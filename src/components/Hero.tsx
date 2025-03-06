@@ -86,7 +86,7 @@ const Hero = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl">
-              Give the gift of extraordinary experiences that create lasting memories and unforgettable stories.
+              92% people prefer an Experience over a Material gift. Give the gift of extraordinary experiences that create lasting memories and unforgettable stories.
             </p>
             
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
