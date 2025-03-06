@@ -79,14 +79,14 @@ const Hero = () => {
             </div>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-medium mb-6 leading-tight">
-              Unforgettable Moments, <br />
+              Gifting Something, <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-                Perfectly Packaged
+                That Matters
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl">
-              92% people prefer an Experience over a Material gift. Give the gift of extraordinary experiences that create lasting memories and unforgettable stories.
+              92% of all people prefer an Experience over a Material gift and 63% forget what they recieved a year back.
             </p>
             
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
