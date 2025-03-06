@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Clock, Users, Calendar, Heart, ArrowLeft, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/components/ui/use-toast";
+import { formatRupees } from '@/lib/formatters';
+import { useCart } from '@/contexts/CartContext';
 
 const ExperienceView = () => {
   const { id } = useParams();
@@ -16,6 +18,7 @@ const ExperienceView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const { toast } = useToast();
+  const { addToCart } = useCart();
   
   useEffect(() => {
     // Scroll to top when the component mounts
@@ -55,6 +58,12 @@ const ExperienceView = () => {
         description: "Share this experience with your friends!",
         duration: 3000,
       });
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (experience) {
+      addToCart(experience.id);
     }
   };
   
@@ -126,7 +135,7 @@ const ExperienceView = () => {
                   <MapPin className="h-4 w-4 mr-1" />
                   <span>{experience.location}</span>
                 </div>
-                <div className="text-xl font-medium">${experience.price}</div>
+                <div className="text-xl font-medium">{formatRupees(experience.price)}</div>
               </div>
               
               <div className="grid grid-cols-3 gap-4 mb-8">
@@ -174,10 +183,10 @@ const ExperienceView = () => {
               <div className="bg-white rounded-lg p-4 mb-6">
                 <div className="flex justify-between mb-4">
                   <span className="text-muted-foreground">Price</span>
-                  <span className="font-medium">${experience.price}</span>
+                  <span className="font-medium">{formatRupees(experience.price)}</span>
                 </div>
                 
-                <Button size="lg" className="w-full mb-3">Add to Cart</Button>
+                <Button size="lg" className="w-full mb-3" onClick={handleAddToCart}>Add to Cart</Button>
                 
                 <p className="text-xs text-center text-muted-foreground">
                   Secure checkout and instant digital delivery

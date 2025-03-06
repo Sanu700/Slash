@@ -1,14 +1,16 @@
-
 import { useState, useEffect } from 'react';
 import { Menu, X, Search, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { itemCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,16 +103,22 @@ const Navbar = () => {
           >
             <Search className="h-5 w-5" />
           </button>
-          <button 
+          <Link 
+            to="/cart"
             className={cn(
-              "p-2 rounded-full transition-colors",
+              "p-2 rounded-full transition-colors relative",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
                 : "hover:bg-white/10 text-white"
             )}
           >
             <ShoppingCart className="h-5 w-5" />
-          </button>
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
           <Button 
             variant={isScrolled ? "default" : "outline"}
             className={cn(
@@ -135,16 +143,22 @@ const Navbar = () => {
           >
             <Search className="h-5 w-5" />
           </button>
-          <button 
+          <Link 
+            to="/cart"
             className={cn(
-              "p-2 rounded-full transition-colors",
+              "p-2 rounded-full transition-colors relative",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
                 : "hover:bg-white/10 text-white"
             )}
           >
             <ShoppingCart className="h-5 w-5" />
-          </button>
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
+          </Link>
           <button
             onClick={toggleMobileMenu}
             className={cn(

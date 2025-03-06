@@ -5,6 +5,7 @@ import { Experience } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MapPin, Clock, Users, Calendar, Heart } from 'lucide-react';
+import { formatRupees } from '@/lib/formatters';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -78,7 +79,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
                 <MapPin className="h-3.5 w-3.5 mr-1" />
                 <span>{experience.location}</span>
               </div>
-              <div className="text-lg font-medium">${experience.price}</div>
+              <div className="text-lg font-medium">{formatRupees(experience.price)}</div>
             </div>
             
             <div className={cn(
