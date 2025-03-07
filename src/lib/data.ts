@@ -1,4 +1,3 @@
-
 import { Gift, MapPin, Users, Clock, Calendar } from "lucide-react";
 
 export interface Experience {
@@ -132,6 +131,129 @@ export const experiences: Experience[] = [
     duration: "8 hours",
     participants: "1 person",
     date: "Seasonal",
+    category: "learning"
+  },
+  {
+    id: "exp9",
+    title: "Desert Stargazing Retreat",
+    description: "Observe celestial wonders with professional astronomers in a remote desert location with zero light pollution.",
+    imageUrl: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?q=80&w=2578&auto=format&fit=crop",
+    price: 18500,
+    location: "Jaisalmer, Rajasthan",
+    duration: "Overnight",
+    participants: "2 people",
+    date: "Available on clear nights",
+    category: "adventure"
+  },
+  {
+    id: "exp10",
+    title: "Ancient Temple Meditation",
+    description: "Find inner peace with guided meditation sessions in a centuries-old temple surrounded by nature.",
+    imageUrl: "https://images.unsplash.com/photo-1609234500016-81afafa54181?q=80&w=2670&auto=format&fit=crop",
+    price: 12999,
+    location: "Hampi, Karnataka",
+    duration: "4 hours",
+    participants: "1 person",
+    date: "Daily sessions",
+    category: "wellness"
+  },
+  {
+    id: "exp11",
+    title: "Himalayan Homestay Experience",
+    description: "Live with a local family in a remote Himalayan village, experiencing authentic cuisine and daily life.",
+    imageUrl: "https://images.unsplash.com/photo-1606217057598-fe753187e473?q=80&w=2574&auto=format&fit=crop",
+    price: 32500,
+    location: "Spiti Valley, Himachal Pradesh",
+    duration: "3 days",
+    participants: "2 people",
+    date: "Seasonal (May-September)",
+    category: "adventure"
+  },
+  {
+    id: "exp12",
+    title: "Artisanal Coffee Masterclass",
+    description: "Learn the art of coffee from bean selection to perfect brewing techniques with award-winning baristas.",
+    imageUrl: "https://images.unsplash.com/photo-1511537190424-bbbab87ac5eb?q=80&w=2670&auto=format&fit=crop",
+    price: 14999,
+    location: "Coorg, Karnataka",
+    duration: "6 hours",
+    participants: "1 person",
+    date: "Weekends",
+    category: "learning"
+  },
+  {
+    id: "exp13",
+    title: "Heritage Palace Dinner",
+    description: "Enjoy a royal multi-course dinner in a historic palace with traditional music and dance performances.",
+    imageUrl: "https://images.unsplash.com/photo-1583396754091-11f775ec4121?q=80&w=2670&auto=format&fit=crop",
+    price: 42500,
+    location: "Udaipur, Rajasthan",
+    duration: "4 hours",
+    participants: "2 people",
+    date: "Available year-round",
+    category: "dining",
+    featured: true
+  },
+  {
+    id: "exp14",
+    title: "Houseboat Backwater Cruise",
+    description: "Navigate tranquil backwaters on a luxury houseboat with personal chef and panoramic views.",
+    imageUrl: "https://images.unsplash.com/photo-1580551387343-5e98952dc0a3?q=80&w=2670&auto=format&fit=crop",
+    price: 28999,
+    location: "Alleppey, Kerala",
+    duration: "1 day",
+    participants: "2-4 people",
+    date: "Year-round",
+    category: "luxury",
+    trending: true
+  },
+  {
+    id: "exp15",
+    title: "Wildlife Photography Safari",
+    description: "Capture stunning wildlife photographs with expert guidance in one of India's premier national parks.",
+    imageUrl: "https://images.unsplash.com/photo-1574068752483-06bbe6da7c02?q=80&w=2670&auto=format&fit=crop",
+    price: 36999,
+    location: "Ranthambore, Rajasthan",
+    duration: "2 days",
+    participants: "1 person",
+    date: "October-June",
+    category: "learning"
+  },
+  {
+    id: "exp16",
+    title: "Organic Farm-to-Table Cooking",
+    description: "Harvest fresh ingredients and learn traditional cooking techniques in a scenic organic farm.",
+    imageUrl: "https://images.unsplash.com/photo-1536184071535-78906f7172c2?q=80&w=2670&auto=format&fit=crop",
+    price: 17500,
+    location: "Manali, Himachal Pradesh",
+    duration: "1 day",
+    participants: "2 people",
+    date: "Year-round",
+    category: "dining"
+  },
+  {
+    id: "exp17",
+    title: "Private Beach Glamping",
+    description: "Luxury camping on a secluded beach with gourmet meals, bonfires, and water activities.",
+    imageUrl: "https://images.unsplash.com/photo-1531097517181-3de20fd3f05c?q=80&w=2574&auto=format&fit=crop",
+    price: 38500,
+    location: "Gokarna, Karnataka",
+    duration: "2 days",
+    participants: "2 people",
+    date: "October-May",
+    category: "luxury",
+    trending: true
+  },
+  {
+    id: "exp18",
+    title: "Historical Architecture Walk",
+    description: "Explore magnificent historical structures with an architectural historian revealing hidden stories and techniques.",
+    imageUrl: "https://images.unsplash.com/photo-1598827121180-220024f25804?q=80&w=2670&auto=format&fit=crop",
+    price: 11999,
+    location: "Delhi",
+    duration: "4 hours",
+    participants: "2 people",
+    date: "Weekends",
     category: "learning"
   }
 ];
