@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
@@ -10,32 +9,29 @@ import Footer from '@/components/Footer';
 import { experiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { cn } from '@/lib/utils';
-
 const Index = () => {
   // Smooth scroll for anchor links
   useEffect(() => {
     const handleSmoothScroll = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const link = target.closest('a');
-      
       if (link && link.hash && link.href.includes(window.location.pathname)) {
         e.preventDefault();
         const targetElement = document.querySelector(link.hash);
         if (targetElement) {
-          targetElement.scrollIntoView({ behavior: 'smooth' });
+          targetElement.scrollIntoView({
+            behavior: 'smooth'
+          });
         }
       }
     };
-    
     document.addEventListener('click', handleSmoothScroll);
     return () => document.removeEventListener('click', handleSmoothScroll);
   }, []);
-  
+
   // Filter featured experiences
   const featuredExperiences = experiences.filter(exp => exp.featured);
-
-  return (
-    <div className="flex flex-col min-h-screen">
+  return <div className="flex flex-col min-h-screen">
       <Navbar />
       
       <main>
@@ -55,16 +51,9 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredExperiences.map((experience, index) => (
-                <div key={experience.id} className={cn(
-                  index === 0 && "md:col-span-2"
-                )}>
-                  <ExperienceCard 
-                    experience={experience} 
-                    featured={index === 0}
-                  />
-                </div>
-              ))}
+              {featuredExperiences.map((experience, index) => <div key={experience.id} className="">
+                  <ExperienceCard experience={experience} featured={index === 0} />
+                </div>)}
             </div>
           </div>
         </section>
@@ -83,8 +72,6 @@ const Index = () => {
       </main>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
