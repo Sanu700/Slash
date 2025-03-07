@@ -4,14 +4,18 @@ import { Menu, X, Search, ShoppingCart, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { experiences } from '@/lib/data';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof experiences>([]);
   const { itemCount } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,12 +25,51 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    // Only search when query is at least 2 characters
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const lowercaseQuery = searchQuery.toLowerCase();
+    const results = experiences
+      .filter(exp => 
+        exp.title.toLowerCase().includes(lowercaseQuery) || 
+        exp.description.toLowerCase().includes(lowercaseQuery) ||
+        exp.location.toLowerCase().includes(lowercaseQuery)
+      )
+      .slice(0, 5); // Limit to 5 results for performance
+    
+    setSearchResults(results);
+  }, [searchQuery]);
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
   const toggleSearch = () => {
     setSearchOpen(!searchOpen);
+    if (!searchOpen) {
+      // Reset search when opening
+      setSearchQuery('');
+      setSearchResults([]);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Close search
+      setSearchOpen(false);
+      // Navigate to all experiences with search query
+      navigate(`/experiences?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleSearchResultClick = (id: string) => {
+    setSearchOpen(false);
+    navigate(`/experience/${id}`);
   };
 
   return (
@@ -181,26 +224,75 @@ const Navbar = () => {
           )}
         >
           <div className="container max-w-2xl mx-auto pt-28 px-4">
-            <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="relative">
               <Input
                 type="search"
                 placeholder="Search for experiences..."
                 className="pl-10 pr-4 py-6 text-lg rounded-xl"
                 autoFocus={searchOpen}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <button 
+                type="button"
                 onClick={toggleSearch}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-5 w-5" />
               </button>
-            </div>
+            </form>
+            
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="mt-4 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden divide-y divide-white/10">
+                {searchResults.map(result => (
+                  <div 
+                    key={result.id}
+                    onClick={() => handleSearchResultClick(result.id)}
+                    className="flex p-4 hover:bg-white/20 cursor-pointer transition-colors"
+                  >
+                    <div className="w-16 h-16 rounded-md overflow-hidden mr-4 flex-shrink-0">
+                      <img 
+                        src={result.imageUrl} 
+                        alt={result.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-medium">{result.title}</h4>
+                      <p className="text-white/70 text-sm truncate">{result.location}</p>
+                    </div>
+                  </div>
+                ))}
+                <div className="p-4 text-center">
+                  <button
+                    onClick={() => {
+                      setSearchOpen(false);
+                      navigate(`/experiences?search=${encodeURIComponent(searchQuery)}`);
+                    }}
+                    className="text-primary hover:underline text-sm"
+                  >
+                    See all results ({experiences.filter(exp => 
+                      exp.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      exp.description.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).length})
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="mt-6 text-white">
               <p className="text-sm text-gray-400 mb-3">Popular Searches</p>
               <div className="flex flex-wrap gap-2">
                 {["Hot Air Balloon", "Dining", "Yacht", "Spa Day", "Adventure"].map((term) => (
-                  <span key={term} className="px-3 py-1 bg-white/10 rounded-full text-sm hover:bg-white/20 cursor-pointer">
+                  <span 
+                    key={term} 
+                    className="px-3 py-1 bg-white/10 rounded-full text-sm hover:bg-white/20 cursor-pointer"
+                    onClick={() => {
+                      setSearchQuery(term);
+                    }}
+                  >
                     {term}
                   </span>
                 ))}

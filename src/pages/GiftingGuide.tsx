@@ -1,23 +1,22 @@
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Heart, Gift, Star, Award, ThumbsUp, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Gift, CheckCircle, Clock, Heart, Image, CornerRightDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
+import ExperienceCard from '@/components/ExperienceCard';
+import { experiences } from '@/lib/data';
 
 const GiftingGuide = () => {
-  const [activeTab, setActiveTab] = useState<'qualities' | 'stats'>('qualities');
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [contentRef1, isInView1] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  const [contentRef2, isInView2] = useInView<HTMLDivElement>({ threshold: 0.1, triggerOnce: true });
-  const [contentRef3, isInView3] = useInView<HTMLDivElement>({ threshold: 0.1, triggerOnce: true });
+  const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   
-  const scrollToContent = () => {
-    contentRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Get a few featured experiences for recommendations
+  const featuredExperiences = experiences
+    .filter(exp => exp.trending || exp.price > 30000)
+    .slice(0, 3);
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -43,250 +42,150 @@ const GiftingGuide = () => {
             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
               <Gift className="h-8 w-8" />
             </div>
-            <h1 className="text-3xl md:text-5xl font-medium mb-4">The Art of Gifting</h1>
+            <h1 className="text-3xl md:text-5xl font-medium mb-4">Experience vs. Material Gifts</h1>
             <p className="max-w-2xl text-white/80 text-lg mb-8">
-              Discover what makes a gift truly meaningful and why experiences create lasting memories
+              Discover why experiences make for more meaningful and memorable gifts
             </p>
             <Button 
-              onClick={scrollToContent}
               size="lg" 
               className="bg-white text-black hover:bg-white/90"
+              onClick={() => {
+                const section = document.getElementById('comparison');
+                section?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
-              Explore Guide
+              Explore the Guide
             </Button>
           </div>
         </div>
         
+        {/* Main Content */}
         <div 
-          ref={contentRef}
-          className="container max-w-6xl mx-auto px-6 md:px-10 py-16 md:py-24"
+          ref={ref}
+          id="comparison"
+          className="container max-w-4xl mx-auto px-6 md:px-10 py-16 md:py-24"
         >
-          {/* Tab Navigation */}
-          <div className="flex justify-center mb-12">
-            <div className="inline-flex rounded-lg bg-secondary/50 p-1">
-              <button
-                className={cn(
-                  "px-6 py-3 rounded-md text-sm md:text-base font-medium transition-colors",
-                  activeTab === 'qualities' ? "bg-white text-black" : "text-muted-foreground"
-                )}
-                onClick={() => setActiveTab('qualities')}
-              >
-                What Makes a Great Gift
-              </button>
-              <button
-                className={cn(
-                  "px-6 py-3 rounded-md text-sm md:text-base font-medium transition-colors",
-                  activeTab === 'stats' ? "bg-white text-black" : "text-muted-foreground"
-                )}
-                onClick={() => setActiveTab('stats')}
-              >
-                Experience vs. Material Gifts
-              </button>
+          <div className={cn(
+            "space-y-16 transition-all duration-700",
+            isInView ? "opacity-100" : "opacity-0 translate-y-8"
+          )}>
+            {/* Intro Section */}
+            <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-medium mb-6">Why Gift an Experience?</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Research shows that experiences create stronger emotional connections and more lasting happiness than material possessions. Let's explore why.
+              </p>
             </div>
-          </div>
-          
-          {/* What Makes a Great Gift Content */}
-          {activeTab === 'qualities' && (
-            <div ref={contentRef1} className={cn(
-              "transition-all duration-700",
-              isInView1 ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
-              <h2 className="text-3xl font-medium mb-10 text-center">The Five Qualities of Meaningful Gifts</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 hover:bg-white/10 transition-colors border border-gray-200/10">
-                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                    <Heart className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-medium mb-3">Personalization</h3>
-                  <p className="text-muted-foreground">
-                    The best gifts reflect a deep understanding of the recipient's personality, interests, and desires. They show that you've put thought into what would truly delight them.
-                  </p>
+            
+            {/* Comparison Section */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+              <div className="bg-secondary/30 p-8 rounded-2xl">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                  <Gift className="h-6 w-6 text-primary" />
                 </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 hover:bg-white/10 transition-colors border border-gray-200/10">
-                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                    <Star className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-medium mb-3">Surprise Factor</h3>
-                  <p className="text-muted-foreground">
-                    Unexpected gifts often create the strongest emotional reactions. A gift that surprises and delights creates an unforgettable moment that both giver and receiver will remember.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 hover:bg-white/10 transition-colors border border-gray-200/10">
-                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                    <Award className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-medium mb-3">Quality Over Quantity</h3>
-                  <p className="text-muted-foreground">
-                    A single, thoughtful gift will always mean more than multiple generic items. Quality gifts show that you value the recipient enough to invest in something truly special.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 hover:bg-white/10 transition-colors border border-gray-200/10">
-                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                    <ThumbsUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-medium mb-3">Emotional Connection</h3>
-                  <p className="text-muted-foreground">
-                    The most treasured gifts forge an emotional bond. They may remind the recipient of a shared memory, an inside joke, or demonstrate how well you understand them.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 hover:bg-white/10 transition-colors border border-gray-200/10 md:col-span-2 lg:col-span-1">
-                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                    <Gift className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-medium mb-3">Lasting Impact</h3>
-                  <p className="text-muted-foreground">
-                    Great gifts continue to bring joy long after they're given. Whether through memories created, skills learned, or experiences gained, they have enduring value.
-                  </p>
-                </div>
+                <h3 className="text-2xl font-medium mb-4">Material Gifts</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <Clock className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                    <span>Quick enjoyment but excitement fades over time</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Image className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                    <span>Takes up physical space and can contribute to clutter</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CornerRightDown className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                    <span>Value and appreciation often decreases with time</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Heart className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                    <span>Can be meaningful but often lacks personal touch</span>
+                  </li>
+                </ul>
               </div>
               
-              <div className="mt-16 text-center">
-                <h3 className="text-2xl font-medium mb-6">Why Experiences Make Perfect Gifts</h3>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-                  Experience gifts excel in all five qualities of great gifts. They're highly personalized, create surprise and delight, offer premium quality, forge emotional connections, and create lasting memories that endure for years.
-                </p>
+              <div className="bg-primary/10 p-8 rounded-2xl">
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-6">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-medium mb-4">Experience Gifts</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                    <span>Creates lasting memories and stories to share</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                    <span>No physical clutter - only emotional richness</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                    <span>Appreciation increases over time as memories are cherished</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                    <span>Deepens relationships through shared moments</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            {/* Stats Section */}
+            <div className="bg-secondary/20 rounded-2xl p-8 md:p-10">
+              <h3 className="text-2xl font-medium mb-6 text-center">The Science Behind Experience Gifts</h3>
+              
+              <div className="grid sm:grid-cols-3 gap-8">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">78%</div>
+                  <p className="text-muted-foreground">of people prefer experiences over material items</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">3x</div>
+                  <p className="text-muted-foreground">longer lasting happiness from experiential purchases</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">85%</div>
+                  <p className="text-muted-foreground">stronger memory retention for experiences vs. objects</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Quote Section */}
+            <div className="relative py-8">
+              <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                <span className="text-9xl">"</span>
+              </div>
+              <blockquote className="text-xl md:text-2xl text-center italic relative z-10 max-w-3xl mx-auto">
+                "We don't remember days, we remember moments. The richness of life lies in memories we have forgotten."
+                <footer className="text-base text-muted-foreground mt-4 not-italic">
+                  — Cesare Pavese
+                </footer>
+              </blockquote>
+            </div>
+            
+            {/* Recommended Experiences */}
+            <div>
+              <h3 className="text-2xl font-medium mb-6 text-center">Recommended Experiences</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredExperiences.map(experience => (
+                  <ExperienceCard key={experience.id} experience={experience} />
+                ))}
+              </div>
+              <div className="text-center mt-8">
                 <Link to="/gift-personalizer">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90">
-                    Find the Perfect Experience Gift
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button size="lg" className="mr-4">
+                    Find the Perfect Gift
+                  </Button>
+                </Link>
+                <Link to="/experiences">
+                  <Button variant="outline" size="lg">
+                    Browse All Experiences
                   </Button>
                 </Link>
               </div>
             </div>
-          )}
-          
-          {/* Stats Content */}
-          {activeTab === 'stats' && (
-            <div ref={contentRef2} className={cn(
-              "transition-all duration-700",
-              isInView2 ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
-              <h2 className="text-3xl font-medium mb-10 text-center">The Science Behind Experience Gifts</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
-                <div>
-                  <h3 className="text-xl font-medium mb-6">Research Findings</h3>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-200/10">
-                      <p className="text-2xl font-medium text-primary mb-2">78%</p>
-                      <p className="text-muted-foreground">of people report greater happiness from experiential purchases compared to material ones</p>
-                    </div>
-                    
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-200/10">
-                      <p className="text-2xl font-medium text-primary mb-2">85%</p>
-                      <p className="text-muted-foreground">of experience gift recipients remembered their gift a year later versus only 53% for material gifts</p>
-                    </div>
-                    
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-200/10">
-                      <p className="text-2xl font-medium text-primary mb-2">3.5×</p>
-                      <p className="text-muted-foreground">stronger social bonds are formed through shared experiences versus material gift exchanges</p>
-                    </div>
-                    
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-200/10">
-                      <p className="text-2xl font-medium text-primary mb-2">64%</p>
-                      <p className="text-muted-foreground">of millennials prefer to receive experience gifts rather than physical items</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-xl font-medium mb-6">Why Experiences Win</h3>
-                  
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-gray-200/10 h-full">
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="font-medium mb-2 flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                          No Comparison Shopping
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Unlike physical items, experiences are harder to directly compare, reducing "buyer's remorse" and increasing satisfaction.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2 flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                          Part of Identity
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Experiences become part of our identity and personal narrative, while material items remain external possessions.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2 flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                          Anticipation Factor
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          The excitement before an experience creates additional happiness, effectively extending the gift's enjoyment period.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2 flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                          No Adaptation
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Physical gifts lose their appeal through "hedonic adaptation," while memories of experiences often become more positive over time.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2 flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>
-                          Social Connection
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Experiences often involve social interaction, which is a fundamental human need and contributor to happiness.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-16 text-center">
-                <h3 className="text-2xl font-medium mb-6">Find the Perfect Experience Gift</h3>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-                  Our personalized gift finder helps you select the ideal experience based on the recipient's preferences and interests.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link to="/gift-personalizer">
-                    <Button size="lg" className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
-                      Try Gift Personalizer
-                    </Button>
-                  </Link>
-                  <Link to="/experiences">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                      Browse All Experiences
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Quote Section */}
-        <div ref={contentRef3} className={cn(
-          "bg-primary/5 py-16 md:py-24 transition-all duration-700",
-          isInView3 ? "opacity-100" : "opacity-0"
-        )}>
-          <div className="container max-w-4xl mx-auto px-6 md:px-10 text-center">
-            <div className="text-5xl font-serif mb-6">"</div>
-            <p className="text-xl md:text-2xl font-medium mb-6">
-              We don't remember days, we remember moments. The richness of life lies in memories we have forgotten.
-            </p>
-            <p className="text-md text-muted-foreground">— Cesare Pavese</p>
           </div>
         </div>
       </main>

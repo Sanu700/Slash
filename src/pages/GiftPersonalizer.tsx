@@ -61,6 +61,7 @@ const GiftPersonalizer = () => {
   });
   
   const [suggestedExperiences, setSuggestedExperiences] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,8 +95,6 @@ const GiftPersonalizer = () => {
       setProgress(90);
     } else if (currentStep === 'social') {
       generateRecommendations();
-      setCurrentStep('results');
-      setProgress(100);
     }
   };
   
@@ -144,43 +143,74 @@ const GiftPersonalizer = () => {
   };
   
   const generateRecommendations = () => {
-    // Here we would normally use an AI algorithm to process the user data
-    // For now, we'll use a simple algorithm to select experiences
+    setIsGenerating(true);
     
-    // Find experiences that match the interests
-    let matched = experiences.filter(exp => {
-      // Match by category/interest
-      const categoryMatch = formData.interests.some(interest => 
-        categories.find(cat => cat.name.toLowerCase() === interest.toLowerCase())?.id === exp.category
-      );
+    setTimeout(() => {
+      let potentialMatches = [...experiences];
       
-      // Check if within budget range
-      let budgetMatch = true;
       if (formData.budget === 'low') {
-        budgetMatch = exp.price < 20000;
+        potentialMatches = potentialMatches.filter(exp => exp.price < 20000);
       } else if (formData.budget === 'medium') {
-        budgetMatch = exp.price >= 20000 && exp.price < 30000;
+        potentialMatches = potentialMatches.filter(exp => exp.price >= 20000 && exp.price <= 30000);
       } else if (formData.budget === 'high') {
-        budgetMatch = exp.price >= 30000;
+        potentialMatches = potentialMatches.filter(exp => exp.price > 30000);
       }
       
-      return categoryMatch && budgetMatch;
-    });
-    
-    // If no matches, just return a few random experiences
-    if (matched.length < 3) {
-      matched = experiences.slice(0, 5);
-    }
-    
-    // Return the top 3-5 matches
-    const recommended = matched.slice(0, Math.min(matched.length, 5)).map(exp => exp.id);
-    setSuggestedExperiences(recommended);
-    
-    // Simulate loading and AI processing
-    toast({
-      title: "Recommendations generated!",
-      description: "We've analyzed your preferences to find perfect gift experiences.",
-    });
+      const scoredExperiences = potentialMatches.map(exp => {
+        let score = 0;
+        
+        const categoryMatch = formData.interests.some(interest => {
+          const matchingCategory = categories.find(cat => 
+            cat.name.toLowerCase() === interest.toLowerCase()
+          );
+          return matchingCategory?.id === exp.category;
+        });
+        
+        if (categoryMatch) score += 10;
+        
+        if (formData.occasion === 'anniversary' && exp.romantic) score += 8;
+        if (formData.occasion === 'birthday' && exp.trending) score += 5;
+        if (formData.occasion === 'graduation' && exp.category === 'luxury') score += 5;
+        
+        if (formData.preferences.adventurous > 3 && exp.adventurous) score += 7;
+        if (formData.preferences.adventurous < 3 && !exp.adventurous) score += 5;
+        
+        if (formData.preferences.social > 3 && exp.group) score += 6;
+        if (formData.preferences.social < 3 && !exp.group) score += 4;
+        
+        if (formData.preferences.relaxation > 3 && exp.category === 'wellness') score += 7;
+        
+        if (formData.preferences.learning > 3 && 
+            (exp.category === 'learning' || exp.niche === 'workshops')) score += 7;
+        
+        if (formData.relationship === 'partner' && exp.romantic) score += 8;
+        if (formData.relationship === 'family' && exp.group) score += 6;
+        if (formData.relationship === 'friend' && exp.category === 'adventure') score += 5;
+        
+        if (formData.occasion === 'anniversary' && exp.niche === 'luxury') score += 10;
+        
+        return { 
+          experience: exp,
+          score
+        };
+      });
+      
+      scoredExperiences.sort((a, b) => b.score - a.score);
+      
+      const topRecommendations = scoredExperiences
+        .slice(0, 5)
+        .map(item => item.experience.id);
+      
+      setSuggestedExperiences(topRecommendations);
+      setCurrentStep('results');
+      setProgress(100);
+      setIsGenerating(false);
+      
+      toast({
+        title: "Personalized recommendations ready!",
+        description: `We've found the perfect experiences for ${formData.recipient}.`,
+      });
+    }, 1500);
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -226,7 +256,6 @@ const GiftPersonalizer = () => {
       <Navbar />
       
       <main className="flex-grow pt-20 md:pt-24">
-        {/* Hero Section */}
         <div className="relative h-[50vh] md:h-[60vh] w-full">
           <img 
             src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
@@ -267,7 +296,6 @@ const GiftPersonalizer = () => {
             "transition-all duration-700",
             isInView ? "opacity-100" : "opacity-0 translate-y-8"
           )}>
-            {/* Progress Bar */}
             <div className="w-full bg-secondary/30 h-2 rounded-full mb-8">
               <div 
                 className="bg-primary h-full rounded-full transition-all duration-500"
@@ -275,7 +303,6 @@ const GiftPersonalizer = () => {
               ></div>
             </div>
             
-            {/* Step: Basic Information */}
             {currentStep === 'basics' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-medium mb-2">Tell us about the recipient</h2>
@@ -351,7 +378,6 @@ const GiftPersonalizer = () => {
               </div>
             )}
             
-            {/* Step: Interests */}
             {currentStep === 'interests' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-medium mb-2">What are they interested in?</h2>
@@ -388,7 +414,6 @@ const GiftPersonalizer = () => {
               </div>
             )}
             
-            {/* Step: Preferences */}
             {currentStep === 'preferences' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-medium mb-2">Personality Profile</h2>
@@ -460,7 +485,6 @@ const GiftPersonalizer = () => {
               </div>
             )}
             
-            {/* Step: Social Accounts */}
             {currentStep === 'social' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-medium mb-2">Social & Shopping Profiles</h2>
@@ -523,7 +547,6 @@ const GiftPersonalizer = () => {
               </div>
             )}
             
-            {/* Step: Results */}
             {currentStep === 'results' && (
               <div className="space-y-6">
                 <div className="text-center mb-10">
@@ -555,7 +578,6 @@ const GiftPersonalizer = () => {
               </div>
             )}
             
-            {/* Navigation Buttons */}
             {currentStep !== 'results' && (
               <div className="flex justify-between mt-10">
                 <Button
@@ -569,8 +591,19 @@ const GiftPersonalizer = () => {
                 <Button
                   type="button"
                   onClick={handleNextStep}
+                  disabled={isGenerating}
                 >
-                  {currentStep === 'social' ? 'Generate Recommendations' : 'Next'}
+                  {currentStep === 'social' ? (
+                    isGenerating ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                      </>
+                    ) : 'Generate Recommendations'
+                  ) : 'Next'}
                 </Button>
               </div>
             )}

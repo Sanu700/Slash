@@ -10,7 +10,12 @@ import { ArrowRight } from 'lucide-react';
 
 const TrendingSection = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  const trendingExperiences = experiences.filter(exp => exp.trending);
+  
+  // Only show 3 trending experiences for better performance and formatting
+  const trendingExperiences = experiences
+    .filter(exp => exp.trending)
+    .sort((a, b) => b.price - a.price) // Sort by price descending for variety
+    .slice(0, 3); // Limit to only 3 experiences
   
   return (
     <section 
@@ -55,7 +60,7 @@ const TrendingSection = () => {
 
         <div 
           className={cn(
-            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+            "grid grid-cols-1 md:grid-cols-3 gap-8",
             isInView ? "animate-fade-in" : "opacity-0"
           )}
         >

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -13,31 +13,156 @@ import { useInView } from '@/lib/animations';
 const AllExperiences = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
-  const [filteredExperiences, setFilteredExperiences] = useState(experiences);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const experiencesPerPage = 12;
   
-  useEffect(() => {
-    // Scroll to top when the component mounts
-    window.scrollTo(0, 0);
-    
-    // Reset experiences
-    setFilteredExperiences([...experiences]);
-  }, []);
-  
-  // Handle sorting
-  useEffect(() => {
+  // Memoize filtered and sorted experiences to improve performance
+  const filteredExperiences = useMemo(() => {
     let sorted = [...experiences];
     
+    // Apply sorting
     if (sortOrder === 'price-low') {
       sorted.sort((a, b) => a.price - b.price);
     } else if (sortOrder === 'price-high') {
       sorted.sort((a, b) => b.price - a.price);
     }
     
-    setFilteredExperiences(sorted);
-  }, [sortOrder]);
+    // Apply search filtering if there's a search term
+    if (searchTerm.trim()) {
+      const lowercasedSearch = searchTerm.toLowerCase();
+      sorted = sorted.filter(exp => 
+        exp.title.toLowerCase().includes(lowercasedSearch) ||
+        exp.description.toLowerCase().includes(lowercasedSearch) ||
+        exp.location.toLowerCase().includes(lowercasedSearch)
+      );
+    }
+    
+    return sorted;
+  }, [sortOrder, searchTerm]);
+  
+  // Calculate pagination
+  const indexOfLastExperience = currentPage * experiencesPerPage;
+  const indexOfFirstExperience = indexOfLastExperience - experiencesPerPage;
+  const currentExperiences = filteredExperiences.slice(indexOfFirstExperience, indexOfLastExperience);
+  const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
+  
+  useEffect(() => {
+    // Scroll to top when the component mounts or when page changes
+    window.scrollTo(0, 0);
+    
+    // Reset to page 1 when search or sort changes
+    setCurrentPage(1);
+  }, [searchTerm, sortOrder]);
   
   const handleSortChange = (order: 'default' | 'price-low' | 'price-high') => {
     setSortOrder(order);
+  };
+  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+  
+  const renderPagination = () => {
+    const pages = [];
+    
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={cn(
+            "w-10 h-10 rounded-md transition-colors",
+            currentPage === i 
+              ? "bg-primary text-white" 
+              : "bg-secondary hover:bg-secondary/80"
+          )}
+        >
+          {i}
+        </button>
+      );
+    }
+    
+    return (
+      <div className="flex items-center justify-center gap-2 mt-12">
+        <button 
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-2 rounded-md bg-secondary hover:bg-secondary/80 disabled:opacity-50"
+        >
+          Previous
+        </button>
+        
+        <div className="flex items-center gap-1">
+          {totalPages <= 7 ? (
+            pages
+          ) : (
+            <>
+              {currentPage > 2 && (
+                <>
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    className="w-10 h-10 rounded-md bg-secondary hover:bg-secondary/80"
+                  >
+                    1
+                  </button>
+                  {currentPage > 3 && <span className="px-1">...</span>}
+                </>
+              )}
+              
+              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                let pageNum;
+                if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                if (pageNum > 0 && pageNum <= totalPages) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "w-10 h-10 rounded-md transition-colors",
+                        currentPage === pageNum 
+                          ? "bg-primary text-white" 
+                          : "bg-secondary hover:bg-secondary/80"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                }
+                return null;
+              })}
+              
+              {currentPage < totalPages - 1 && (
+                <>
+                  {currentPage < totalPages - 2 && <span className="px-1">...</span>}
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-10 h-10 rounded-md bg-secondary hover:bg-secondary/80"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+        
+        <button 
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-3 py-2 rounded-md bg-secondary hover:bg-secondary/80 disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    );
   };
   
   return (
@@ -79,6 +204,25 @@ const AllExperiences = () => {
           ref={ref}
           className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
         >
+          {/* Search Bar */}
+          <div className={cn(
+            "mb-8 transition-all duration-500",
+            isInView ? "opacity-100" : "opacity-0 translate-y-8"
+          )}>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search experiences by title, description or location..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full px-4 py-3 pl-12 rounded-lg border focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+              />
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+            </div>
+          </div>
+          
           {/* Filters and Sorting */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className={cn(
@@ -131,14 +275,27 @@ const AllExperiences = () => {
           </div>
           
           {/* Experiences Grid */}
-          <div className={cn(
-            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
-            isInView ? "opacity-100" : "opacity-0"
-          )}>
-            {filteredExperiences.map((experience) => (
-              <ExperienceCard key={experience.id} experience={experience} />
-            ))}
-          </div>
+          {currentExperiences.length > 0 ? (
+            <div className={cn(
+              "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
+              isInView ? "opacity-100" : "opacity-0"
+            )}>
+              {currentExperiences.map((experience) => (
+                <ExperienceCard key={experience.id} experience={experience} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <h3 className="text-xl mb-2">No matching experiences found</h3>
+              <p className="text-muted-foreground mb-6">Try adjusting your search criteria</p>
+              <Button onClick={() => setSearchTerm('')}>
+                Clear Search
+              </Button>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {filteredExperiences.length > experiencesPerPage && renderPagination()}
         </div>
       </main>
       
