@@ -1,4 +1,5 @@
-import { Gift, MapPin, Users, Clock, Calendar } from "lucide-react";
+
+import { Gift, MapPin, Users, Clock, Calendar, Music, Camera, Utensils, Plane, Palette, BookOpen, Shirt, HeartPulse, Landmark, Briefcase, Anchor, Dumbbell, Leaf, Coffee, Wine } from "lucide-react";
 
 export interface Experience {
   id: string;
@@ -11,6 +12,7 @@ export interface Experience {
   participants: string;
   date: string;
   category: string;
+  nicheCategory?: string;
   trending?: boolean;
   featured?: boolean;
 }
@@ -23,11 +25,111 @@ export interface Category {
   icon: any;
 }
 
+export interface NicheCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: any;
+}
+
 // Cart related types
 export interface CartItem {
   experienceId: string;
   quantity: number;
 }
+
+export const nicheCategories: NicheCategory[] = [
+  {
+    id: "niche1",
+    name: "Music & Arts",
+    description: "Experiences for music and art enthusiasts",
+    icon: Music
+  },
+  {
+    id: "niche2",
+    name: "Photography",
+    description: "Experiences for photography enthusiasts",
+    icon: Camera
+  },
+  {
+    id: "niche3",
+    name: "Culinary Arts",
+    description: "Experiences for food and cooking enthusiasts",
+    icon: Utensils
+  },
+  {
+    id: "niche4",
+    name: "Luxury Escapes",
+    description: "Premium getaway experiences",
+    icon: Plane
+  },
+  {
+    id: "niche5",
+    name: "Creative Workshops",
+    description: "Hands-on creative experiences",
+    icon: Palette
+  },
+  {
+    id: "niche6",
+    name: "Literature & History",
+    description: "Experiences for book and history lovers",
+    icon: BookOpen
+  },
+  {
+    id: "niche7",
+    name: "Fashion & Style",
+    description: "Experiences for fashion enthusiasts",
+    icon: Shirt
+  },
+  {
+    id: "niche8",
+    name: "Wellness & Spirituality",
+    description: "Experiences for mind and body wellness",
+    icon: HeartPulse
+  },
+  {
+    id: "niche9",
+    name: "Heritage & Culture",
+    description: "Experiences to explore local culture and heritage",
+    icon: Landmark
+  },
+  {
+    id: "niche10",
+    name: "Business & Professional",
+    description: "Professional development experiences",
+    icon: Briefcase
+  },
+  {
+    id: "niche11",
+    name: "Ocean & Marine",
+    description: "Experiences for ocean and marine enthusiasts",
+    icon: Anchor
+  },
+  {
+    id: "niche12",
+    name: "Sports & Fitness",
+    description: "Active and athletic experiences",
+    icon: Dumbbell
+  },
+  {
+    id: "niche13",
+    name: "Eco & Sustainability",
+    description: "Environmentally conscious experiences",
+    icon: Leaf
+  },
+  {
+    id: "niche14",
+    name: "Coffee Culture",
+    description: "Experiences for coffee enthusiasts",
+    icon: Coffee
+  },
+  {
+    id: "niche15",
+    name: "Wine & Spirits",
+    description: "Experiences for wine and spirits connoisseurs",
+    icon: Wine
+  }
+];
 
 export const experiences: Experience[] = [
   {
@@ -42,96 +144,104 @@ export const experiences: Experience[] = [
     date: "Available year-round",
     category: "adventure",
     trending: true,
-    featured: true
+    featured: true,
+    nicheCategory: "Luxury Escapes"
   },
   {
     id: "exp2",
     title: "Michelin Star Dining",
     description: "Experience culinary excellence with a 7-course tasting menu at an award-winning restaurant.",
-    imageUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop",
+    imageUrl: "https://example.com/michelin-dining-image.jpg",
     price: 28999,
     location: "New York, NY",
     duration: "3 hours",
     participants: "2 people",
     date: "Available weekdays",
     category: "dining",
-    trending: true
+    trending: true,
+    nicheCategory: "Culinary Arts"
   },
   {
     id: "exp3",
     title: "Private Yacht Sunset Cruise",
     description: "Cruise along the coast on a private yacht with champagne and hors d'oeuvres.",
-    imageUrl: "https://images.unsplash.com/photo-1560507074-b9eb43faab00?q=80&w=2787&auto=format&fit=crop",
+    imageUrl: "https://example.com/yacht-sunset-image.jpg",
     price: 41999,
     location: "Miami, FL",
     duration: "4 hours",
     participants: "Up to 6 people",
     date: "Seasonal",
     category: "luxury",
-    featured: true
+    featured: true,
+    nicheCategory: "Luxury Escapes"
   },
   {
     id: "exp4",
     title: "Helicopter City Tour",
     description: "See the city from above with a private helicopter tour over iconic landmarks.",
-    imageUrl: "https://images.unsplash.com/photo-1506974210756-8e1b8985d348?q=80&w=2574&auto=format&fit=crop",
+    imageUrl: "https://example.com/helicopter-tour-image.jpg",
     price: 33999,
     location: "Los Angeles, CA",
     duration: "1 hour",
     participants: "3 people",
     date: "Available daily",
     category: "adventure",
-    trending: true
+    trending: true,
+    nicheCategory: "Luxury Escapes"
   },
   {
     id: "exp5",
     title: "Wine Tasting Experience",
     description: "Guided tour of premium vineyards with exclusive tastings and pairings.",
-    imageUrl: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?q=80&w=2670&auto=format&fit=crop",
+    imageUrl: "https://example.com/wine-tasting-image.jpg",
     price: 15999,
     location: "Sonoma, CA",
     duration: "5 hours",
     participants: "2 people",
     date: "Weekends",
     category: "dining",
-    featured: true
+    featured: true,
+    nicheCategory: "Wine & Spirits"
   },
   {
     id: "exp6",
     title: "Spa Retreat Day",
     description: "Full day of relaxation with massage, facial treatments, and thermal baths.",
-    imageUrl: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2670&auto=format&fit=crop",
+    imageUrl: "https://example.com/spa-retreat-image.jpg",
     price: 23999,
     location: "Sedona, AZ",
     duration: "Full day",
     participants: "1 person",
     date: "Available daily",
     category: "wellness",
-    trending: true
+    trending: true,
+    nicheCategory: "Wellness & Spirituality"
   },
   {
     id: "exp7",
     title: "Supercar Track Day",
     description: "Drive exotic supercars on a professional race track with professional instruction.",
-    imageUrl: "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?q=80&w=2574&auto=format&fit=crop",
+    imageUrl: "https://example.com/supercar-track-image.jpg",
     price: 49999,
     location: "Austin, TX",
     duration: "4 hours",
     participants: "1 person",
     date: "Weekends",
-    category: "adventure"
+    category: "adventure",
+    nicheCategory: "Sports & Fitness"
   },
   {
     id: "exp8",
     title: "Photography Workshop",
     description: "Learn professional photography techniques in stunning natural settings.",
-    imageUrl: "https://images.unsplash.com/photo-1520549233664-03f65c1d1327?q=80&w=2574&auto=format&fit=crop",
+    imageUrl: "https://example.com/photography-workshop-image.jpg",
     price: 20999,
     location: "Yosemite, CA",
     duration: "8 hours",
     participants: "1 person",
     date: "Seasonal",
-    category: "learning"
+    category: "learning",
+    nicheCategory: "Photography"
   },
   {
     id: "exp9",
@@ -143,7 +253,8 @@ export const experiences: Experience[] = [
     duration: "Overnight",
     participants: "2 people",
     date: "Available on clear nights",
-    category: "adventure"
+    category: "adventure",
+    nicheCategory: "Eco & Sustainability"
   },
   {
     id: "exp10",
@@ -155,7 +266,8 @@ export const experiences: Experience[] = [
     duration: "4 hours",
     participants: "1 person",
     date: "Daily sessions",
-    category: "wellness"
+    category: "wellness",
+    nicheCategory: "Wellness & Spirituality"
   },
   {
     id: "exp11",
@@ -167,7 +279,8 @@ export const experiences: Experience[] = [
     duration: "3 days",
     participants: "2 people",
     date: "Seasonal (May-September)",
-    category: "adventure"
+    category: "adventure",
+    nicheCategory: "Heritage & Culture"
   },
   {
     id: "exp12",
@@ -179,7 +292,8 @@ export const experiences: Experience[] = [
     duration: "6 hours",
     participants: "1 person",
     date: "Weekends",
-    category: "learning"
+    category: "learning",
+    nicheCategory: "Coffee Culture"
   },
   {
     id: "exp13",
@@ -192,7 +306,8 @@ export const experiences: Experience[] = [
     participants: "2 people",
     date: "Available year-round",
     category: "dining",
-    featured: true
+    featured: true,
+    nicheCategory: "Heritage & Culture"
   },
   {
     id: "exp14",
@@ -205,7 +320,8 @@ export const experiences: Experience[] = [
     participants: "2-4 people",
     date: "Year-round",
     category: "luxury",
-    trending: true
+    trending: true,
+    nicheCategory: "Luxury Escapes"
   },
   {
     id: "exp15",
@@ -217,7 +333,8 @@ export const experiences: Experience[] = [
     duration: "2 days",
     participants: "1 person",
     date: "October-June",
-    category: "learning"
+    category: "learning",
+    nicheCategory: "Photography"
   },
   {
     id: "exp16",
@@ -229,7 +346,8 @@ export const experiences: Experience[] = [
     duration: "1 day",
     participants: "2 people",
     date: "Year-round",
-    category: "dining"
+    category: "dining",
+    nicheCategory: "Culinary Arts"
   },
   {
     id: "exp17",
@@ -242,7 +360,8 @@ export const experiences: Experience[] = [
     participants: "2 people",
     date: "October-May",
     category: "luxury",
-    trending: true
+    trending: true,
+    nicheCategory: "Luxury Escapes"
   },
   {
     id: "exp18",
@@ -254,7 +373,1114 @@ export const experiences: Experience[] = [
     duration: "4 hours",
     participants: "2 people",
     date: "Weekends",
-    category: "learning"
+    category: "learning",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp19",
+    title: "Perfume Creation Workshop",
+    description: "Create your signature scent with a master perfumer using premium natural essential oils.",
+    imageUrl: "https://images.unsplash.com/photo-1562887250-9a52d844ad30?q=80&w=2574&auto=format&fit=crop",
+    price: 19999,
+    location: "Paris, France",
+    duration: "3 hours",
+    participants: "1 person",
+    date: "Available year-round",
+    category: "learning",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp20",
+    title: "Vinyl Record Tour",
+    description: "Explore hidden record stores with a music expert and build your vinyl collection.",
+    imageUrl: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=2674&auto=format&fit=crop",
+    price: 15000,
+    location: "Tokyo, Japan",
+    duration: "4 hours",
+    participants: "1 person",
+    date: "Weekends",
+    category: "learning",
+    nicheCategory: "Music & Arts",
+  },
+  // Adding 82 new experiences with functional image links
+  {
+    id: "exp21",
+    title: "Opera Box Experience",
+    description: "Enjoy a world-class opera performance from a private box with champagne service.",
+    imageUrl: "https://images.unsplash.com/photo-1580809361436-42a7ec5c625c?q=80&w=2535&auto=format&fit=crop",
+    price: 72999,
+    location: "Milan, Italy",
+    duration: "4 hours",
+    participants: "2 people",
+    date: "Performance schedule",
+    category: "luxury",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp22",
+    title: "Arctic Igloo Stargazing",
+    description: "Watch the Northern Lights from the comfort of a luxury heated glass igloo.",
+    imageUrl: "https://images.unsplash.com/photo-1520681279154-51b3fb4ea0f0?q=80&w=2670&auto=format&fit=crop",
+    price: 89999,
+    location: "Rovaniemi, Finland",
+    duration: "Overnight",
+    participants: "2 people",
+    date: "Winter season",
+    category: "luxury",
+    featured: true,
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp23",
+    title: "Wilderness Survival Course",
+    description: "Learn essential survival skills with former military special forces in remote wilderness.",
+    imageUrl: "https://images.unsplash.com/photo-1534246357230-40b05868c867?q=80&w=2670&auto=format&fit=crop",
+    price: 32500,
+    location: "Colorado Rockies, USA",
+    duration: "2 days",
+    participants: "1 person",
+    date: "May-September",
+    category: "adventure",
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp24",
+    title: "Volcano Helicopter Landing",
+    description: "Fly over active volcanoes and land on a hardened lava field for an up-close experience.",
+    imageUrl: "https://images.unsplash.com/photo-1604537529428-15bcbeecfe4d?q=80&w=2169&auto=format&fit=crop",
+    price: 54999,
+    location: "Big Island, Hawaii",
+    duration: "3 hours",
+    participants: "2 people",
+    date: "Weather dependent",
+    category: "adventure",
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp25",
+    title: "Zero Gravity Flight",
+    description: "Experience weightlessness like an astronaut on a specialized parabolic flight.",
+    imageUrl: "https://images.unsplash.com/photo-1454789476662-53eb23ba5907?q=80&w=2668&auto=format&fit=crop",
+    price: 99999,
+    location: "Orlando, Florida",
+    duration: "4 hours",
+    participants: "1 person",
+    date: "Limited dates",
+    category: "adventure",
+    trending: true,
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp26",
+    title: "Ancient Pottery Workshop",
+    description: "Create pottery using ancient techniques with a master potter in a traditional studio.",
+    imageUrl: "https://images.unsplash.com/photo-1611651338412-8403fa6e3599?q=80&w=2574&auto=format&fit=crop",
+    price: 15999,
+    location: "Kyoto, Japan",
+    duration: "6 hours",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp27",
+    title: "Private Island Getaway",
+    description: "Escape to a private island paradise with personal chef and water activities.",
+    imageUrl: "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?q=80&w=2574&auto=format&fit=crop",
+    price: 199999,
+    location: "Maldives",
+    duration: "3 days",
+    participants: "2 people",
+    date: "Year-round",
+    category: "luxury",
+    featured: true,
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp28",
+    title: "Michelin Chef Home Dinner",
+    description: "A Michelin-starred chef prepares a bespoke dinner in your home with wine pairings.",
+    imageUrl: "https://images.unsplash.com/photo-1608835291093-394b0c943a75?q=80&w=2672&auto=format&fit=crop",
+    price: 67999,
+    location: "Your Home",
+    duration: "4 hours",
+    participants: "Up to 8 people",
+    date: "By appointment",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp29",
+    title: "Horseback Safari",
+    description: "Experience wildlife up close on a guided horseback safari through pristine wilderness.",
+    imageUrl: "https://images.unsplash.com/photo-1610018556010-6a11691bc905?q=80&w=2574&auto=format&fit=crop",
+    price: 45999,
+    location: "Maasai Mara, Kenya",
+    duration: "2 days",
+    participants: "2 people",
+    date: "Dry season",
+    category: "adventure",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp30",
+    title: "Sushi Masterclass",
+    description: "Learn the art of sushi-making from a renowned Japanese chef in an intimate setting.",
+    imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=2670&auto=format&fit=crop",
+    price: 23999,
+    location: "Tokyo, Japan",
+    duration: "5 hours",
+    participants: "1 person",
+    date: "Weekends",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp31",
+    title: "Formula 1 Pit Experience",
+    description: "Go behind the scenes with a Formula 1 team during race weekend with paddock access.",
+    imageUrl: "https://images.unsplash.com/photo-1504716325983-cb91edab7e7d?q=80&w=2670&auto=format&fit=crop",
+    price: 85999,
+    location: "Monaco Grand Prix",
+    duration: "1 day",
+    participants: "1 person",
+    date: "May",
+    category: "luxury",
+    trending: true,
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp32",
+    title: "Truffle Hunting Adventure",
+    description: "Hunt for rare truffles with trained dogs and a local expert in ancient forests.",
+    imageUrl: "https://images.unsplash.com/photo-1620147443099-d7128539d8dc?q=80&w=2574&auto=format&fit=crop",
+    price: 34999,
+    location: "Piedmont, Italy",
+    duration: "6 hours",
+    participants: "2 people",
+    date: "October-December",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp33",
+    title: "Ayurvedic Wellness Retreat",
+    description: "Personalized ancient healing treatments and diet in a tranquil sanctuary.",
+    imageUrl: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?q=80&w=2670&auto=format&fit=crop",
+    price: 65999,
+    location: "Kerala, India",
+    duration: "5 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "wellness",
+    nicheCategory: "Wellness & Spirituality"
+  },
+  {
+    id: "exp34",
+    title: "Antarctic Expedition",
+    description: "Journey to Antarctica with scientists to witness pristine wilderness and unique wildlife.",
+    imageUrl: "https://images.unsplash.com/photo-1531211430262-1798f9694483?q=80&w=2532&auto=format&fit=crop",
+    price: 249999,
+    location: "Antarctica",
+    duration: "10 days",
+    participants: "1 person",
+    date: "November-February",
+    category: "adventure",
+    featured: true,
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp35",
+    title: "Private Museum Tour",
+    description: "After-hours access to world-famous museums with an art historian guide.",
+    imageUrl: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?q=80&w=2574&auto=format&fit=crop",
+    price: 37999,
+    location: "Paris, France",
+    duration: "3 hours",
+    participants: "2 people",
+    date: "By appointment",
+    category: "learning",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp36",
+    title: "Rare Whisky Tasting",
+    description: "Sample the world's rarest and most expensive whiskies with a master distiller.",
+    imageUrl: "https://images.unsplash.com/photo-1582819509237-dca012691a01?q=80&w=2574&auto=format&fit=crop",
+    price: 45999,
+    location: "Edinburgh, Scotland",
+    duration: "4 hours",
+    participants: "2 people",
+    date: "Year-round",
+    category: "dining",
+    nicheCategory: "Wine & Spirits"
+  },
+  {
+    id: "exp37",
+    title: "Silk Road Journey",
+    description: "Travel ancient trade routes with expert historians through stunning landscapes.",
+    imageUrl: "https://images.unsplash.com/photo-1626544827763-d516dce335e2?q=80&w=2574&auto=format&fit=crop",
+    price: 125999,
+    location: "Central Asia",
+    duration: "14 days",
+    participants: "2 people",
+    date: "April-October",
+    category: "adventure",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp38",
+    title: "Coral Reef Restoration",
+    description: "Work alongside marine biologists to restore endangered coral reefs.",
+    imageUrl: "https://images.unsplash.com/photo-1618258099199-13481f29f2f2?q=80&w=2670&auto=format&fit=crop",
+    price: 29999,
+    location: "Great Barrier Reef, Australia",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp39",
+    title: "Custom Perfume Creation",
+    description: "Create a unique signature scent with a master perfumer in a private atelier.",
+    imageUrl: "https://images.unsplash.com/photo-1596435163709-b374809c7821?q=80&w=2670&auto=format&fit=crop",
+    price: 32999,
+    location: "Grasse, France",
+    duration: "4 hours",
+    participants: "1 person",
+    date: "By appointment",
+    category: "luxury",
+    nicheCategory: "Fashion & Style"
+  },
+  {
+    id: "exp40",
+    title: "Drone Photography Expedition",
+    description: "Capture stunning aerial imagery with professional equipment and expert guidance.",
+    imageUrl: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?q=80&w=2670&auto=format&fit=crop",
+    price: 26999,
+    location: "Cappadocia, Turkey",
+    duration: "2 days",
+    participants: "1 person",
+    date: "Weather dependent",
+    category: "learning",
+    nicheCategory: "Photography"
+  },
+  {
+    id: "exp41",
+    title: "Bespoke Watch Workshop",
+    description: "Create your own luxury timepiece with a master watchmaker in Switzerland.",
+    imageUrl: "https://images.unsplash.com/photo-1612817288484-6f916006741a?q=80&w=2574&auto=format&fit=crop",
+    price: 72999,
+    location: "Geneva, Switzerland",
+    duration: "2 days",
+    participants: "1 person",
+    date: "By appointment",
+    category: "luxury",
+    nicheCategory: "Fashion & Style"
+  },
+  {
+    id: "exp42",
+    title: "Volcanic Hot Spring Retreat",
+    description: "Relax in natural volcanic hot springs with panoramic mountain views.",
+    imageUrl: "https://images.unsplash.com/photo-1515362655824-9a74989f318e?q=80&w=2670&auto=format&fit=crop",
+    price: 42999,
+    location: "Iceland",
+    duration: "3 days",
+    participants: "2 people",
+    date: "Year-round",
+    category: "wellness",
+    nicheCategory: "Wellness & Spirituality"
+  },
+  {
+    id: "exp43",
+    title: "Private Island Culinary Week",
+    description: "Learn from celebrity chefs while staying on a private island paradise.",
+    imageUrl: "https://images.unsplash.com/photo-1541480110211-542ebe2dbfbd?q=80&w=2670&auto=format&fit=crop",
+    price: 189999,
+    location: "Caribbean",
+    duration: "7 days",
+    participants: "2 people",
+    date: "Seasonal",
+    category: "dining",
+    featured: true,
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp44",
+    title: "Literary London Tour",
+    description: "Visit famous literary landmarks with an expert guide and rare bookstore access.",
+    imageUrl: "https://images.unsplash.com/photo-1546545817-27d8dae0b50c?q=80&w=2532&auto=format&fit=crop",
+    price: 19999,
+    location: "London, UK",
+    duration: "1 day",
+    participants: "2 people",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Literature & History"
+  },
+  {
+    id: "exp45",
+    title: "Samurai Sword Forging",
+    description: "Forge a traditional samurai sword with a master bladesmith using ancient techniques.",
+    imageUrl: "https://images.unsplash.com/photo-1595419680288-4730435b5a38?q=80&w=2670&auto=format&fit=crop",
+    price: 54999,
+    location: "Seki, Japan",
+    duration: "3 days",
+    participants: "1 person",
+    date: "By appointment",
+    category: "learning",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp46",
+    title: "Amazonian Jungle Expedition",
+    description: "Explore remote areas of the Amazon with indigenous guides seeking rare wildlife.",
+    imageUrl: "https://images.unsplash.com/photo-1550236520-7050f3582da0?q=80&w=2535&auto=format&fit=crop",
+    price: 67999,
+    location: "Amazon Rainforest, Brazil",
+    duration: "7 days",
+    participants: "2 people",
+    date: "Dry season",
+    category: "adventure",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp47",
+    title: "Haute Couture Experience",
+    description: "Design and create a custom couture garment with renowned fashion designers.",
+    imageUrl: "https://images.unsplash.com/photo-1611042553365-9b101441c135?q=80&w=2670&auto=format&fit=crop",
+    price: 94999,
+    location: "Paris, France",
+    duration: "5 days",
+    participants: "1 person",
+    date: "By appointment",
+    category: "luxury",
+    nicheCategory: "Fashion & Style"
+  },
+  {
+    id: "exp48",
+    title: "Dogsledding Expedition",
+    description: "Drive your own dog sled team through pristine winter wilderness with expert guides.",
+    imageUrl: "https://images.unsplash.com/photo-1580315130362-8f4979d0e526?q=80&w=2670&auto=format&fit=crop",
+    price: 39999,
+    location: "Yukon, Canada",
+    duration: "3 days",
+    participants: "1 person",
+    date: "December-March",
+    category: "adventure",
+    trending: true,
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp49",
+    title: "Rare Gemstone Mining",
+    description: "Mine for precious gems with experts and create custom jewelry with your finds.",
+    imageUrl: "https://images.unsplash.com/photo-1551462058-e55aaec18aaf?q=80&w=2574&auto=format&fit=crop",
+    price: 62999,
+    location: "Montana, USA",
+    duration: "2 days",
+    participants: "2 people",
+    date: "June-September",
+    category: "adventure",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp50",
+    title: "Blockchain Conference VIP",
+    description: "VIP access to top blockchain conferences with private meetings with industry leaders.",
+    imageUrl: "https://images.unsplash.com/photo-1516245834210-c4c142787335?q=80&w=2669&auto=format&fit=crop",
+    price: 47999,
+    location: "Silicon Valley, USA",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Conference schedule",
+    category: "learning",
+    nicheCategory: "Business & Professional"
+  },
+  {
+    id: "exp51",
+    title: "Deep Sea Submersible Dive",
+    description: "Descend to the ocean depths in a private submersible to witness rare marine life.",
+    imageUrl: "https://images.unsplash.com/photo-1544551763-92ab472cad5d?q=80&w=2670&auto=format&fit=crop",
+    price: 129999,
+    location: "Azores, Portugal",
+    duration: "1 day",
+    participants: "2 people",
+    date: "May-September",
+    category: "adventure",
+    featured: true,
+    nicheCategory: "Ocean & Marine"
+  },
+  {
+    id: "exp52",
+    title: "Rare Manuscript Access",
+    description: "Handle and study rare historical manuscripts with expert scholars in private archives.",
+    imageUrl: "https://images.unsplash.com/photo-1576078846229-4e9c7a95a18a?q=80&w=2652&auto=format&fit=crop",
+    price: 35999,
+    location: "Oxford, UK",
+    duration: "1 day",
+    participants: "1 person",
+    date: "By appointment",
+    category: "learning",
+    nicheCategory: "Literature & History"
+  },
+  {
+    id: "exp53",
+    title: "Thai Cooking Masterclass",
+    description: "Learn authentic Thai cooking techniques from a renowned chef in a traditional setting.",
+    imageUrl: "https://images.unsplash.com/photo-1607330289024-1535c6b4e1c1?q=80&w=2574&auto=format&fit=crop",
+    price: 18999,
+    location: "Chiang Mai, Thailand",
+    duration: "2 days",
+    participants: "2 people",
+    date: "Year-round",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp54",
+    title: "Ghost Town Photography",
+    description: "Exclusive access to abandoned ghost towns with professional photography guidance.",
+    imageUrl: "https://images.unsplash.com/photo-1539667547529-84c607280d20?q=80&w=2574&auto=format&fit=crop",
+    price: 22999,
+    location: "Namibia",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Photography"
+  },
+  {
+    id: "exp55",
+    title: "Ballet Masterclass",
+    description: "Train with principal dancers from world-renowned ballet companies in private sessions.",
+    imageUrl: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?q=80&w=2573&auto=format&fit=crop",
+    price: 26999,
+    location: "Saint Petersburg, Russia",
+    duration: "5 days",
+    participants: "1 person",
+    date: "By appointment",
+    category: "learning",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp56",
+    title: "Space Training Experience",
+    description: "Train like an astronaut with actual space equipment and zero-gravity flights.",
+    imageUrl: "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?q=80&w=2670&auto=format&fit=crop",
+    price: 149999,
+    location: "Houston, Texas",
+    duration: "5 days",
+    participants: "1 person",
+    date: "Limited availability",
+    category: "adventure",
+    trending: true,
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp57",
+    title: "Camel Trek Across Sahara",
+    description: "Cross the Sahara on camelback with Berber guides to ancient oases and starlit camps.",
+    imageUrl: "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?q=80&w=2674&auto=format&fit=crop",
+    price: 59999,
+    location: "Morocco",
+    duration: "7 days",
+    participants: "1 person",
+    date: "October-April",
+    category: "adventure",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp58",
+    title: "Ancient Tea Ceremony",
+    description: "Experience traditional tea ceremonies with tea masters in historic temples.",
+    imageUrl: "https://images.unsplash.com/photo-1470151410168-1e9a863230b4?q=80&w=2670&auto=format&fit=crop",
+    price: 16999,
+    location: "Kyoto, Japan",
+    duration: "4 hours",
+    participants: "2 people",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp59",
+    title: "Vintage Car Rally",
+    description: "Drive classic vintage cars through scenic countryside with luxury accommodations.",
+    imageUrl: "https://images.unsplash.com/photo-1533309907656-7b29c8415c29?q=80&w=2670&auto=format&fit=crop",
+    price: 78999,
+    location: "Tuscany, Italy",
+    duration: "4 days",
+    participants: "2 people",
+    date: "May-September",
+    category: "luxury",
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp60",
+    title: "Artisanal Cheese Making",
+    description: "Create artisanal cheeses with an award-winning cheesemaker in an alpine setting.",
+    imageUrl: "https://images.unsplash.com/photo-1589881133595-a3c085cb731d?q=80&w=2574&auto=format&fit=crop",
+    price: 23999,
+    location: "Swiss Alps",
+    duration: "2 days",
+    participants: "2 people",
+    date: "Year-round",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp61",
+    title: "Desert Astronomy Camp",
+    description: "Observe celestial phenomena with professional-grade telescopes in pristine dark skies.",
+    imageUrl: "https://images.unsplash.com/photo-1504333638930-c8787321eee0?q=80&w=2670&auto=format&fit=crop",
+    price: 27999,
+    location: "Atacama Desert, Chile",
+    duration: "3 days",
+    participants: "2 people",
+    date: "New moon periods",
+    category: "learning",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp62",
+    title: "Classical Music Composition",
+    description: "Create an original composition with renowned composers and hear it performed live.",
+    imageUrl: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?q=80&w=2670&auto=format&fit=crop",
+    price: 42999,
+    location: "Vienna, Austria",
+    duration: "5 days",
+    participants: "1 person",
+    date: "By appointment",
+    category: "learning",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp63",
+    title: "Traditional Woodblock Printing",
+    description: "Learn ancient woodblock printing techniques with master artisans in a historic studio.",
+    imageUrl: "https://images.unsplash.com/photo-1598343672916-de13ab0636ed?q=80&w=2532&auto=format&fit=crop",
+    price: 19999,
+    location: "Kyoto, Japan",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp64",
+    title: "Polar Bear Expedition",
+    description: "Observe and photograph polar bears in their natural habitat with wildlife experts.",
+    imageUrl: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?q=80&w=2670&auto=format&fit=crop",
+    price: 89999,
+    location: "Svalbard, Norway",
+    duration: "6 days",
+    participants: "1 person",
+    date: "March-May",
+    category: "adventure",
+    nicheCategory: "Photography"
+  },
+  {
+    id: "exp65",
+    title: "Medieval Castle Banquet",
+    description: "Experience an authentic medieval feast with period entertainment in a historic castle.",
+    imageUrl: "https://images.unsplash.com/photo-1584285418504-466883706b75?q=80&w=2670&auto=format&fit=crop",
+    price: 32999,
+    location: "Loire Valley, France",
+    duration: "1 evening",
+    participants: "2 people",
+    date: "Selected dates",
+    category: "dining",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp66",
+    title: "Glacier Ice Cave Exploration",
+    description: "Journey inside ancient glaciers to explore stunning blue ice caves with expert guides.",
+    imageUrl: "https://images.unsplash.com/photo-1534551039924-9c555706b57d?q=80&w=2670&auto=format&fit=crop",
+    price: 37999,
+    location: "Iceland",
+    duration: "1 day",
+    participants: "2 people",
+    date: "November-March",
+    category: "adventure",
+    nicheCategory: "Photography"
+  },
+  {
+    id: "exp67",
+    title: "Truffle Dog Training",
+    description: "Learn to train truffle-hunting dogs and participate in actual truffle hunts.",
+    imageUrl: "https://images.unsplash.com/photo-1579113800032-c38bd7635818?q=80&w=2670&auto=format&fit=crop",
+    price: 28999,
+    location: "Umbria, Italy",
+    duration: "2 days",
+    participants: "1 person",
+    date: "Truffle season",
+    category: "learning",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp68",
+    title: "Falconry Masterclass",
+    description: "Train and fly hawks and falcons with master falconers in a historic estate.",
+    imageUrl: "https://images.unsplash.com/photo-1613294326794-e7c74fe886e2?q=80&w=2670&auto=format&fit=crop",
+    price: 32999,
+    location: "Scotland",
+    duration: "2 days",
+    participants: "1 person",
+    date: "March-October",
+    category: "learning",
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp69",
+    title: "Luxury Train Journey",
+    description: "Travel across continents in a luxurious private cabin with gourmet dining and panoramic views.",
+    imageUrl: "https://images.unsplash.com/photo-1508872558182-ffc7f1b387f9?q=80&w=2670&auto=format&fit=crop",
+    price: 95999,
+    location: "Trans-Siberian Railway",
+    duration: "14 days",
+    participants: "2 people",
+    date: "Limited departures",
+    category: "luxury",
+    featured: true,
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp70",
+    title: "Indigenous Art Workshop",
+    description: "Learn traditional art techniques from indigenous master artists in their community.",
+    imageUrl: "https://images.unsplash.com/photo-1569091791842-7cfb64e04797?q=80&w=2503&auto=format&fit=crop",
+    price: 21999,
+    location: "Northern Territory, Australia",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Dry season",
+    category: "learning",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp71",
+    title: "Coffee Farm Immersion",
+    description: "Work alongside coffee farmers, learn processing methods, and create your own roast profile.",
+    imageUrl: "https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?q=80&w=2574&auto=format&fit=crop",
+    price: 26999,
+    location: "Colombia",
+    duration: "4 days",
+    participants: "2 people",
+    date: "Harvest season",
+    category: "learning",
+    nicheCategory: "Coffee Culture"
+  },
+  {
+    id: "exp72",
+    title: "Perfume Creation Workshop",
+    description: "Design a custom fragrance with master perfumers using rare and exotic ingredients.",
+    imageUrl: "https://images.unsplash.com/photo-1595425964143-5707f971bbc3?q=80&w=2584&auto=format&fit=crop",
+    price: 29999,
+    location: "Grasse, France",
+    duration: "1 day",
+    participants: "1 person",
+    date: "Year-round",
+    category: "luxury",
+    nicheCategory: "Fashion & Style"
+  },
+  {
+    id: "exp73",
+    title: "Flamenco Intensive",
+    description: "Learn authentic flamenco with master dancers and musicians in a historic tablao.",
+    imageUrl: "https://images.unsplash.com/photo-1464699908537-0952a84ceab3?q=80&w=2574&auto=format&fit=crop",
+    price: 24999,
+    location: "Seville, Spain",
+    duration: "5 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp74",
+    title: "Submarine Exploration",
+    description: "Pilot a personal submarine to explore underwater caves and marine life.",
+    imageUrl: "https://images.unsplash.com/photo-1557587341-b45bbf4d7b9b?q=80&w=2515&auto=format&fit=crop",
+    price: 84999,
+    location: "Bora Bora",
+    duration: "Half day",
+    participants: "2 people",
+    date: "Year-round",
+    category: "adventure",
+    trending: true,
+    nicheCategory: "Ocean & Marine"
+  },
+  {
+    id: "exp75",
+    title: "Historical Fashion Experience",
+    description: "Be fitted for and wear authentic period clothing from various historical eras.",
+    imageUrl: "https://images.unsplash.com/photo-1568251188382-376b48208168?q=80&w=2670&auto=format&fit=crop",
+    price: 31999,
+    location: "London, UK",
+    duration: "1 day",
+    participants: "1 person",
+    date: "By appointment",
+    category: "luxury",
+    nicheCategory: "Fashion & Style"
+  },
+  {
+    id: "exp76",
+    title: "Sustainable Farming Immersion",
+    description: "Learn organic and sustainable farming practices on an award-winning eco-farm.",
+    imageUrl: "https://images.unsplash.com/photo-1621500913927-0326607af301?q=80&w=2670&auto=format&fit=crop",
+    price: 19999,
+    location: "Tuscany, Italy",
+    duration: "3 days",
+    participants: "2 people",
+    date: "Growing season",
+    category: "learning",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp77",
+    title: "Private Concert Experience",
+    description: "Enjoy a private concert performed by renowned musicians in an intimate setting.",
+    imageUrl: "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=2670&auto=format&fit=crop",
+    price: 59999,
+    location: "Vienna, Austria",
+    duration: "3 hours",
+    participants: "Up to 10 people",
+    date: "By arrangement",
+    category: "luxury",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp78",
+    title: "Ancient Martial Arts Training",
+    description: "Learn traditional martial arts from master practitioners in historic training grounds.",
+    imageUrl: "https://images.unsplash.com/photo-1605666801194-9e76893ff858?q=80&w=2574&auto=format&fit=crop",
+    price: 34999,
+    location: "Shaolin Temple, China",
+    duration: "7 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp79",
+    title: "Abandoned Places Photography",
+    description: "Exclusive access to rarely-seen abandoned locations with expert photography guidance.",
+    imageUrl: "https://images.unsplash.com/photo-1594132824950-56500a4273df?q=80&w=2670&auto=format&fit=crop",
+    price: 27999,
+    location: "Chernobyl, Ukraine",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Photography"
+  },
+  {
+    id: "exp80",
+    title: "Ice Hotel Experience",
+    description: "Stay in a luxury suite carved entirely from ice with private hot springs access.",
+    imageUrl: "https://images.unsplash.com/photo-1548803095-caaa51d89f4b?q=80&w=2574&auto=format&fit=crop",
+    price: 45999,
+    location: "Swedish Lapland",
+    duration: "2 days",
+    participants: "2 people",
+    date: "December-April",
+    category: "luxury",
+    nicheCategory: "Luxury Escapes"
+  },
+  {
+    id: "exp81",
+    title: "Michelin Star Restaurant Tour",
+    description: "Private dining at multiple Michelin-starred restaurants with chef meetings in one city.",
+    imageUrl: "https://images.unsplash.com/photo-1511817307640-e389886e912a?q=80&w=2670&auto=format&fit=crop",
+    price: 79999,
+    location: "Tokyo, Japan",
+    duration: "4 days",
+    participants: "2 people",
+    date: "Year-round",
+    category: "dining",
+    featured: true,
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp82",
+    title: "Horseback Archery Training",
+    description: "Master the ancient art of mounted archery with world champion instructors.",
+    imageUrl: "https://images.unsplash.com/photo-1640236658190-1bc41c3f6c82?q=80&w=2670&auto=format&fit=crop",
+    price: 29999,
+    location: "Mongolia",
+    duration: "5 days",
+    participants: "1 person",
+    date: "June-September",
+    category: "learning",
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp83",
+    title: "Luxury Meditation Retreat",
+    description: "Guided meditation in stunning locations with personalized wellness programs.",
+    imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=2622&auto=format&fit=crop",
+    price: 43999,
+    location: "Bali, Indonesia",
+    duration: "7 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "wellness",
+    nicheCategory: "Wellness & Spirituality"
+  },
+  {
+    id: "exp84",
+    title: "Bioluminescent Kayaking",
+    description: "Paddle through glowing waters at night in rare bioluminescent bays.",
+    imageUrl: "https://images.unsplash.com/photo-1596453439259-80c97a52db5e?q=80&w=2670&auto=format&fit=crop",
+    price: 18999,
+    location: "Puerto Rico",
+    duration: "4 hours",
+    participants: "2 people",
+    date: "New moon periods",
+    category: "adventure",
+    nicheCategory: "Ocean & Marine"
+  },
+  {
+    id: "exp85",
+    title: "Private Sakura Viewing",
+    description: "Exclusive cherry blossom viewing in private gardens with traditional tea ceremony.",
+    imageUrl: "https://images.unsplash.com/photo-1522383225653-ed111181a951?q=80&w=2676&auto=format&fit=crop",
+    price: 32999,
+    location: "Kyoto, Japan",
+    duration: "1 day",
+    participants: "2 people",
+    date: "Late March-Early April",
+    category: "luxury",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp86",
+    title: "Desert Marathon Challenge",
+    description: "Train for and participate in an ultra-marathon across stunning desert landscapes.",
+    imageUrl: "https://images.unsplash.com/photo-1541625602330-2277a4c46182?q=80&w=2670&auto=format&fit=crop",
+    price: 52999,
+    location: "Sahara Desert",
+    duration: "8 days",
+    participants: "1 person",
+    date: "Race schedule",
+    category: "adventure",
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp87",
+    title: "Private Jazz Club Evening",
+    description: "VIP access to legendary jazz clubs with musician meetings and backstage passes.",
+    imageUrl: "https://images.unsplash.com/photo-1661956602868-6ae368943878?q=80&w=2670&auto=format&fit=crop",
+    price: 21999,
+    location: "New Orleans, USA",
+    duration: "1 evening",
+    participants: "2 people",
+    date: "Year-round",
+    category: "luxury",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp88",
+    title: "Macaron Making Masterclass",
+    description: "Learn to create perfect macarons with a pastry chef from a famous Parisian patisserie.",
+    imageUrl: "https://images.unsplash.com/photo-1558326567-98ae2405596b?q=80&w=2626&auto=format&fit=crop",
+    price: 17999,
+    location: "Paris, France",
+    duration: "4 hours",
+    participants: "1 person",
+    date: "Year-round",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp89",
+    title: "Zero Waste Lifestyle Workshop",
+    description: "Learn practical skills for sustainable living from leading environmental experts.",
+    imageUrl: "https://images.unsplash.com/photo-1605600659853-4246dea1c06a?q=80&w=2574&auto=format&fit=crop",
+    price: 15999,
+    location: "Copenhagen, Denmark",
+    duration: "2 days",
+    participants: "1 person",
+    date: "Monthly sessions",
+    category: "learning",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp90",
+    title: "Dolphin Research Expedition",
+    description: "Join marine biologists studying dolphin behavior and communication patterns.",
+    imageUrl: "https://images.unsplash.com/photo-1607153333879-c174d265f1d2?q=80&w=2642&auto=format&fit=crop",
+    price: 39999,
+    location: "Bahamas",
+    duration: "5 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Ocean & Marine"
+  },
+  {
+    id: "exp91",
+    title: "Artisanal Chocolate Making",
+    description: "Create fine chocolates from bean to bar with award-winning chocolatiers.",
+    imageUrl: "https://images.unsplash.com/photo-1511381939415-e44015466834?q=80&w=2738&auto=format&fit=crop",
+    price: 19999,
+    location: "Brussels, Belgium",
+    duration: "1 day",
+    participants: "2 people",
+    date: "Year-round",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp92",
+    title: "Wildlife Conservation Project",
+    description: "Participate in hands-on wildlife conservation with researchers in protected reserves.",
+    imageUrl: "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?q=80&w=2676&auto=format&fit=crop",
+    price: 42999,
+    location: "Costa Rica",
+    duration: "7 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Eco & Sustainability"
+  },
+  {
+    id: "exp93",
+    title: "Private Ballet Performance",
+    description: "Enjoy a private ballet performance by principal dancers in a historic theater.",
+    imageUrl: "https://images.unsplash.com/photo-1606634599898-77eaaa8d7cf0?q=80&w=2670&auto=format&fit=crop",
+    price: 58999,
+    location: "Saint Petersburg, Russia",
+    duration: "1 evening",
+    participants: "2 people",
+    date: "By arrangement",
+    category: "luxury",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp94",
+    title: "Ancient Textile Weaving",
+    description: "Learn traditional weaving techniques from indigenous artisans using natural dyes.",
+    imageUrl: "https://images.unsplash.com/photo-1548053279-c678031bfcbd?q=80&w=2670&auto=format&fit=crop",
+    price: 21999,
+    location: "Peru",
+    duration: "3 days",
+    participants: "1 person",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Creative Workshops"
+  },
+  {
+    id: "exp95",
+    title: "Michelin Chef Cooking Class",
+    description: "Cook alongside a Michelin-starred chef in their restaurant kitchen and enjoy the meal.",
+    imageUrl: "https://images.unsplash.com/photo-1542367787-4baf35f3037d?q=80&w=2667&auto=format&fit=crop",
+    price: 39999,
+    location: "Barcelona, Spain",
+    duration: "1 day",
+    participants: "2 people",
+    date: "By appointment",
+    category: "dining",
+    trending: true,
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp96",
+    title: "Ancient Ruins Private Tour",
+    description: "Exclusive after-hours access to famous archaeological sites with expert archaeologists.",
+    imageUrl: "https://images.unsplash.com/photo-1608542752644-1d450e8609d0?q=80&w=2670&auto=format&fit=crop",
+    price: 47999,
+    location: "Machu Picchu, Peru",
+    duration: "1 day",
+    participants: "2 people",
+    date: "Year-round",
+    category: "learning",
+    nicheCategory: "Heritage & Culture"
+  },
+  {
+    id: "exp97",
+    title: "Wilderness Survival Challenge",
+    description: "Master survival skills in remote wilderness with special forces veterans.",
+    imageUrl: "https://images.unsplash.com/photo-1501554728187-ce583db33af7?q=80&w=2670&auto=format&fit=crop",
+    price: 36999,
+    location: "Wyoming, USA",
+    duration: "5 days",
+    participants: "1 person",
+    date: "June-September",
+    category: "adventure",
+    nicheCategory: "Sports & Fitness"
+  },
+  {
+    id: "exp98",
+    title: "Japanese Whisky Tour",
+    description: "VIP access to Japan's most exclusive whisky distilleries with master blenders.",
+    imageUrl: "https://images.unsplash.com/photo-1568644396922-5c3bfae12521?q=80&w=2574&auto=format&fit=crop",
+    price: 54999,
+    location: "Japan",
+    duration: "5 days",
+    participants: "2 people",
+    date: "Year-round",
+    category: "luxury",
+    nicheCategory: "Wine & Spirits"
+  },
+  {
+    id: "exp99",
+    title: "Volcanic Helicopter Tour",
+    description: "Fly directly over active volcanoes with a volcanologist guide explaining the activity below.",
+    imageUrl: "https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?q=80&w=2370&auto=format&fit=crop",
+    price: 42999,
+    location: "Hawaii, USA",
+    duration: "3 hours",
+    participants: "2 people",
+    date: "Year-round",
+    category: "adventure",
+    nicheCategory: "Photography"
+  },
+  {
+    id: "exp100",
+    title: "Private Broadway Experience",
+    description: "VIP Broadway show tickets with backstage access, cast meet-and-greet, and dinner.",
+    imageUrl: "https://images.unsplash.com/photo-1503095396549-807759245b35?q=80&w=2371&auto=format&fit=crop",
+    price: 32999,
+    location: "New York, USA",
+    duration: "1 evening",
+    participants: "2 people",
+    date: "Show dependent",
+    category: "luxury",
+    nicheCategory: "Music & Arts"
+  },
+  {
+    id: "exp101",
+    title: "Gourmet Mushroom Foraging",
+    description: "Hunt for rare culinary mushrooms with expert mycologists and enjoy a forest-to-table meal.",
+    imageUrl: "https://images.unsplash.com/photo-1571154610519-ee2f2873b993?q=80&w=2670&auto=format&fit=crop",
+    price: 23999,
+    location: "Pacific Northwest, USA",
+    duration: "1 day",
+    participants: "2 people",
+    date: "Fall season",
+    category: "dining",
+    nicheCategory: "Culinary Arts"
+  },
+  {
+    id: "exp102",
+    title: "AI Innovation Workshop",
+    description: "Learn about cutting-edge AI developments with leading researchers in a tech hub.",
+    imageUrl: "https://images.unsplash.com/photo-1677442135136-760c813029de?q=80&w=2532&auto=format&fit=crop",
+    price: 45999,
+    location: "San Francisco, USA",
+    duration: "2 days",
+    participants: "1 person",
+    date: "Quarterly",
+    category: "learning",
+    nicheCategory: "Business & Professional"
   }
 ];
 
@@ -295,3 +1521,4 @@ export const categories: Category[] = [
     icon: Clock
   }
 ];
+
