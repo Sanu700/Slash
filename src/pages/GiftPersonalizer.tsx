@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -189,13 +188,26 @@ const GiftPersonalizer = () => {
     
     if (name.includes('.')) {
       const [section, field] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section as keyof FormData],
-          [field]: value
+      setFormData(prev => {
+        if (section === 'socialLinks') {
+          return {
+            ...prev,
+            socialLinks: {
+              ...prev.socialLinks,
+              [field]: value
+            }
+          };
+        } else if (section === 'preferences') {
+          return {
+            ...prev,
+            preferences: {
+              ...prev.preferences,
+              [field]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setFormData(prev => ({
         ...prev,
