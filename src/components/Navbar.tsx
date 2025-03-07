@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { Menu, X, Search, ShoppingCart } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -70,24 +71,24 @@ const Navbar = () => {
           >
             Categories
           </a>
-          <a 
-            href="#trending" 
+          <Link 
+            to="/gifting-guide" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
               isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
             )}
           >
-            Trending
-          </a>
-          <a 
-            href="#customize" 
+            Gifting Guide
+          </Link>
+          <Link 
+            to="/gift-personalizer" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
               isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
             )}
           >
-            Customize
-          </a>
+            Gift Personalizer
+          </Link>
         </div>
 
         {/* Desktop Actions */}
@@ -231,20 +232,26 @@ const Navbar = () => {
               >
                 Categories
               </a>
-              <a 
-                href="#trending" 
+              <Link 
+                to="/gifting-guide" 
                 className="py-2 border-b border-gray-100 dark:border-gray-800"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Trending
-              </a>
-              <a 
-                href="#customize" 
+                <div className="flex items-center">
+                  <Gift className="h-5 w-5 mr-2" />
+                  Gifting Guide
+                </div>
+              </Link>
+              <Link 
+                to="/gift-personalizer" 
                 className="py-2 border-b border-gray-100 dark:border-gray-800"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Customize
-              </a>
+                <div className="flex items-center">
+                  <Gift className="h-5 w-5 mr-2" />
+                  Gift Personalizer
+                </div>
+              </Link>
             </div>
             <div className="mt-auto mb-10">
               <Button className="w-full mb-4">Sign In</Button>
