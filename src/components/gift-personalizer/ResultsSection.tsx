@@ -40,11 +40,6 @@ const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps)
               View All Experiences
             </Button>
           </Link>
-          <Link to="/manage-experiences">
-            <Button variant="outline">
-              Manage Experiences
-            </Button>
-          </Link>
         </div>
       </div>
     </div>

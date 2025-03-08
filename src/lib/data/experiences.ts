@@ -1,25 +1,7 @@
+import { Experience as ExperienceType } from './types';
 
-export interface Experience {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  price: number;
-  location: string;
-  duration: string;
-  participants: string;
-  date: string;
-  category: string;
-  niche?: string;
-  nicheCategory?: string;
-  trending?: boolean;
-  featured?: boolean;
-  romantic?: boolean;
-  adventurous?: boolean;
-  group?: boolean;
-}
-
-export const experiences: Experience[] = [
+// Default/initial experiences data
+export const defaultExperiences: ExperienceType[] = [
   {
     id: "exp1",
     title: "Hot Air Balloon Ride",
@@ -156,3 +138,10 @@ export const experiences: Experience[] = [
     group: true
   }
 ];
+
+// For backwards compatibility and to ensure the imported experiences are available
+// This exports the global experiences from index.ts
+export { globalExperiences as experiences } from './index';
+
+// Re-export the Experience type
+export type Experience = ExperienceType;

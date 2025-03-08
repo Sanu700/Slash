@@ -1,80 +1,115 @@
 
-export * from './types';
-export * from './categories';
-export * from './nicheCategories';
-export * from './experiences';
-
-// This is the main data management layer that will be used by the application
-import { experiences as defaultExperiences, Experience } from './experiences';
-import { categories as defaultCategories } from './categories';
-import { nicheCategories as defaultNicheCategories } from './nicheCategories';
 import { useState, useEffect } from 'react';
+import { categories } from './categories';
+import { nicheCategories } from './nicheCategories';
+import { defaultExperiences, Experience } from './experiences';
+import { v4 as uuidv4 } from 'uuid';
 
-// Create a data manager that loads experiences from localStorage or external source
-// and provides methods to update them
+export { categories, nicheCategories, Experience };
+export { experiences } from './experiences';
 
-// This function checks if there are saved experiences in localStorage
-// If not, it uses the default experiences
-const getSavedExperiences = (): Experience[] => {
-  const saved = localStorage.getItem('experiences');
-  return saved ? JSON.parse(saved) : defaultExperiences;
+// Add uuid dependency
+// <lov-add-dependency>uuid@latest</lov-add-dependency>
+// <lov-add-dependency>@types/uuid@latest</lov-add-dependency>
+
+// Storage key for experiences
+const STORAGE_KEY = 'slash_experiences';
+
+// Global experiences store to ensure consistency across components
+let globalExperiences: Experience[] = [...defaultExperiences];
+
+// Load experiences from localStorage on app initialization
+const loadInitialExperiences = () => {
+  try {
+    const storedExperiences = localStorage.getItem(STORAGE_KEY);
+    if (storedExperiences) {
+      globalExperiences = JSON.parse(storedExperiences);
+    }
+  } catch (error) {
+    console.error('Error loading experiences from storage:', error);
+  }
 };
 
-// This hook manages the experiences data
+// Initialize on module load
+loadInitialExperiences();
+
 export const useExperiencesManager = () => {
-  const [experiences, setExperiences] = useState<Experience[]>(getSavedExperiences());
+  const [experiences, setExperiences] = useState<Experience[]>(globalExperiences);
 
-  // Save experiences to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('experiences', JSON.stringify(experiences));
-  }, [experiences]);
-
-  // Add a new experience
-  const addExperience = (experience: Omit<Experience, 'id'>) => {
-    const newExperience = {
-      ...experience,
-      id: `exp${Date.now()}` // Generate a unique ID
-    };
-    setExperiences([...experiences, newExperience as Experience]);
-    return newExperience;
-  };
-
-  // Update an existing experience
-  const updateExperience = (id: string, updates: Partial<Experience>) => {
-    setExperiences(
-      experiences.map(exp => (exp.id === id ? { ...exp, ...updates } : exp))
-    );
-  };
-
-  // Delete an experience
-  const deleteExperience = (id: string) => {
-    setExperiences(experiences.filter(exp => exp.id !== id));
-  };
-
-  // Reset to default experiences
-  const resetExperiences = () => {
-    setExperiences(defaultExperiences);
-    localStorage.removeItem('experiences');
-  };
-
-  // Import experiences from JSON
-  const importExperiences = (jsonString: string) => {
+  // Function to update both local state and the global store
+  const updateStore = (newExperiences: Experience[]) => {
+    setExperiences(newExperiences);
+    globalExperiences = newExperiences;
+    
+    // Persist to localStorage
     try {
-      const importedExperiences = JSON.parse(jsonString);
-      if (Array.isArray(importedExperiences)) {
-        setExperiences(importedExperiences);
-        return { success: true, message: 'Experiences imported successfully' };
-      }
-      return { success: false, message: 'Invalid format: expected an array' };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newExperiences));
     } catch (error) {
-      return { 
-        success: false, 
-        message: `Error parsing JSON: ${error instanceof Error ? error.message : 'Unknown error'}` 
-      };
+      console.error('Error saving experiences to storage:', error);
     }
   };
 
-  // Export experiences to JSON
+  const addExperience = (experienceData: Omit<Experience, 'id'>) => {
+    const newExperience = {
+      ...experienceData,
+      id: `exp-${uuidv4().slice(0, 8)}`,
+    };
+    
+    const newExperiences = [...experiences, newExperience];
+    updateStore(newExperiences);
+    
+    return newExperience;
+  };
+
+  const updateExperience = (id: string, data: Partial<Experience>) => {
+    const experienceIndex = experiences.findIndex(exp => exp.id === id);
+    
+    if (experienceIndex !== -1) {
+      const updatedExperiences = [...experiences];
+      updatedExperiences[experienceIndex] = {
+        ...updatedExperiences[experienceIndex],
+        ...data
+      };
+      
+      updateStore(updatedExperiences);
+      return true;
+    }
+    
+    return false;
+  };
+
+  const deleteExperience = (id: string) => {
+    const filteredExperiences = experiences.filter(exp => exp.id !== id);
+    updateStore(filteredExperiences);
+  };
+
+  const resetExperiences = () => {
+    updateStore([...defaultExperiences]);
+  };
+
+  const importExperiences = (jsonData: string) => {
+    try {
+      const parsedData = JSON.parse(jsonData);
+      
+      if (!Array.isArray(parsedData)) {
+        return { success: false, message: 'Invalid format: data must be an array' };
+      }
+      
+      // Basic validation
+      for (const item of parsedData) {
+        if (!item.title || !item.description || !item.category) {
+          return { success: false, message: 'Invalid data: experiences must have title, description, and category' };
+        }
+      }
+      
+      updateStore(parsedData);
+      return { success: true, message: `Successfully imported ${parsedData.length} experiences` };
+    } catch (error) {
+      console.error('Import error:', error);
+      return { success: false, message: 'Invalid JSON data' };
+    }
+  };
+
   const exportExperiences = () => {
     return JSON.stringify(experiences, null, 2);
   };
