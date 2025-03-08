@@ -1,115 +1,80 @@
 
+export * from './types';
+export * from './categories';
+export * from './nicheCategories';
+export * from './experiences';
+
+// This is the main data management layer that will be used by the application
+import { experiences as defaultExperiences, Experience } from './experiences';
+import { categories as defaultCategories } from './categories';
+import { nicheCategories as defaultNicheCategories } from './nicheCategories';
 import { useState, useEffect } from 'react';
-import { categories } from './categories';
-import { nicheCategories } from './nicheCategories';
-import { defaultExperiences, Experience } from './experiences';
-import { v4 as uuidv4 } from 'uuid';
 
-export { categories, nicheCategories, Experience };
-export { experiences } from './experiences';
+// Create a data manager that loads experiences from localStorage or external source
+// and provides methods to update them
 
-// Add uuid dependency
-// <lov-add-dependency>uuid@latest</lov-add-dependency>
-// <lov-add-dependency>@types/uuid@latest</lov-add-dependency>
-
-// Storage key for experiences
-const STORAGE_KEY = 'slash_experiences';
-
-// Global experiences store to ensure consistency across components
-let globalExperiences: Experience[] = [...defaultExperiences];
-
-// Load experiences from localStorage on app initialization
-const loadInitialExperiences = () => {
-  try {
-    const storedExperiences = localStorage.getItem(STORAGE_KEY);
-    if (storedExperiences) {
-      globalExperiences = JSON.parse(storedExperiences);
-    }
-  } catch (error) {
-    console.error('Error loading experiences from storage:', error);
-  }
+// This function checks if there are saved experiences in localStorage
+// If not, it uses the default experiences
+const getSavedExperiences = (): Experience[] => {
+  const saved = localStorage.getItem('experiences');
+  return saved ? JSON.parse(saved) : defaultExperiences;
 };
 
-// Initialize on module load
-loadInitialExperiences();
-
+// This hook manages the experiences data
 export const useExperiencesManager = () => {
-  const [experiences, setExperiences] = useState<Experience[]>(globalExperiences);
+  const [experiences, setExperiences] = useState<Experience[]>(getSavedExperiences());
 
-  // Function to update both local state and the global store
-  const updateStore = (newExperiences: Experience[]) => {
-    setExperiences(newExperiences);
-    globalExperiences = newExperiences;
-    
-    // Persist to localStorage
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newExperiences));
-    } catch (error) {
-      console.error('Error saving experiences to storage:', error);
-    }
-  };
+  // Save experiences to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('experiences', JSON.stringify(experiences));
+  }, [experiences]);
 
-  const addExperience = (experienceData: Omit<Experience, 'id'>) => {
+  // Add a new experience
+  const addExperience = (experience: Omit<Experience, 'id'>) => {
     const newExperience = {
-      ...experienceData,
-      id: `exp-${uuidv4().slice(0, 8)}`,
+      ...experience,
+      id: `exp${Date.now()}` // Generate a unique ID
     };
-    
-    const newExperiences = [...experiences, newExperience];
-    updateStore(newExperiences);
-    
+    setExperiences([...experiences, newExperience as Experience]);
     return newExperience;
   };
 
-  const updateExperience = (id: string, data: Partial<Experience>) => {
-    const experienceIndex = experiences.findIndex(exp => exp.id === id);
-    
-    if (experienceIndex !== -1) {
-      const updatedExperiences = [...experiences];
-      updatedExperiences[experienceIndex] = {
-        ...updatedExperiences[experienceIndex],
-        ...data
-      };
-      
-      updateStore(updatedExperiences);
-      return true;
-    }
-    
-    return false;
+  // Update an existing experience
+  const updateExperience = (id: string, updates: Partial<Experience>) => {
+    setExperiences(
+      experiences.map(exp => (exp.id === id ? { ...exp, ...updates } : exp))
+    );
   };
 
+  // Delete an experience
   const deleteExperience = (id: string) => {
-    const filteredExperiences = experiences.filter(exp => exp.id !== id);
-    updateStore(filteredExperiences);
+    setExperiences(experiences.filter(exp => exp.id !== id));
   };
 
+  // Reset to default experiences
   const resetExperiences = () => {
-    updateStore([...defaultExperiences]);
+    setExperiences(defaultExperiences);
+    localStorage.removeItem('experiences');
   };
 
-  const importExperiences = (jsonData: string) => {
+  // Import experiences from JSON
+  const importExperiences = (jsonString: string) => {
     try {
-      const parsedData = JSON.parse(jsonData);
-      
-      if (!Array.isArray(parsedData)) {
-        return { success: false, message: 'Invalid format: data must be an array' };
+      const importedExperiences = JSON.parse(jsonString);
+      if (Array.isArray(importedExperiences)) {
+        setExperiences(importedExperiences);
+        return { success: true, message: 'Experiences imported successfully' };
       }
-      
-      // Basic validation
-      for (const item of parsedData) {
-        if (!item.title || !item.description || !item.category) {
-          return { success: false, message: 'Invalid data: experiences must have title, description, and category' };
-        }
-      }
-      
-      updateStore(parsedData);
-      return { success: true, message: `Successfully imported ${parsedData.length} experiences` };
+      return { success: false, message: 'Invalid format: expected an array' };
     } catch (error) {
-      console.error('Import error:', error);
-      return { success: false, message: 'Invalid JSON data' };
+      return { 
+        success: false, 
+        message: `Error parsing JSON: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
     }
   };
 
+  // Export experiences to JSON
   const exportExperiences = () => {
     return JSON.stringify(experiences, null, 2);
   };

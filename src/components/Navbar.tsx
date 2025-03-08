@@ -108,7 +108,7 @@ const Navbar = () => {
             Categories
           </a>
           <Link 
-            to="/gift-guide" 
+            to="/gifting-guide" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
               isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
@@ -124,6 +124,12 @@ const Navbar = () => {
             )}
           >
             Gift Personalizer
+          </Link>
+          <Link
+            to="/manage-experiences"
+            className="text-sm font-medium transition-colors hover:text-primary"
+          >
+            Manage Experiences
           </Link>
         </div>
 
@@ -313,7 +319,7 @@ const Navbar = () => {
                 Categories
               </a>
               <Link 
-                to="/gift-guide" 
+                to="/gifting-guide" 
                 className="py-2 border-b border-gray-100 dark:border-gray-800"
                 onClick={() => setMobileMenuOpen(false)}
               >

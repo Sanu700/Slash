@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,8 +30,6 @@ const App = () => (
             <Route path="/experiences" element={<AllExperiences />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/gift-guide" element={<GiftingGuide />} />
-            {/* Add the alias route for backward compatibility */}
-            <Route path="/gifting-guide" element={<GiftingGuide />} />
             <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
             <Route path="/manage-experiences" element={<ExperienceManager />} />
             <Route path="*" element={<NotFound />} />

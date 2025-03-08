@@ -14,15 +14,13 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { ArrowLeft, Download, Upload, RotateCcw, PlusIcon, Pencil, Trash2, LogOut } from 'lucide-react';
+import { ArrowLeft, Download, Upload, RotateCcw, PlusIcon, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import { formatRupees } from '@/lib/formatters';
-import { requireAuth, useAuth } from '@/lib/auth';
 
-const ExperienceManagerContent = () => {
-  const { logout } = useAuth();
+const ExperienceManager = () => {
   const {
     experiences,
     addExperience,
@@ -209,15 +207,6 @@ const ExperienceManagerContent = () => {
             <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
               <ArrowLeft className="h-5 w-5 text-white" />
             </Link>
-          </div>
-          
-          <div className="absolute top-6 right-6">
-            <button 
-              onClick={logout}
-              className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <LogOut className="h-5 w-5 text-white" />
-            </button>
           </div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
@@ -689,8 +678,5 @@ const ExperienceManagerContent = () => {
     </div>
   );
 };
-
-// Apply the auth guard to the experience manager
-const ExperienceManager = requireAuth(ExperienceManagerContent);
 
 export default ExperienceManager;
