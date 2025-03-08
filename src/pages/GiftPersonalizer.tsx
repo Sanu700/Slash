@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -168,26 +169,28 @@ const GiftPersonalizer = () => {
         
         if (categoryMatch) score += 10;
         
+        // Only check these properties if they exist
         if (formData.occasion === 'anniversary' && exp.romantic) score += 8;
         if (formData.occasion === 'birthday' && exp.trending) score += 5;
         if (formData.occasion === 'graduation' && exp.category === 'luxury') score += 5;
         
         if (formData.preferences.adventurous > 3 && exp.adventurous) score += 7;
-        if (formData.preferences.adventurous < 3 && !exp.adventurous) score += 5;
+        if (formData.preferences.adventurous < 3 && exp.adventurous === false) score += 5;
         
         if (formData.preferences.social > 3 && exp.group) score += 6;
-        if (formData.preferences.social < 3 && !exp.group) score += 4;
+        if (formData.preferences.social < 3 && exp.group === false) score += 4;
         
         if (formData.preferences.relaxation > 3 && exp.category === 'wellness') score += 7;
         
         if (formData.preferences.learning > 3 && 
-            (exp.category === 'learning' || exp.niche === 'workshops')) score += 7;
+            (exp.category === 'learning' || exp.nicheCategory === 'Creative Workshops' || 
+             exp.nicheCategory === 'Literature & History')) score += 7;
         
         if (formData.relationship === 'partner' && exp.romantic) score += 8;
         if (formData.relationship === 'family' && exp.group) score += 6;
         if (formData.relationship === 'friend' && exp.category === 'adventure') score += 5;
         
-        if (formData.occasion === 'anniversary' && exp.niche === 'luxury') score += 10;
+        if (formData.occasion === 'anniversary' && exp.nicheCategory === 'Luxury Escapes') score += 10;
         
         return { 
           experience: exp,
