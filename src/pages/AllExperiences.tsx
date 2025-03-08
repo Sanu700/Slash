@@ -1,13 +1,12 @@
-
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Filter } from 'lucide-react';
-import { experiences } from '@/lib/data';
+import { getSavedExperiences } from '@/lib/data';
 import { useInView } from '@/lib/animations';
 
 const AllExperiences = () => {
@@ -16,6 +15,19 @@ const AllExperiences = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const experiencesPerPage = 12;
+  const location = useLocation();
+  
+  // Get search term from URL query params
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const search = query.get('search');
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, [location.search]);
+  
+  // Get experiences from localStorage or defaults
+  const experiences = getSavedExperiences();
   
   // Memoize filtered and sorted experiences to improve performance
   const filteredExperiences = useMemo(() => {
@@ -39,7 +51,7 @@ const AllExperiences = () => {
     }
     
     return sorted;
-  }, [sortOrder, searchTerm]);
+  }, [sortOrder, searchTerm, experiences]);
   
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
@@ -48,9 +60,6 @@ const AllExperiences = () => {
   const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
   
   useEffect(() => {
-    // Scroll to top when the component mounts or when page changes
-    window.scrollTo(0, 0);
-    
     // Reset to page 1 when search or sort changes
     setCurrentPage(1);
   }, [searchTerm, sortOrder]);
@@ -63,7 +72,9 @@ const AllExperiences = () => {
     setSearchTerm(e.target.value);
   };
   
+  // Keep the existing pagination renderer code
   const renderPagination = () => {
+    // ... keep existing code for pagination
     const pages = [];
     
     for (let i = 1; i <= totalPages; i++) {
@@ -204,6 +215,7 @@ const AllExperiences = () => {
           ref={ref}
           className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
         >
+          {/* Keep existing code for search bar, filters, and the grid */}
           {/* Search Bar */}
           <div className={cn(
             "mb-8 transition-all duration-500",

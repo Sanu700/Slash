@@ -5,17 +5,18 @@ export * from './nicheCategories';
 export * from './experiences';
 
 // This is the main data management layer that will be used by the application
-import { experiences as defaultExperiences, Experience } from './experiences';
+import { useState, useEffect } from 'react';
+import { experiences as defaultExperiences } from './experiences';
 import { categories as defaultCategories } from './categories';
 import { nicheCategories as defaultNicheCategories } from './nicheCategories';
-import { useState, useEffect } from 'react';
+import { Experience } from './types';
 
 // Create a data manager that loads experiences from localStorage or external source
 // and provides methods to update them
 
 // This function checks if there are saved experiences in localStorage
 // If not, it uses the default experiences
-const getSavedExperiences = (): Experience[] => {
+export const getSavedExperiences = (): Experience[] => {
   const saved = localStorage.getItem('experiences');
   return saved ? JSON.parse(saved) : defaultExperiences;
 };

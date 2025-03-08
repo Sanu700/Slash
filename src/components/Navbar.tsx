@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Search, ShoppingCart, Gift } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, Gift, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
-import { experiences } from '@/lib/data';
+import { getSavedExperiences } from '@/lib/data';
+import { useAuth } from '@/lib/auth';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof experiences>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const { itemCount } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +33,7 @@ const Navbar = () => {
       return;
     }
 
+    const experiences = getSavedExperiences();
     const lowercaseQuery = searchQuery.toLowerCase();
     const results = experiences
       .filter(exp => 
@@ -67,6 +71,12 @@ const Navbar = () => {
     navigate(`/experience/${id}`);
   };
 
+  const isDarkPage = 
+    location.pathname === '/' || 
+    location.pathname.includes('/gifting-guide') || 
+    location.pathname.includes('/category/') ||
+    location.pathname.includes('/experience/');
+
   return (
     <nav
       className={cn(
@@ -77,41 +87,41 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <a href="/" className="flex items-center space-x-2 z-10">
+        <Link to="/" className="flex items-center space-x-2 z-10">
           <img 
             src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
             alt="Slash logo" 
             className={cn("h-8 w-8 transition-colors")} 
           />
-          <span className={cn("font-medium text-xl transition-colors", isScrolled ? "text-primary" : "text-white")}>
+          <span className={cn("font-medium text-xl transition-colors", isScrolled ? "text-primary" : (isDarkPage ? "text-white" : "text-primary"))}>
             Slash
           </span>
-        </a>
+        </Link>
 
         <div className="hidden md:flex items-center space-x-8">
-          <a 
-            href="#experiences" 
+          <Link 
+            to="/#experiences" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
+              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
             )}
           >
             Experiences
-          </a>
-          <a 
-            href="#categories" 
+          </Link>
+          <Link 
+            to="/#categories" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
+              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
             )}
           >
             Categories
-          </a>
+          </Link>
           <Link 
             to="/gifting-guide" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
+              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
             )}
           >
             Gifting Guide
@@ -120,17 +130,31 @@ const Navbar = () => {
             to="/gift-personalizer" 
             className={cn(
               "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : "text-white"
+              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
             )}
           >
             Gift Personalizer
           </Link>
-          <Link
-            to="/manage-experiences"
-            className="text-sm font-medium transition-colors hover:text-primary"
-          >
-            Manage Experiences
-          </Link>
+          {isAuthenticated && (
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/manage-experiences"
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  isScrolled ? "text-gray-800" : (isDarkPage ? "text-white" : "text-gray-800")
+                )}
+              >
+                Manage Experiences
+              </Link>
+              <button 
+                onClick={logout}
+                className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
@@ -140,7 +164,7 @@ const Navbar = () => {
               "p-2 rounded-full transition-colors",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
             )}
           >
             <Search className="h-5 w-5" />
@@ -151,7 +175,7 @@ const Navbar = () => {
               "p-2 rounded-full transition-colors relative",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
             )}
           >
             <ShoppingCart className="h-5 w-5" />
@@ -165,7 +189,7 @@ const Navbar = () => {
             variant={isScrolled ? "default" : "outline"}
             className={cn(
               "transition-all",
-              !isScrolled && "text-white border-white hover:bg-white/20"
+              !isScrolled && isDarkPage && "text-white border-white hover:bg-white/20"
             )}
           >
             Sign In
@@ -179,7 +203,7 @@ const Navbar = () => {
               "p-2 rounded-full transition-colors",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
             )}
           >
             <Search className="h-5 w-5" />
@@ -190,7 +214,7 @@ const Navbar = () => {
               "p-2 rounded-full transition-colors relative",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
             )}
           >
             <ShoppingCart className="h-5 w-5" />
@@ -206,7 +230,7 @@ const Navbar = () => {
               "p-2 rounded-full transition-colors",
               isScrolled 
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
             )}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -268,10 +292,7 @@ const Navbar = () => {
                     }}
                     className="text-primary hover:underline text-sm"
                   >
-                    See all results ({experiences.filter(exp => 
-                      exp.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                      exp.description.toLowerCase().includes(searchQuery.toLowerCase())
-                    ).length})
+                    See all results
                   </button>
                 </div>
               </div>
@@ -304,20 +325,20 @@ const Navbar = () => {
         >
           <div className="flex flex-col h-full pt-20 px-6">
             <div className="flex flex-col space-y-6 text-xl">
-              <a 
-                href="#experiences" 
+              <Link 
+                to="/#experiences" 
                 className="py-2 border-b border-gray-100 dark:border-gray-800"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Experiences
-              </a>
-              <a 
-                href="#categories" 
+              </Link>
+              <Link 
+                to="/#categories" 
                 className="py-2 border-b border-gray-100 dark:border-gray-800"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Categories
-              </a>
+              </Link>
               <Link 
                 to="/gifting-guide" 
                 className="py-2 border-b border-gray-100 dark:border-gray-800"
@@ -338,6 +359,27 @@ const Navbar = () => {
                   Gift Personalizer
                 </div>
               </Link>
+              {isAuthenticated && (
+                <>
+                  <Link 
+                    to="/manage-experiences" 
+                    className="py-2 border-b border-gray-100 dark:border-gray-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Manage Experiences
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="py-2 border-b border-gray-100 dark:border-gray-800 text-red-500 flex items-center"
+                  >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    Logout
+                  </button>
+                </>
+              )}
             </div>
             <div className="mt-auto mb-10">
               <Button className="w-full mb-4">Sign In</Button>

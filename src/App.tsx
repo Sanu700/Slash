@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,8 +14,12 @@ import NotFound from "./pages/NotFound";
 import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
 import ExperienceManager from "./pages/ExperienceManager";
+import { requireAuth } from "./lib/auth";
 
 const queryClient = new QueryClient();
+
+// Apply authentication to the ExperienceManager component
+const ProtectedExperienceManager = requireAuth(ExperienceManager);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,9 +34,9 @@ const App = () => (
             <Route path="/category/:id" element={<CategoryExplore />} />
             <Route path="/experiences" element={<AllExperiences />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/gift-guide" element={<GiftingGuide />} />
+            <Route path="/gifting-guide" element={<GiftingGuide />} />
             <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
-            <Route path="/manage-experiences" element={<ExperienceManager />} />
+            <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

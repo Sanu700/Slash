@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ExperienceCard from '@/components/ExperienceCard';
-import { experiences } from '@/lib/data';
+import { getSavedExperiences } from '@/lib/data';
 import { FormData } from '@/types/personalizerTypes';
 
 interface ResultsSectionProps {
@@ -12,6 +12,8 @@ interface ResultsSectionProps {
 }
 
 const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps) => {
+  const experiences = getSavedExperiences();
+  
   return (
     <div className="space-y-6">
       <div className="text-center mb-10">
@@ -38,11 +40,6 @@ const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps)
           <Link to="/experiences">
             <Button>
               View All Experiences
-            </Button>
-          </Link>
-          <Link to="/manage-experiences">
-            <Button variant="outline">
-              Manage Experiences
             </Button>
           </Link>
         </div>

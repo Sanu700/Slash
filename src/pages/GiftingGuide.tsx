@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -8,12 +7,13 @@ import { ArrowLeft, ArrowRight, Gift, CheckCircle, Clock, Heart, Image, CornerRi
 import { Link } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import ExperienceCard from '@/components/ExperienceCard';
-import { experiences } from '@/lib/data';
+import { getSavedExperiences } from '@/lib/data';
 
 const GiftingGuide = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   
   // Get a few featured experiences for recommendations
+  const experiences = getSavedExperiences();
   const featuredExperiences = experiences
     .filter(exp => exp.trending || exp.price > 30000)
     .slice(0, 3);
