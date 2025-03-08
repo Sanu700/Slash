@@ -1,3 +1,4 @@
+
 import { Gift, MapPin, Users, Clock, Calendar, Music, Camera, Utensils, Plane, Palette, BookOpen, Shirt, HeartPulse, Landmark, Briefcase, Anchor, Dumbbell, Leaf, Coffee, Wine } from "lucide-react";
 
 export interface Experience {
@@ -317,7 +318,7 @@ import { useState, useEffect } from 'react';
 
 // This function checks if there are saved experiences in localStorage
 // If not, it uses the default experiences
-const getSavedExperiences = (): Experience[] => {
+export const getSavedExperiences = (): Experience[] => {
   const saved = localStorage.getItem('experiences');
   return saved ? JSON.parse(saved) : experiences;
 };
