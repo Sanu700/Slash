@@ -154,8 +154,7 @@ export const experiences: Experience[] = [
     romantic: false,
     adventurous: false,
     group: true
-  }
-];
+  },
   {
     id: "exp9",
     title: "Urban Street Art Tour & Workshop",
@@ -316,3 +315,4 @@ export const experiences: Experience[] = [
     adventurous: false,
     group: true
   }
+];
