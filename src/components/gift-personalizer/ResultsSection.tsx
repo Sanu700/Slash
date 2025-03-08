@@ -34,11 +34,18 @@ const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps)
         <p className="text-muted-foreground mb-6">
           Not seeing the perfect gift? Browse our complete collection of experiences.
         </p>
-        <Link to="/experiences">
-          <Button>
-            View All Experiences
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/experiences">
+            <Button>
+              View All Experiences
+            </Button>
+          </Link>
+          <Link to="/manage-experiences">
+            <Button variant="outline">
+              Manage Experiences
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

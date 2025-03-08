@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Menu, X, Search, ShoppingCart, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // Only search when query is at least 2 characters
     if (searchQuery.length < 2) {
       setSearchResults([]);
       return;
@@ -39,7 +37,7 @@ const Navbar = () => {
         exp.description.toLowerCase().includes(lowercaseQuery) ||
         exp.location.toLowerCase().includes(lowercaseQuery)
       )
-      .slice(0, 5); // Limit to 5 results for performance
+      .slice(0, 5);
     
     setSearchResults(results);
   }, [searchQuery]);
@@ -51,7 +49,6 @@ const Navbar = () => {
   const toggleSearch = () => {
     setSearchOpen(!searchOpen);
     if (!searchOpen) {
-      // Reset search when opening
       setSearchQuery('');
       setSearchResults([]);
     }
@@ -60,9 +57,7 @@ const Navbar = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Close search
       setSearchOpen(false);
-      // Navigate to all experiences with search query
       navigate(`/experiences?search=${encodeURIComponent(searchQuery)}`);
     }
   };
@@ -82,7 +77,6 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
         <a href="/" className="flex items-center space-x-2 z-10">
           <img 
             src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
@@ -94,7 +88,6 @@ const Navbar = () => {
           </span>
         </a>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
           <a 
             href="#experiences" 
@@ -132,9 +125,14 @@ const Navbar = () => {
           >
             Gift Personalizer
           </Link>
+          <Link
+            to="/manage-experiences"
+            className="text-sm font-medium transition-colors hover:text-primary"
+          >
+            Manage Experiences
+          </Link>
         </div>
 
-        {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4">
           <button 
             onClick={toggleSearch}
@@ -174,7 +172,6 @@ const Navbar = () => {
           </Button>
         </div>
 
-        {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center space-x-3">
           <button 
             onClick={toggleSearch}
@@ -216,7 +213,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Search Overlay */}
         <div
           className={cn(
             "fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-50",
@@ -243,7 +239,6 @@ const Navbar = () => {
               </button>
             </form>
             
-            {/* Search Results */}
             {searchResults.length > 0 && (
               <div className="mt-4 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden divide-y divide-white/10">
                 {searchResults.map(result => (
@@ -301,7 +296,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         <div
           className={cn(
             "fixed inset-0 bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out md:hidden z-40",
