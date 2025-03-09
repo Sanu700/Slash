@@ -1,16 +1,18 @@
+
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, ArrowRight, Gift, CheckCircle, Clock, Heart, Image, CornerRightDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import ExperienceCard from '@/components/ExperienceCard';
 import { getSavedExperiences } from '@/lib/data';
 
 const GiftingGuide = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
+  const navigate = useNavigate();
   
   // Get a few featured experiences for recommendations
   const experiences = getSavedExperiences();
@@ -33,9 +35,12 @@ const GiftingGuide = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           
           <div className="absolute top-6 left-6">
-            <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
+            <button 
+              onClick={() => navigate('/')} 
+              className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
+            >
               <ArrowLeft className="h-5 w-5 text-white" />
-            </Link>
+            </button>
           </div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">

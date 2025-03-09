@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useInView } from '@/lib/animations';
@@ -9,33 +8,43 @@ import { Link } from 'react-router-dom';
 const Hero = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.3 });
   const [currentImage, setCurrentImage] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false]);
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false, false]);
   const imageUrls = [
     'https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2670&auto=format&fit=crop&h=1200',
     'https://images.unsplash.com/photo-1613324138641-1c5ffc8e7e0a?q=80&w=2670&auto=format&fit=crop&h=1200',
-    'https://images.unsplash.com/photo-1519708495087-ca1b71df408a?q=80&w=2670&auto=format&fit=crop&h=1200'
+    'https://images.unsplash.com/photo-1519708495087-ca1b71df408a?q=80&w=2670&auto=format&fit=crop&h=1200',
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2670&auto=format&fit=crop&h=1200'
   ];
   
-  // Preload images
+  // Preload images - improved version with state tracking
   useEffect(() => {
-    imageUrls.forEach((url, index) => {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        setImagesLoaded(prev => {
-          const newState = [...prev];
-          newState[index] = true;
-          return newState;
+    const preloadImages = async () => {
+      const promises = imageUrls.map((url, index) => {
+        return new Promise<void>((resolve) => {
+          const img = new Image();
+          img.src = url;
+          img.onload = () => {
+            setImagesLoaded(prev => {
+              const newState = [...prev];
+              newState[index] = true;
+              return newState;
+            });
+            resolve();
+          };
         });
-      };
-    });
+      });
+      
+      await Promise.all(promises);
+    };
+    
+    preloadImages();
   }, []);
   
-  // Image transition effect
+  // Image transition effect with improved timing
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % imageUrls.length);
-    }, 6000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [imageUrls.length]);
 
@@ -73,7 +82,21 @@ const Hero = () => {
             }}
           />
         ))}
-        <div className="absolute inset-0 bg-black/60" /> {/* Darkened overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/70" /> {/* Darkened overlay for better text readability */}
+      </div>
+
+      {/* Carousel indicators */}
+      <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+        {imageUrls.map((_, index) => (
+          <button
+            key={index}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all",
+              index === currentImage ? "bg-white w-6" : "bg-white/40"
+            )}
+            onClick={() => setCurrentImage(index)}
+          />
+        ))}
       </div>
 
       {/* Content */}
@@ -117,13 +140,15 @@ const Hero = () => {
                   </div>
                 </Button>
               </Link>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-white text-white hover:bg-white/10 text-base transition-all"
-              >
-                Gift Inspiration
-              </Button>
+              <Link to="/gifting-guide">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white/10 text-base transition-all"
+                >
+                  Gift Inspiration
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

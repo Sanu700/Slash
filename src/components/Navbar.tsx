@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X, Search, ShoppingCart, Gift, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,15 +28,14 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // When search is opened, prevent background scrolling
     if (searchOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('search-overlay-active');
     } else {
-      document.body.style.overflow = '';
+      document.body.classList.remove('search-overlay-active');
     }
     
     return () => {
-      document.body.style.overflow = '';
+      document.body.classList.remove('search-overlay-active');
     };
   }, [searchOpen]);
 

@@ -29,6 +29,7 @@ const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerat
         type="button"
         variant="outline"
         onClick={handleBackAction}
+        className="flex items-center"
       >
         Back
       </Button>
