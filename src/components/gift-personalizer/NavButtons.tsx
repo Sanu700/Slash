@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { QuestionStep } from '@/types/personalizerTypes';
+import { useNavigate } from 'react-router-dom';
 
 interface NavButtonsProps {
   currentStep: QuestionStep;
@@ -11,13 +12,23 @@ interface NavButtonsProps {
 }
 
 const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerating }: NavButtonsProps) => {
+  const navigate = useNavigate();
+  
+  // If we're on the first step and user clicks back, navigate to home
+  const handleBackAction = () => {
+    if (currentStep === 'basics') {
+      navigate('/');
+    } else {
+      handlePreviousStep();
+    }
+  };
+
   return (
     <div className="flex justify-between mt-10">
       <Button
         type="button"
         variant="outline"
-        onClick={handlePreviousStep}
-        disabled={currentStep === 'basics'}
+        onClick={handleBackAction}
       >
         Back
       </Button>

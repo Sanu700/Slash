@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Menu, X, Search, ShoppingCart, Gift, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,19 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    // When search is opened, prevent background scrolling
+    if (searchOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [searchOpen]);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -75,13 +89,14 @@ const Navbar = () => {
     location.pathname === '/' || 
     location.pathname.includes('/gifting-guide') || 
     location.pathname.includes('/category/') ||
-    location.pathname.includes('/experience/');
+    location.pathname.includes('/experience/') ||
+    location.pathname.includes('/gift-personalizer');
 
   return (
     <nav
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4',
-        isScrolled
+        isScrolled || !isDarkPage
           ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm'
           : 'bg-transparent'
       )}
@@ -93,7 +108,12 @@ const Navbar = () => {
             alt="Slash logo" 
             className={cn("h-8 w-8 transition-colors")} 
           />
-          <span className={cn("font-medium text-xl transition-colors", isScrolled ? "text-primary" : (isDarkPage ? "text-white" : "text-primary"))}>
+          <span className={cn(
+            "font-medium text-xl transition-colors", 
+            isScrolled || !isDarkPage 
+              ? "text-primary" 
+              : "text-white"
+          )}>
             Slash
           </span>
         </Link>
@@ -102,8 +122,10 @@ const Navbar = () => {
           <Link 
             to="/#experiences" 
             className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
+              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
+              isScrolled || !isDarkPage 
+                ? "text-gray-800 dark:text-gray-200" 
+                : "text-white"
             )}
           >
             Experiences
@@ -111,8 +133,10 @@ const Navbar = () => {
           <Link 
             to="/#categories" 
             className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
+              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
+              isScrolled || !isDarkPage 
+                ? "text-gray-800 dark:text-gray-200" 
+                : "text-white"
             )}
           >
             Categories
@@ -120,8 +144,10 @@ const Navbar = () => {
           <Link 
             to="/gifting-guide" 
             className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
+              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
+              isScrolled || !isDarkPage 
+                ? "text-gray-800 dark:text-gray-200" 
+                : "text-white"
             )}
           >
             Gifting Guide
@@ -129,8 +155,10 @@ const Navbar = () => {
           <Link 
             to="/gift-personalizer" 
             className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300",
-              isScrolled ? "text-gray-800 dark:text-gray-200" : (isDarkPage ? "text-white" : "text-gray-800")
+              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
+              isScrolled || !isDarkPage 
+                ? "text-gray-800 dark:text-gray-200" 
+                : "text-white"
             )}
           >
             Gift Personalizer
@@ -141,7 +169,9 @@ const Navbar = () => {
                 to="/manage-experiences"
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary",
-                  isScrolled ? "text-gray-800" : (isDarkPage ? "text-white" : "text-gray-800")
+                  isScrolled || !isDarkPage 
+                    ? "text-gray-800" 
+                    : "text-white"
                 )}
               >
                 Manage Experiences
@@ -162,9 +192,9 @@ const Navbar = () => {
             onClick={toggleSearch}
             className={cn(
               "p-2 rounded-full transition-colors",
-              isScrolled 
+              isScrolled || !isDarkPage
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
+                : "hover:bg-white/10 text-white"
             )}
           >
             <Search className="h-5 w-5" />
@@ -173,9 +203,9 @@ const Navbar = () => {
             to="/cart"
             className={cn(
               "p-2 rounded-full transition-colors relative",
-              isScrolled 
+              isScrolled || !isDarkPage
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
+                : "hover:bg-white/10 text-white"
             )}
           >
             <ShoppingCart className="h-5 w-5" />
@@ -186,7 +216,7 @@ const Navbar = () => {
             )}
           </Link>
           <Button 
-            variant={isScrolled ? "default" : "outline"}
+            variant={isScrolled || !isDarkPage ? "default" : "outline"}
             className={cn(
               "transition-all",
               !isScrolled && isDarkPage && "text-white border-white hover:bg-white/20"
@@ -201,9 +231,9 @@ const Navbar = () => {
             onClick={toggleSearch}
             className={cn(
               "p-2 rounded-full transition-colors",
-              isScrolled 
+              isScrolled || !isDarkPage
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
+                : "hover:bg-white/10 text-white"
             )}
           >
             <Search className="h-5 w-5" />
@@ -212,9 +242,9 @@ const Navbar = () => {
             to="/cart"
             className={cn(
               "p-2 rounded-full transition-colors relative",
-              isScrolled 
+              isScrolled || !isDarkPage
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
+                : "hover:bg-white/10 text-white"
             )}
           >
             <ShoppingCart className="h-5 w-5" />
@@ -228,9 +258,9 @@ const Navbar = () => {
             onClick={toggleMobileMenu}
             className={cn(
               "p-2 rounded-full transition-colors",
-              isScrolled 
+              isScrolled || !isDarkPage
                 ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : (isDarkPage ? "hover:bg-white/10 text-white" : "hover:bg-gray-100 text-gray-700")
+                : "hover:bg-white/10 text-white"
             )}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -239,7 +269,7 @@ const Navbar = () => {
 
         <div
           className={cn(
-            "fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-50",
+            "fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity z-50",
             searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
         >
@@ -276,6 +306,7 @@ const Navbar = () => {
                         src={result.imageUrl} 
                         alt={result.title}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
                     <div className="flex-1">

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -104,6 +103,19 @@
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-medium;
   }
+  
+  /* Improved image loading */
+  img {
+    @apply transition-opacity duration-300;
+  }
+  
+  img.lazy-load {
+    @apply opacity-0;
+  }
+  
+  img.lazy-loaded {
+    @apply opacity-100;
+  }
 }
 
 @layer utilities {
@@ -112,7 +124,11 @@
   }
   
   .text-shadow {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   }
   
   .mask-gradient-b {
@@ -132,6 +148,16 @@
   .backdrop-blur-card {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+  }
+  
+  /* Better image backgrounds */
+  .bg-image-overlay {
+    @apply relative isolate;
+  }
+  
+  .bg-image-overlay::after {
+    content: '';
+    @apply absolute inset-0 bg-black/40 z-[-1];
   }
 }
 
@@ -195,3 +221,17 @@
 .stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
 .stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
 .stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* Image loading */
+[data-image-loaded="false"] {
+  @apply bg-gray-200 animate-pulse;
+}
+
+[data-image-loaded="true"] {
+  @apply bg-transparent;
+}
+
+/* Fix for search modal */
+body.search-open {
+  overflow: hidden;
+}

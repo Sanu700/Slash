@@ -9,11 +9,27 @@ import { Link } from 'react-router-dom';
 const Hero = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.3 });
   const [currentImage, setCurrentImage] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false]);
   const imageUrls = [
-    'https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2670&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1613324138641-1c5ffc8e7e0a?q=80&w=2670&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1519708495087-ca1b71df408a?q=80&w=2670&auto=format&fit=crop'
+    'https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2670&auto=format&fit=crop&h=1200',
+    'https://images.unsplash.com/photo-1613324138641-1c5ffc8e7e0a?q=80&w=2670&auto=format&fit=crop&h=1200',
+    'https://images.unsplash.com/photo-1519708495087-ca1b71df408a?q=80&w=2670&auto=format&fit=crop&h=1200'
   ];
+  
+  // Preload images
+  useEffect(() => {
+    imageUrls.forEach((url, index) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        setImagesLoaded(prev => {
+          const newState = [...prev];
+          newState[index] = true;
+          return newState;
+        });
+      };
+    });
+  }, []);
   
   // Image transition effect
   useEffect(() => {
@@ -57,7 +73,7 @@ const Hero = () => {
             }}
           />
         ))}
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/60" /> {/* Darkened overlay for better text readability */}
       </div>
 
       {/* Content */}
@@ -69,7 +85,7 @@ const Hero = () => {
               isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"
             )}
           >
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
               <img 
                 src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
                 alt="Slash logo" 
@@ -78,14 +94,14 @@ const Hero = () => {
               <span className="text-sm font-medium">Curated Experience Gifts</span>
             </div>
             
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-medium mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow">
               Gifting Something, <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
                 That Matters
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl">
+            <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl text-shadow">
               92% of all people prefer an Experience over a Material gift and 63% forget what they recieved a year back.
             </p>
             
@@ -125,9 +141,9 @@ const Hero = () => {
             { value: "4.9", label: "Average Rating" },
             { value: "100%", label: "Satisfaction" }
           ].map((stat, index) => (
-            <div key={index} className="backdrop-blur-sm bg-white/10 rounded-lg p-4 md:p-6">
+            <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-6">
               <p className="text-2xl md:text-3xl font-medium">{stat.value}</p>
-              <p className="text-sm text-white/70">{stat.label}</p>
+              <p className="text-sm text-white/90">{stat.label}</p>
             </div>
           ))}
         </div>
