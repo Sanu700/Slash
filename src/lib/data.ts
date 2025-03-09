@@ -274,7 +274,7 @@ export const experiences: Experience[] = [
     id: "exp9",
     title: "Urban Street Art Tour & Workshop",
     description: "Explore local street art scenes and create your own piece with professional artists.",
-    imageUrl: "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8",
+    imageUrl: "https://melbournestreettours.com/wp-content/uploads/2021/04/melbournestreettours-hero-012.webp",
     price: 15999,
     location: "Brooklyn, NY",
     duration: "6 hours",
