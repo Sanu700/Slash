@@ -1,32 +1,71 @@
-
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
 
-// Simple predefined admin credentials
+// Simple predefined admin credentials for admin access
 const ADMIN_ID = "admin123";
 const ADMIN_PASSWORD = "slash2025";
 
 // Auth context
 type AuthContextType = {
   isAuthenticated: boolean;
-  login: (id: string, password: string) => boolean;
-  logout: () => void;
+  user: any | null;
+  session: Session | null;
+  loading: boolean;
+  login: (id: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Check if user is already authenticated
-    const authStatus = localStorage.getItem('slash_admin_auth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
+    // Check if user is already authenticated with Supabase
+    const checkAuth = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          setIsAuthenticated(true);
+        } else {
+          // Check for admin auth in localStorage (for admin panel)
+          const authStatus = localStorage.getItem('slash_admin_auth');
+          if (authStatus === 'true') {
+            setIsAuthenticated(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAuth();
+    
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user || null);
+      setIsAuthenticated(!!newSession);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
-  const login = (id: string, password: string): boolean => {
+  // Admin login function (still keeping for admin access)
+  const login = async (id: string, password: string): Promise<boolean> => {
     if (id === ADMIN_ID && password === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem('slash_admin_auth', 'true');
@@ -38,14 +77,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const logout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('slash_admin_auth');
-    toast.success('Logged out successfully');
+  // Sign in with Google
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        }
+      });
+      
+      if (error) {
+        console.error('Google sign in error:', error);
+        toast.error('Failed to sign in with Google');
+      }
+    } catch (error) {
+      console.error('Exception during Google sign in:', error);
+      toast.error('An error occurred during sign in');
+    }
+  };
+  
+  // Logout function
+  const logout = async () => {
+    try {
+      // If using Supabase auth
+      if (session) {
+        await supabase.auth.signOut();
+      }
+      
+      // For admin auth
+      localStorage.removeItem('slash_admin_auth');
+      setIsAuthenticated(false);
+      setUser(null);
+      setSession(null);
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Failed to log out');
+    }
   };
   
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      session, 
+      loading, 
+      login, 
+      logout, 
+      signInWithGoogle 
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -59,7 +140,7 @@ export const useAuth = () => {
   return context;
 };
 
-// Auth guard component
+// Auth guard component (for admin access)
 export const requireAuth = (Component: React.ComponentType<any>) => {
   const ProtectedComponent = (props: any) => {
     const { isAuthenticated, login } = useAuth();

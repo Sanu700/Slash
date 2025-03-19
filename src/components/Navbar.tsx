@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, Search, ShoppingCart, Gift, LogOut } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, Gift, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ const Navbar = () => {
   const { itemCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout, signInWithGoogle } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,6 +81,10 @@ const Navbar = () => {
   const handleSearchResultClick = (id: string) => {
     setSearchOpen(false);
     navigate(`/experience/${id}`);
+  };
+
+  const handleSignIn = () => {
+    signInWithGoogle();
   };
 
   const isDarkPage = 
@@ -175,7 +179,7 @@ const Navbar = () => {
                 Manage Experiences
               </Link>
               <button 
-                onClick={logout}
+                onClick={() => logout()}
                 className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center"
               >
                 <LogOut className="h-4 w-4 mr-1" />
@@ -213,15 +217,32 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Button 
-            variant={isScrolled || !isDarkPage ? "default" : "outline"}
-            className={cn(
-              "transition-all",
-              !isScrolled && isDarkPage && "text-white border-white hover:bg-white/20"
-            )}
-          >
-            Sign In
-          </Button>
+          {isAuthenticated ? (
+            <div className="flex items-center">
+              {user?.user_metadata?.avatar_url ? (
+                <img 
+                  src={user.user_metadata.avatar_url} 
+                  alt="Profile" 
+                  className="h-8 w-8 rounded-full border-2 border-primary"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
+                  <User className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+          ) : (
+            <Button 
+              variant={isScrolled || !isDarkPage ? "default" : "outline"}
+              className={cn(
+                "transition-all",
+                !isScrolled && isDarkPage && "text-white border-white hover:bg-white/20"
+              )}
+              onClick={handleSignIn}
+            >
+              Sign In
+            </Button>
+          )}
         </div>
 
         <div className="md:hidden flex items-center space-x-3">
@@ -411,8 +432,32 @@ const Navbar = () => {
               )}
             </div>
             <div className="mt-auto mb-10">
-              <Button className="w-full mb-4">Sign In</Button>
-              <Button variant="outline" className="w-full">Register</Button>
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-3 py-4">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img 
+                      src={user.user_metadata.avatar_url} 
+                      alt="Profile" 
+                      className="h-10 w-10 rounded-full border-2 border-primary"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                      <User className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium">{user?.user_metadata?.full_name || 'User'}</p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Button className="w-full mb-4" onClick={() => {
+                    signInWithGoogle();
+                    setMobileMenuOpen(false);
+                  }}>Sign In</Button>
+                </>
+              )}
             </div>
           </div>
         </div>
