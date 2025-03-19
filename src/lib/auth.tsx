@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,16 +81,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign in with Google
   const signInWithGoogle = async () => {
     try {
+      // Get the current URL for redirect handling
+      const currentUrl = window.location.origin;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: currentUrl,
         }
       });
       
       if (error) {
         console.error('Google sign in error:', error);
-        toast.error('Failed to sign in with Google');
+        toast.error(`Failed to sign in with Google: ${error.message}`);
       }
     } catch (error) {
       console.error('Exception during Google sign in:', error);
