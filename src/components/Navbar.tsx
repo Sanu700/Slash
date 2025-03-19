@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X, Search, ShoppingCart, Gift, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,15 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { getSavedExperiences } from '@/lib/data';
 import { useAuth } from '@/lib/auth';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -85,6 +94,11 @@ const Navbar = () => {
 
   const handleSignIn = () => {
     signInWithGoogle();
+  };
+
+  const handleProfileClick = () => {
+    setMobileMenuOpen(false);
+    navigate('/profile');
   };
 
   const isDarkPage = 
@@ -218,19 +232,49 @@ const Navbar = () => {
             )}
           </Link>
           {isAuthenticated ? (
-            <div className="flex items-center">
-              {user?.user_metadata?.avatar_url ? (
-                <img 
-                  src={user.user_metadata.avatar_url} 
-                  alt="Profile" 
-                  className="h-8 w-8 rounded-full border-2 border-primary"
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
-                  <User className="h-4 w-4" />
-                </div>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="focus:outline-none">
+                  {user?.user_metadata?.avatar_url ? (
+                    <Avatar className="h-8 w-8 cursor-pointer border-2 border-primary">
+                      <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
+                      <AvatarFallback className="bg-primary text-white">
+                        {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer">
+                      <User className="h-4 w-4" />
+                    </div>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  {user?.user_metadata?.full_name || 'My Account'}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/cart')}>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Cart ({itemCount})
+                </DropdownMenuItem>
+                {user?.app_metadata?.provider === 'email' ? (
+                  <DropdownMenuItem onClick={() => navigate('/manage-experiences')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Manage Experiences
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => logout()} className="text-red-500 focus:text-red-500">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button 
               variant={isScrolled || !isDarkPage ? "default" : "outline"}
@@ -412,6 +456,16 @@ const Navbar = () => {
               {isAuthenticated && (
                 <>
                   <Link 
+                    to="/profile" 
+                    className="py-2 border-b border-gray-100 dark:border-gray-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <User className="h-5 w-5 mr-2" />
+                      My Profile
+                    </div>
+                  </Link>
+                  <Link 
                     to="/manage-experiences" 
                     className="py-2 border-b border-gray-100 dark:border-gray-800"
                     onClick={() => setMobileMenuOpen(false)}
@@ -433,7 +487,7 @@ const Navbar = () => {
             </div>
             <div className="mt-auto mb-10">
               {isAuthenticated ? (
-                <div className="flex items-center space-x-3 py-4">
+                <div className="flex items-center space-x-3 py-4" onClick={handleProfileClick}>
                   {user?.user_metadata?.avatar_url ? (
                     <img 
                       src={user.user_metadata.avatar_url} 

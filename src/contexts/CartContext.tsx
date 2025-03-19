@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Experience, experiences } from '@/lib/data';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 
 interface CartContextType {
   items: CartItem[];
@@ -25,9 +26,11 @@ export const useCart = () => {
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>(() => {
-    // Load cart from localStorage
-    const savedCart = localStorage.getItem('cart');
+    // Load cart from localStorage, considering user ID if available
+    const cartKey = user?.id ? `cart_${user.id}` : 'cart';
+    const savedCart = localStorage.getItem(cartKey);
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
@@ -38,10 +41,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return total + (experience?.price || 0) * item.quantity;
   }, 0);
 
-  // Save cart to localStorage when it changes
+  // Update localStorage cart when items change or user changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+    const cartKey = user?.id ? `cart_${user.id}` : 'cart';
+    localStorage.setItem(cartKey, JSON.stringify(items));
+  }, [items, user]);
+
+  // Load user-specific cart when user changes
+  useEffect(() => {
+    if (user?.id) {
+      const userCartKey = `cart_${user.id}`;
+      const savedUserCart = localStorage.getItem(userCartKey);
+      if (savedUserCart) {
+        setItems(JSON.parse(savedUserCart));
+      }
+    }
+  }, [user]);
 
   const getExperienceById = (id: string) => {
     return experiences.find(exp => exp.id === id);
