@@ -1,8 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { experiences, categories } from '@/lib/data';
-import { Experience, Category } from '@/lib/data';
+import { categories } from '@/lib/data/categories';
+import { getExperiencesByCategory } from '@/lib/data';
+import { Experience, Category } from '@/lib/data/types';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ExperienceCard from '@/components/ExperienceCard';
@@ -29,15 +30,25 @@ const CategoryExplore = () => {
     if (foundCategory) {
       setCategory(foundCategory);
       
-      // Filter experiences by category
-      const categoryExperiences = experiences.filter(exp => 
-        exp.category.toLowerCase() === foundCategory.name.toLowerCase()
-      );
+      // Load experiences for this category from Supabase
+      const loadCategoryExperiences = async () => {
+        setIsLoading(true);
+        try {
+          if (id) {
+            const experiences = await getExperiencesByCategory(id);
+            setFilteredExperiences(experiences);
+          }
+        } catch (error) {
+          console.error('Error loading category experiences:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
       
-      setFilteredExperiences(categoryExperiences);
+      loadCategoryExperiences();
+    } else {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }, [id]);
   
   // Handle sorting
@@ -60,7 +71,11 @@ const CategoryExplore = () => {
   };
   
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
   if (!category) {

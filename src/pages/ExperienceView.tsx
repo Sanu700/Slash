@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { experiences } from '@/lib/data';
-import { Experience } from '@/lib/data';
+import { getExperienceById } from '@/lib/data';
+import { Experience } from '@/lib/data/types';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -24,14 +24,22 @@ const ExperienceView = () => {
     // Scroll to top when the component mounts
     window.scrollTo(0, 0);
     
-    // Find the experience with the matching id
-    const foundExperience = experiences.find(exp => exp.id === id);
+    // Load the experience from Supabase
+    const loadExperience = async () => {
+      setIsLoading(true);
+      try {
+        if (id) {
+          const experienceData = await getExperienceById(id);
+          setExperience(experienceData);
+        }
+      } catch (error) {
+        console.error('Error loading experience:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    if (foundExperience) {
-      setExperience(foundExperience);
-    }
-    
-    setIsLoading(false);
+    loadExperience();
   }, [id]);
   
   const toggleFavorite = () => {
@@ -68,7 +76,11 @@ const ExperienceView = () => {
   };
   
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
   if (!experience) {

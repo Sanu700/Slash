@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import CategorySection from '@/components/CategorySection';
@@ -6,10 +7,32 @@ import TrendingSection from '@/components/TrendingSection';
 import CustomizeSection from '@/components/CustomizeSection';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
-import { experiences } from '@/lib/data';
+import { getFeaturedExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
+import { Experience } from '@/lib/data/types';
 import { cn } from '@/lib/utils';
+
 const Index = () => {
+  const [featuredExperiences, setFeaturedExperiences] = useState<Experience[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load featured experiences from Supabase
+  useEffect(() => {
+    const loadFeaturedExperiences = async () => {
+      setIsLoading(true);
+      try {
+        const experiences = await getFeaturedExperiences();
+        setFeaturedExperiences(experiences);
+      } catch (error) {
+        console.error('Error loading featured experiences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFeaturedExperiences();
+  }, []);
+
   // Smooth scroll for anchor links
   useEffect(() => {
     const handleSmoothScroll = (e: MouseEvent) => {
@@ -29,9 +52,8 @@ const Index = () => {
     return () => document.removeEventListener('click', handleSmoothScroll);
   }, []);
 
-  // Filter featured experiences
-  const featuredExperiences = experiences.filter(exp => exp.featured);
-  return <div className="flex flex-col min-h-screen">
+  return (
+    <div className="flex flex-col min-h-screen">
       <Navbar />
       
       <main>
@@ -50,11 +72,23 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredExperiences.map((experience, index) => <div key={experience.id} className="">
-                  <ExperienceCard experience={experience} featured={index === 0} />
-                </div>)}
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : featuredExperiences.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredExperiences.map((experience, index) => (
+                  <div key={experience.id} className="">
+                    <ExperienceCard experience={experience} featured={index === 0} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No featured experiences available at the moment.</p>
+              </div>
+            )}
           </div>
         </section>
         
@@ -72,6 +106,8 @@ const Index = () => {
       </main>
       
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

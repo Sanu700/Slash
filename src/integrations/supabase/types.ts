@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      experiences: {
+        Row: {
+          adventurous: boolean | null
+          category: string
+          created_at: string
+          date: string
+          description: string
+          duration: string
+          featured: boolean | null
+          group_activity: boolean | null
+          id: string
+          image_url: string
+          location: string
+          niche_category: string | null
+          participants: string
+          price: number
+          romantic: boolean | null
+          title: string
+          trending: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          adventurous?: boolean | null
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          duration: string
+          featured?: boolean | null
+          group_activity?: boolean | null
+          id?: string
+          image_url: string
+          location: string
+          niche_category?: string | null
+          participants: string
+          price: number
+          romantic?: boolean | null
+          title: string
+          trending?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          adventurous?: boolean | null
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          duration?: string
+          featured?: boolean | null
+          group_activity?: boolean | null
+          id?: string
+          image_url?: string
+          location?: string
+          niche_category?: string | null
+          participants?: string
+          price?: number
+          romantic?: boolean | null
+          title?: string
+          trending?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -35,7 +98,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      migrate_hardcoded_experiences: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

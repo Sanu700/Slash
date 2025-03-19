@@ -6,7 +6,8 @@ import ExperienceCard from '@/components/ExperienceCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Filter } from 'lucide-react';
-import { getSavedExperiences } from '@/lib/data';
+import { getAllExperiences } from '@/lib/data';
+import { Experience } from '@/lib/data/types';
 import { useInView } from '@/lib/animations';
 
 const AllExperiences = () => {
@@ -14,8 +15,27 @@ const AllExperiences = () => {
   const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const experiencesPerPage = 12;
   const location = useLocation();
+  
+  // Load experiences from Supabase
+  useEffect(() => {
+    const loadExperiences = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAllExperiences();
+        setExperiences(data);
+      } catch (error) {
+        console.error('Error loading experiences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadExperiences();
+  }, []);
   
   // Get search term from URL query params
   useEffect(() => {
@@ -26,11 +46,10 @@ const AllExperiences = () => {
     }
   }, [location.search]);
   
-  // Get experiences from localStorage or defaults
-  const experiences = getSavedExperiences();
-  
   // Memoize filtered and sorted experiences to improve performance
   const filteredExperiences = useMemo(() => {
+    if (isLoading) return [];
+    
     let sorted = [...experiences];
     
     // Apply sorting
@@ -51,7 +70,7 @@ const AllExperiences = () => {
     }
     
     return sorted;
-  }, [sortOrder, searchTerm, experiences]);
+  }, [sortOrder, searchTerm, experiences, isLoading]);
   
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
@@ -74,7 +93,6 @@ const AllExperiences = () => {
   
   // Keep the existing pagination renderer code
   const renderPagination = () => {
-    // ... keep existing code for pagination
     const pages = [];
     
     for (let i = 1; i <= totalPages; i++) {
@@ -215,99 +233,106 @@ const AllExperiences = () => {
           ref={ref}
           className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
         >
-          {/* Keep existing code for search bar, filters, and the grid */}
-          {/* Search Bar */}
-          <div className={cn(
-            "mb-8 transition-all duration-500",
-            isInView ? "opacity-100" : "opacity-0 translate-y-8"
-          )}>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search experiences by title, description or location..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full px-4 py-3 pl-12 rounded-lg border focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-              />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              </div>
-            </div>
-          </div>
-          
-          {/* Filters and Sorting */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div className={cn(
-              "transition-all duration-700",
-              isInView ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
-              <h2 className="text-2xl font-medium">
-                {filteredExperiences.length} Experiences
-              </h2>
-            </div>
-            
-            <div className={cn(
-              "flex items-center space-x-4 transition-all duration-700 delay-100",
-              isInView ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
-              <div className="flex items-center bg-secondary/50 rounded-lg p-1">
-                <button 
-                  onClick={() => handleSortChange('default')}
-                  className={cn(
-                    "px-3 py-1.5 text-sm rounded-md transition-colors",
-                    sortOrder === 'default' ? "bg-white text-black" : "text-muted-foreground"
-                  )}
-                >
-                  Featured
-                </button>
-                <button 
-                  onClick={() => handleSortChange('price-low')}
-                  className={cn(
-                    "px-3 py-1.5 text-sm rounded-md transition-colors",
-                    sortOrder === 'price-low' ? "bg-white text-black" : "text-muted-foreground"
-                  )}
-                >
-                  Price: Low to High
-                </button>
-                <button 
-                  onClick={() => handleSortChange('price-high')}
-                  className={cn(
-                    "px-3 py-1.5 text-sm rounded-md transition-colors",
-                    sortOrder === 'price-high' ? "bg-white text-black" : "text-muted-foreground"
-                  )}
-                >
-                  Price: High to Low
-                </button>
-              </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </Button>
-            </div>
-          </div>
-          
-          {/* Experiences Grid */}
-          {currentExperiences.length > 0 ? (
-            <div className={cn(
-              "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
-              isInView ? "opacity-100" : "opacity-0"
-            )}>
-              {currentExperiences.map((experience) => (
-                <ExperienceCard key={experience.id} experience={experience} />
-              ))}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="text-center py-16">
-              <h3 className="text-xl mb-2">No matching experiences found</h3>
-              <p className="text-muted-foreground mb-6">Try adjusting your search criteria</p>
-              <Button onClick={() => setSearchTerm('')}>
-                Clear Search
-              </Button>
-            </div>
+            <>
+              {/* Search Bar */}
+              <div className={cn(
+                "mb-8 transition-all duration-500",
+                isInView ? "opacity-100" : "opacity-0 translate-y-8"
+              )}>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search experiences by title, description or location..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    className="w-full px-4 py-3 pl-12 rounded-lg border focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Filters and Sorting */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div className={cn(
+                  "transition-all duration-700",
+                  isInView ? "opacity-100" : "opacity-0 translate-y-8"
+                )}>
+                  <h2 className="text-2xl font-medium">
+                    {filteredExperiences.length} Experiences
+                  </h2>
+                </div>
+                
+                <div className={cn(
+                  "flex items-center space-x-4 transition-all duration-700 delay-100",
+                  isInView ? "opacity-100" : "opacity-0 translate-y-8"
+                )}>
+                  <div className="flex items-center bg-secondary/50 rounded-lg p-1">
+                    <button 
+                      onClick={() => handleSortChange('default')}
+                      className={cn(
+                        "px-3 py-1.5 text-sm rounded-md transition-colors",
+                        sortOrder === 'default' ? "bg-white text-black" : "text-muted-foreground"
+                      )}
+                    >
+                      Featured
+                    </button>
+                    <button 
+                      onClick={() => handleSortChange('price-low')}
+                      className={cn(
+                        "px-3 py-1.5 text-sm rounded-md transition-colors",
+                        sortOrder === 'price-low' ? "bg-white text-black" : "text-muted-foreground"
+                      )}
+                    >
+                      Price: Low to High
+                    </button>
+                    <button 
+                      onClick={() => handleSortChange('price-high')}
+                      className={cn(
+                        "px-3 py-1.5 text-sm rounded-md transition-colors",
+                        sortOrder === 'price-high' ? "bg-white text-black" : "text-muted-foreground"
+                      )}
+                    >
+                      Price: High to Low
+                    </button>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Experiences Grid */}
+              {currentExperiences.length > 0 ? (
+                <div className={cn(
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
+                  isInView ? "opacity-100" : "opacity-0"
+                )}>
+                  {currentExperiences.map((experience) => (
+                    <ExperienceCard key={experience.id} experience={experience} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <h3 className="text-xl mb-2">No matching experiences found</h3>
+                  <p className="text-muted-foreground mb-6">Try adjusting your search criteria</p>
+                  <Button onClick={() => setSearchTerm('')}>
+                    Clear Search
+                  </Button>
+                </div>
+              )}
+              
+              {/* Pagination */}
+              {filteredExperiences.length > experiencesPerPage && renderPagination()}
+            </>
           )}
-          
-          {/* Pagination */}
-          {filteredExperiences.length > experiencesPerPage && renderPagination()}
         </div>
       </main>
       
