@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ExperienceCard } from '@/components/ExperienceCard';
+import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
 import { User, Clock, ShoppingCart, Heart, LogOut, Settings } from 'lucide-react';
 

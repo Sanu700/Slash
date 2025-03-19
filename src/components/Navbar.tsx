@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Search, ShoppingCart, Gift, LogOut, User } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, Gift, LogOut, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
