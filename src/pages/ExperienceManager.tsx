@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { useExperiencesManager } from '@/lib/data';
-import { Experience } from '@/lib/data/experiences';
+import { Experience } from '@/lib/data/types';
 import { categories, nicheCategories } from '@/lib/data';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -85,10 +84,10 @@ const ExperienceManager = () => {
     }
   };
 
-  const handleDeleteExperience = () => {
+  const handleDeleteExperience = async () => {
     if (selectedExperience) {
       if (window.confirm(`Are you sure you want to delete "${selectedExperience.title}"?`)) {
-        deleteExperience(selectedExperience.id);
+        await deleteExperience(selectedExperience.id);
         setSelectedExperience(null);
         toast.success('Experience deleted successfully');
       }
@@ -123,7 +122,7 @@ const ExperienceManager = () => {
     });
   };
 
-  const handleSaveExperience = () => {
+  const handleSaveExperience = async () => {
     if (!formData.title || !formData.description || !formData.category) {
       toast.error('Please fill in all required fields');
       return;
@@ -131,12 +130,14 @@ const ExperienceManager = () => {
 
     if (selectedExperience) {
       // Update existing experience
-      updateExperience(selectedExperience.id, formData);
-      setSelectedExperience({...selectedExperience, ...formData} as Experience);
+      await updateExperience(selectedExperience.id, formData);
+      // Refresh the selected experience with updated data
+      const updatedExperience = { ...selectedExperience, ...formData } as Experience;
+      setSelectedExperience(updatedExperience);
       toast.success('Experience updated successfully');
     } else {
       // Create new experience
-      const newExperience = addExperience(formData as Omit<Experience, 'id'>);
+      const newExperience = await addExperience(formData as Omit<Experience, 'id'>);
       setSelectedExperience(newExperience as Experience);
       toast.success('Experience created successfully');
     }
@@ -152,38 +153,46 @@ const ExperienceManager = () => {
     setIsEditMode(false);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!importText.trim()) {
       toast.error('Please paste JSON data to import');
       return;
     }
 
-    const result = importExperiences(importText);
-    if (result.success) {
-      toast.success(result.message);
-      setImportText('');
-    } else {
-      toast.error(result.message);
+    try {
+      const result = await importExperiences(importText);
+      if (result.success) {
+        toast.success(result.message);
+        setImportText('');
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('Failed to import experiences');
     }
   };
 
-  const handleExport = () => {
-    const jsonData = exportExperiences();
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'slash-experiences.json';
-    a.click();
-    
-    URL.revokeObjectURL(url);
-    toast.success('Experiences exported successfully');
+  const handleExport = async () => {
+    try {
+      const jsonData = await exportExperiences();
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'slash-experiences.json';
+      a.click();
+      
+      URL.revokeObjectURL(url);
+      toast.success('Experiences exported successfully');
+    } catch (error) {
+      toast.error('Failed to export experiences');
+    }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (window.confirm('Are you sure you want to reset all experiences to default? This cannot be undone.')) {
-      resetExperiences();
+      await resetExperiences();
       setSelectedExperience(null);
       toast.success('Experiences have been reset to default');
     }

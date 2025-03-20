@@ -28,10 +28,10 @@ export {
 
 // Re-export types and other data
 // Using import * as syntax to avoid name conflicts
-import { Experience, CartItem } from './data/types';
+import { type Experience, type CartItem } from './data/types';
 import * as categoriesModule from './data/categories';
 import * as nicheCategoriesModule from './data/nicheCategories';
 
-export { Experience, CartItem };
+export type { Experience, CartItem };
 export const categories = categoriesModule.categories;
 export const nicheCategories = nicheCategoriesModule.nicheCategories;
