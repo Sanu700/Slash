@@ -1,18 +1,30 @@
 
+// Export types directly
 export * from './types';
-export * from './categories';
-export * from './nicheCategories';
+
+// Import categories and nicheCategories without re-exporting them
+import { categories } from './categories';
+import { nicheCategories } from './nicheCategories';
 
 // This is the main data management layer that will be used by the application
 import { useState, useEffect } from 'react';
-import { categories as defaultCategories } from './categories';
-import { nicheCategories as defaultNicheCategories } from './nicheCategories';
 import { Experience } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Create a data manager that loads experiences from Supabase
 // and provides methods to update them
+
+// This function checks if there are saved experiences in localStorage for fallback
+export const getSavedExperiences = (): Experience[] => {
+  try {
+    const saved = localStorage.getItem('experiences');
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.error('Error retrieving saved experiences:', error);
+    return [];
+  }
+};
 
 // This hook manages the experiences data
 export const useExperiencesManager = () => {
@@ -418,15 +430,15 @@ export const getAllExperiences = async (): Promise<Experience[]> => {
   } catch (err) {
     console.error('Error loading experiences:', err);
     
-    // Return an empty array rather than throwing
-    return [];
+    // Return local fallback on error
+    return getSavedExperiences();
   }
 };
 
 // Create a standalone function to get experiences by category
 export const getExperiencesByCategory = async (categoryId: string): Promise<Experience[]> => {
   try {
-    const category = defaultCategories.find(cat => cat.id === categoryId);
+    const category = categories.find(cat => cat.id === categoryId);
     
     if (!category) {
       return [];
@@ -463,8 +475,11 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
   } catch (err) {
     console.error('Error loading experiences by category:', err);
     
-    // Return an empty array rather than throwing
-    return [];
+    // Filter local fallback by category
+    const localExperiences = getSavedExperiences();
+    return localExperiences.filter(exp => 
+      category && exp.category?.toLowerCase() === category.name.toLowerCase()
+    );
   }
 };
 
@@ -502,8 +517,9 @@ export const getTrendingExperiences = async (): Promise<Experience[]> => {
   } catch (err) {
     console.error('Error loading trending experiences:', err);
     
-    // Return an empty array rather than throwing
-    return [];
+    // Filter local fallback by trending
+    const localExperiences = getSavedExperiences();
+    return localExperiences.filter(exp => exp.trending);
   }
 };
 
@@ -541,8 +557,9 @@ export const getFeaturedExperiences = async (): Promise<Experience[]> => {
   } catch (err) {
     console.error('Error loading featured experiences:', err);
     
-    // Return an empty array rather than throwing
-    return [];
+    // Filter local fallback by featured
+    const localExperiences = getSavedExperiences();
+    return localExperiences.filter(exp => exp.featured);
   }
 };
 
@@ -580,6 +597,9 @@ export const getExperienceById = async (id: string): Promise<Experience | null> 
     } as Experience;
   } catch (err) {
     console.error('Error loading experience by ID:', err);
-    return null;
+    
+    // Try to find in local fallback
+    const localExperiences = getSavedExperiences();
+    return localExperiences.find(exp => exp.id === id) || null;
   }
 };

@@ -19,6 +19,7 @@ export interface Experience {
   romantic?: boolean;
   adventurous?: boolean;
   group?: boolean;
+  onClick?: () => void; // Add onClick property for ExperienceCard in Profile page
 }
 
 export interface Category {

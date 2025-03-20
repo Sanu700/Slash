@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -39,6 +38,11 @@ const Profile = () => {
   if (!isAuthenticated || !user) {
     return null;
   }
+  
+  // Handle click to navigate to experience detail
+  const handleExperienceClick = (experienceId: string) => {
+    navigate(`/experience/${experienceId}`);
+  };
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -107,13 +111,20 @@ const Profile = () => {
               <TabsContent value="cart" className="mt-6">
                 {cartExperiences.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {cartExperiences.map(experience => (
-                      <ExperienceCard 
-                        key={experience.id} 
-                        experience={experience} 
-                        onClick={() => navigate(`/experience/${experience.id}`)}
-                      />
-                    ))}
+                    {cartExperiences.map(experience => {
+                      // Create a new experience object with onClick handler
+                      const expWithClick = {
+                        ...experience,
+                        onClick: () => handleExperienceClick(experience.id)
+                      };
+                      
+                      return (
+                        <ExperienceCard 
+                          key={experience.id} 
+                          experience={expWithClick}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">
