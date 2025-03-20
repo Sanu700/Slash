@@ -286,10 +286,6 @@ export const requireAuth = (Component: React.ComponentType<any>, adminRequired: 
                   </button>
                 </div>
               </form>
-              
-              <div className="mt-4 text-center text-sm text-gray-600">
-                <p>Use admin123 / slash2025 to login</p>
-              </div>
             </div>
           </div>
         </div>
