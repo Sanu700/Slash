@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -14,7 +15,7 @@ import { User, Clock, ShoppingCart, Heart, LogOut, Settings } from 'lucide-react
 
 const Profile = () => {
   const { user, isAuthenticated, logout } = useAuth();
-  const { items, getExperienceById } = useCart();
+  const { items, cachedExperiences } = useCart();
   const [cartExperiences, setCartExperiences] = useState<Experience[]>([]);
   const navigate = useNavigate();
   
@@ -25,15 +26,14 @@ const Profile = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  // Get cart experiences
+  // Get cart experiences from cache
   useEffect(() => {
-    const experiences = items.map(item => {
-      const experience = getExperienceById(item.experienceId);
-      return experience;
-    }).filter(exp => exp !== undefined) as Experience[];
+    const experiences = items
+      .map(item => cachedExperiences[item.experienceId])
+      .filter(exp => exp !== undefined);
     
     setCartExperiences(experiences);
-  }, [items, getExperienceById]);
+  }, [items, cachedExperiences]);
   
   if (!isAuthenticated || !user) {
     return null;

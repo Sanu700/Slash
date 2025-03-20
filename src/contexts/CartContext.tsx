@@ -13,7 +13,10 @@ interface CartContextType {
   clearCart: () => void;
   itemCount: number;
   totalPrice: number;
+  // Change return type from Experience to Promise<Experience | null>
   getExperienceById: (id: string) => Promise<Experience | null>;
+  // Add a new property for cached experiences
+  cachedExperiences: Record<string, Experience>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -147,7 +150,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearCart, 
       itemCount,
       totalPrice,
-      getExperienceById
+      getExperienceById,
+      cachedExperiences: experienceCache // Expose cached experiences to components
     }}>
       {children}
     </CartContext.Provider>

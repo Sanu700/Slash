@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -7,13 +7,19 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { formatRupees } from '@/lib/formatters';
 import { Trash, Plus, Minus, ArrowLeft, ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Experience } from '@/lib/data';
 import { useToast } from '@/components/ui/use-toast';
 
 const Cart = () => {
-  const { items, removeFromCart, updateQuantity, clearCart, totalPrice, getExperienceById } = useCart();
+  const { items, removeFromCart, updateQuantity, clearCart, totalPrice, cachedExperiences } = useCart();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cartExperiences, setCartExperiences] = useState<Record<string, Experience>>({});
+  
+  // Load cart experiences from cache or fetch them
+  useEffect(() => {
+    setCartExperiences(cachedExperiences);
+  }, [cachedExperiences]);
   
   const handleCheckout = () => {
     if (items.length === 0) {
@@ -70,7 +76,7 @@ const Cart = () => {
               <div className="lg:col-span-2">
                 <div className="bg-card rounded-lg shadow-sm divide-y">
                   {items.map((item) => {
-                    const experience = getExperienceById(item.experienceId);
+                    const experience = cartExperiences[item.experienceId];
                     if (!experience) return null;
                     
                     return (
