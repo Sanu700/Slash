@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Experience, experiences } from '@/lib/data';
 import { toast } from 'sonner';
@@ -28,7 +27,6 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>(() => {
-    // Load cart from localStorage, considering user ID if available
     const cartKey = user?.id ? `cart_${user.id}` : 'cart';
     const savedCart = localStorage.getItem(cartKey);
     return savedCart ? JSON.parse(savedCart) : [];
@@ -41,13 +39,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return total + (experience?.price || 0) * item.quantity;
   }, 0);
 
-  // Update localStorage cart when items change or user changes
   useEffect(() => {
     const cartKey = user?.id ? `cart_${user.id}` : 'cart';
     localStorage.setItem(cartKey, JSON.stringify(items));
   }, [items, user]);
 
-  // Load user-specific cart when user changes
   useEffect(() => {
     if (user?.id) {
       const userCartKey = `cart_${user.id}`;
@@ -66,14 +62,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.experienceId === experienceId);
       if (existingItem) {
-        // Increment quantity if item already exists
         return prevItems.map(item => 
           item.experienceId === experienceId 
             ? { ...item, quantity: item.quantity + 1 } 
             : item
         );
       } else {
-        // Add new item
         return [...prevItems, { experienceId, quantity: 1 }];
       }
     });

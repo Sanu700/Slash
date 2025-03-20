@@ -8,8 +8,12 @@ import {
   getTrendingExperiences,
   getFeaturedExperiences,
   getExperienceById,
-  getSavedExperiences
+  getSavedExperiences,
+  useExperiencesManager
 } from './data/index';
+
+// Re-export the experiences array to maintain compatibility
+import { experiences } from './data/experiences';
 
 export {
   getAllExperiences,
@@ -17,10 +21,17 @@ export {
   getTrendingExperiences,
   getFeaturedExperiences,
   getExperienceById,
-  getSavedExperiences
+  getSavedExperiences,
+  useExperiencesManager,
+  experiences
 };
 
 // Re-export types and other data
-export * from './data/types';
-export * from './data/categories';
-export * from './data/nicheCategories';
+// Using import * as syntax to avoid name conflicts
+import { Experience, CartItem } from './data/types';
+import * as categoriesModule from './data/categories';
+import * as nicheCategoriesModule from './data/nicheCategories';
+
+export { Experience, CartItem };
+export const categories = categoriesModule.categories;
+export const nicheCategories = nicheCategoriesModule.nicheCategories;

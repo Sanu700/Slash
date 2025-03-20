@@ -1,4 +1,3 @@
-
 // Export types directly
 export * from './types';
 
@@ -435,54 +434,6 @@ export const getAllExperiences = async (): Promise<Experience[]> => {
   }
 };
 
-// Create a standalone function to get experiences by category
-export const getExperiencesByCategory = async (categoryId: string): Promise<Experience[]> => {
-  try {
-    const category = categories.find(cat => cat.id === categoryId);
-    
-    if (!category) {
-      return [];
-    }
-    
-    const { data, error } = await supabase
-      .from('experiences')
-      .select('*')
-      .eq('category', category.name.toLowerCase());
-    
-    if (error) {
-      throw error;
-    }
-    
-    // Map Supabase data to our Experience type
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url,
-      price: item.price,
-      location: item.location,
-      duration: item.duration,
-      participants: item.participants,
-      date: item.date,
-      category: item.category,
-      nicheCategory: item.niche_category,
-      trending: item.trending,
-      featured: item.featured,
-      romantic: item.romantic,
-      adventurous: item.adventurous,
-      group: item.group_activity
-    })) as Experience[];
-  } catch (err) {
-    console.error('Error loading experiences by category:', err);
-    
-    // Filter local fallback by category
-    const localExperiences = getSavedExperiences();
-    return localExperiences.filter(exp => 
-      category && exp.category?.toLowerCase() === category.name.toLowerCase()
-    );
-  }
-};
-
 // Create a standalone function to get trending experiences
 export const getTrendingExperiences = async (): Promise<Experience[]> => {
   try {
@@ -601,5 +552,54 @@ export const getExperienceById = async (id: string): Promise<Experience | null> 
     // Try to find in local fallback
     const localExperiences = getSavedExperiences();
     return localExperiences.find(exp => exp.id === id) || null;
+  }
+};
+
+// Create a standalone function to get experiences by category
+export const getExperiencesByCategory = async (categoryId: string): Promise<Experience[]> => {
+  try {
+    const categoryObj = categories.find(cat => cat.id === categoryId);
+    
+    if (!categoryObj) {
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('experiences')
+      .select('*')
+      .eq('category', categoryObj.name.toLowerCase());
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Map Supabase data to our Experience type
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      imageUrl: item.image_url,
+      price: item.price,
+      location: item.location,
+      duration: item.duration,
+      participants: item.participants,
+      date: item.date,
+      category: item.category,
+      nicheCategory: item.niche_category,
+      trending: item.trending,
+      featured: item.featured,
+      romantic: item.romantic,
+      adventurous: item.adventurous,
+      group: item.group_activity
+    })) as Experience[];
+  } catch (err) {
+    console.error('Error loading experiences by category:', err);
+    
+    // Filter local fallback by category
+    const localExperiences = getSavedExperiences();
+    const categoryObj = categories.find(cat => cat.id === categoryId);
+    return localExperiences.filter(exp => 
+      categoryObj && exp.category?.toLowerCase() === categoryObj.name.toLowerCase()
+    );
   }
 };
