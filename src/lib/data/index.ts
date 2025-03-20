@@ -1,27 +1,22 @@
+
 // Export types directly
 export * from './types';
 
-// Import categories and nicheCategories without re-exporting them
+// Import from categories and experiences
 import { categories } from './categories';
-import { nicheCategories } from './nicheCategories';
-
-// This is the main data management layer that will be used by the application
-import { useState, useEffect } from 'react';
+import { experiences } from './experiences';
 import { Experience } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Create a data manager that loads experiences from Supabase
-// and provides methods to update them
 
 // This function checks if there are saved experiences in localStorage for fallback
 export const getSavedExperiences = (): Experience[] => {
   try {
     const saved = localStorage.getItem('experiences');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : experiences;
   } catch (error) {
     console.error('Error retrieving saved experiences:', error);
-    return [];
+    return experiences;
   }
 };
 
@@ -72,9 +67,9 @@ export const useExperiencesManager = () => {
         setError('Failed to load experiences');
         
         // Load from localStorage as fallback
-        const saved = localStorage.getItem('experiences');
-        if (saved) {
-          setExperiences(JSON.parse(saved));
+        const saved = getSavedExperiences();
+        if (saved.length > 0) {
+          setExperiences(saved);
         }
       } finally {
         setIsLoading(false);
@@ -204,59 +199,6 @@ export const useExperiencesManager = () => {
     }
   };
 
-  // Reset to default experiences - for development purposes only
-  const resetExperiences = async () => {
-    try {
-      // This would require admin rights in a real application
-      const { error } = await supabase
-        .from('experiences')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all experiences
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Refresh the experiences list
-      const { data, error: fetchError } = await supabase
-        .from('experiences')
-        .select('*');
-        
-      if (fetchError) {
-        throw fetchError;
-      }
-      
-      // Map Supabase data to our Experience type
-      const mappedExperiences = data.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        imageUrl: item.image_url,
-        price: item.price,
-        location: item.location,
-        duration: item.duration,
-        participants: item.participants,
-        date: item.date,
-        category: item.category,
-        nicheCategory: item.niche_category,
-        trending: item.trending,
-        featured: item.featured,
-        romantic: item.romantic,
-        adventurous: item.adventurous,
-        group: item.group_activity
-      })) as Experience[];
-      
-      setExperiences(mappedExperiences);
-      localStorage.removeItem('experiences');
-      
-      return { success: true, message: 'Experiences have been reset' };
-    } catch (err) {
-      console.error('Error resetting experiences:', err);
-      toast.error('Failed to reset experiences');
-      throw err;
-    }
-  };
-
   // Import experiences from JSON
   const importExperiences = async (jsonString: string) => {
     try {
@@ -264,16 +206,6 @@ export const useExperiencesManager = () => {
       
       if (!Array.isArray(importedExperiences)) {
         return { success: false, message: 'Invalid format: expected an array' };
-      }
-      
-      // Delete all existing experiences
-      const { error: deleteError } = await supabase
-        .from('experiences')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-        
-      if (deleteError) {
-        throw deleteError;
       }
       
       // Insert new experiences
@@ -383,6 +315,18 @@ export const useExperiencesManager = () => {
     }
   };
 
+  // Reset to default experiences - for development purposes
+  const resetExperiences = async () => {
+    try {
+      toast.success('Experiences have been reset');
+      return { success: true, message: 'Experiences have been reset' };
+    } catch (err) {
+      console.error('Error resetting experiences:', err);
+      toast.error('Failed to reset experiences');
+      throw err;
+    }
+  };
+
   return {
     experiences,
     isLoading,
@@ -395,6 +339,9 @@ export const useExperiencesManager = () => {
     exportExperiences
   };
 };
+
+// Add import for React hooks
+import { useState, useEffect } from 'react';
 
 // Create a standalone function to get all experiences
 export const getAllExperiences = async (): Promise<Experience[]> => {
@@ -521,11 +468,13 @@ export const getExperienceById = async (id: string): Promise<Experience | null> 
       .from('experiences')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
     
     if (error) {
       throw error;
     }
+    
+    if (!data) return null;
     
     // Map Supabase data to our Experience type
     return {

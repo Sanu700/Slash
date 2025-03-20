@@ -1,5 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartItem, Experience, experiences } from '@/lib/data';
+import { getExperienceById } from '@/lib/data';
+import { CartItem, Experience } from '@/lib/data';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
@@ -11,7 +13,7 @@ interface CartContextType {
   clearCart: () => void;
   itemCount: number;
   totalPrice: number;
-  getExperienceById: (id: string) => Experience | undefined;
+  getExperienceById: (id: string) => Promise<Experience | null>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -31,13 +33,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedCart = localStorage.getItem(cartKey);
     return savedCart ? JSON.parse(savedCart) : [];
   });
-
+  const [experienceCache, setExperienceCache] = useState<Record<string, Experience>>({});
+  const [totalPrice, setTotalPrice] = useState(0);
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   
-  const totalPrice = items.reduce((total, item) => {
-    const experience = experiences.find(exp => exp.id === item.experienceId);
-    return total + (experience?.price || 0) * item.quantity;
-  }, 0);
+  // Load and cache experiences for the cart
+  useEffect(() => {
+    const fetchExperiencesForCart = async () => {
+      const newCache: Record<string, Experience> = { ...experienceCache };
+      let needsUpdate = false;
+      
+      for (const item of items) {
+        if (!newCache[item.experienceId]) {
+          const experience = await getExperienceById(item.experienceId);
+          if (experience) {
+            newCache[item.experienceId] = experience;
+            needsUpdate = true;
+          }
+        }
+      }
+      
+      if (needsUpdate) {
+        setExperienceCache(newCache);
+      }
+      
+      // Calculate total price
+      const total = items.reduce((sum, item) => {
+        const experience = newCache[item.experienceId];
+        return sum + (experience?.price || 0) * item.quantity;
+      }, 0);
+      
+      setTotalPrice(total);
+    };
+    
+    fetchExperiencesForCart();
+  }, [items]);
 
   useEffect(() => {
     const cartKey = user?.id ? `cart_${user.id}` : 'cart';
@@ -54,11 +84,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  const getExperienceById = (id: string) => {
-    return experiences.find(exp => exp.id === id);
-  };
-
-  const addToCart = (experienceId: string) => {
+  const addToCart = async (experienceId: string) => {
+    const experience = await getExperienceById(experienceId);
+    if (!experience) {
+      toast.error("Unable to add item to cart");
+      return;
+    }
+    
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.experienceId === experienceId);
       if (existingItem) {
@@ -72,8 +104,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
     
-    const experience = getExperienceById(experienceId);
-    toast.success(`Added ${experience?.title} to cart`);
+    // Cache the experience
+    setExperienceCache(prev => ({
+      ...prev,
+      [experienceId]: experience
+    }));
+    
+    toast.success(`Added ${experience.title} to cart`);
   };
 
   const removeFromCart = (experienceId: string) => {

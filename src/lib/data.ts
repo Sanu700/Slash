@@ -12,9 +12,11 @@ import {
   useExperiencesManager
 } from './data/index';
 
-// Re-export the experiences array to maintain compatibility
-import { experiences } from './data/experiences';
+// Import categories and nicheCategories
+import { categories } from './data/categories';
+import { nicheCategories } from './data/nicheCategories';
 
+// Re-export them
 export {
   getAllExperiences,
   getExperiencesByCategory,
@@ -23,15 +25,14 @@ export {
   getExperienceById,
   getSavedExperiences,
   useExperiencesManager,
-  experiences
+  categories,
+  nicheCategories
 };
 
-// Re-export types and other data
-// Using import * as syntax to avoid name conflicts
-import { type Experience, type CartItem } from './data/types';
-import * as categoriesModule from './data/categories';
-import * as nicheCategoriesModule from './data/nicheCategories';
-
+// Re-export types
+import type { Experience, CartItem } from './data/types';
 export type { Experience, CartItem };
-export const categories = categoriesModule.categories;
-export const nicheCategories = nicheCategoriesModule.nicheCategories;
+
+// Import experiences array if used in the codebase
+import { experiences } from './data/experiences';
+export { experiences };
