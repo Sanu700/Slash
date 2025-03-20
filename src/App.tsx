@@ -20,8 +20,8 @@ import { requireAuth } from "./lib/auth";
 
 const queryClient = new QueryClient();
 
-// Apply authentication to the ExperienceManager component
-const ProtectedExperienceManager = requireAuth(ExperienceManager);
+// Apply authentication to the ExperienceManager component with admin required
+const ProtectedExperienceManager = requireAuth(ExperienceManager, true);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
