@@ -43,7 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsAuthenticated(true);
           
           // Check for admin email domain or specific user IDs that are admins
-          // This is a simple check - in production, you would check against a database role
           const isAdminUser = 
             currentSession.user.email === 'admin@example.com' || 
             localStorage.getItem('slash_admin_auth') === 'true';
@@ -89,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
   
-  // Admin login function (still keeping for admin access)
+  // Admin login function
   const login = async (id: string, password: string): Promise<boolean> => {
     if (id === ADMIN_ID && password === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
@@ -106,7 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign in with Google
   const signInWithGoogle = async () => {
     try {
-      // Get the current URL for redirect handling
       const currentUrl = window.location.origin;
       
       const { error } = await supabase.auth.signInWithOAuth({
@@ -169,12 +167,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Logout function
   const logout = async () => {
     try {
-      // If using Supabase auth
       if (session) {
         await supabase.auth.signOut();
       }
       
-      // For admin auth
       localStorage.removeItem('slash_admin_auth');
       setIsAuthenticated(false);
       setIsAdmin(false);

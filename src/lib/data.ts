@@ -32,7 +32,3 @@ export {
 // Re-export types
 import type { Experience, CartItem } from './data/types';
 export type { Experience, CartItem };
-
-// Import experiences array if used in the codebase
-import { experiences } from './data/experiences';
-export { experiences };
