@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -8,17 +8,30 @@ import { ArrowLeft, ArrowRight, Gift, CheckCircle, Clock, Heart, Image, CornerRi
 import { Link, useNavigate } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import ExperienceCard from '@/components/ExperienceCard';
-import { getSavedExperiences } from '@/lib/data';
+import { getTrendingExperiences, getFeaturedExperiences } from '@/lib/data';
 
 const GiftingGuide = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const navigate = useNavigate();
+  const [featuredExperiences, setFeaturedExperiences] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Get a few featured experiences for recommendations
-  const experiences = getSavedExperiences();
-  const featuredExperiences = experiences
-    .filter(exp => exp.trending || exp.price > 30000)
-    .slice(0, 3);
+  // Get featured experiences from Supabase
+  useEffect(() => {
+    const loadFeaturedExperiences = async () => {
+      try {
+        // Fetch experiences that are trending or high-priced
+        const experiences = await getTrendingExperiences();
+        setFeaturedExperiences(experiences.slice(0, 3));
+      } catch (error) {
+        console.error('Error loading featured experiences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadFeaturedExperiences();
+  }, []);
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -173,11 +186,17 @@ const GiftingGuide = () => {
             {/* Recommended Experiences */}
             <div>
               <h3 className="text-2xl font-medium mb-6 text-center">Recommended Experiences</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featuredExperiences.map(experience => (
-                  <ExperienceCard key={experience.id} experience={experience} />
-                ))}
-              </div>
+              {isLoading ? (
+                <div className="flex justify-center items-center p-10">
+                  <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {featuredExperiences.map(experience => (
+                    <ExperienceCard key={experience.id} experience={experience} />
+                  ))}
+                </div>
+              )}
               <div className="text-center mt-8">
                 <Link to="/gift-personalizer">
                   <Button size="lg" className="mr-4">
