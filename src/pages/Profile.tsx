@@ -14,14 +14,18 @@ import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
 import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
   const { user, isAuthenticated, isAdmin, logout, updateProfile } = useAuth();
   const { items, cachedExperiences } = useCart();
   const [cartExperiences, setCartExperiences] = useState<Experience[]>([]);
+  const [recentlyViewedExperiences, setRecentlyViewedExperiences] = useState<Experience[]>([]);
+  const [wishlistExperiences, setWishlistExperiences] = useState<Experience[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [fullName, setFullName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
   // Redirect if not authenticated
@@ -48,12 +52,205 @@ const Profile = () => {
     }
   }, [user]);
   
+  // Load recently viewed experiences from Supabase
+  useEffect(() => {
+    const loadRecentlyViewed = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('viewed_experiences')
+          .select('experience_id, viewed_at')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(4);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Load experience details for each viewed experience
+        if (data && data.length > 0) {
+          const experiences = [];
+          
+          for (const item of data) {
+            const { data: expData, error: expError } = await supabase
+              .from('experiences')
+              .select('*')
+              .eq('id', item.experience_id)
+              .single();
+              
+            if (!expError && expData) {
+              const experience: Experience = {
+                id: expData.id,
+                title: expData.title,
+                description: expData.description,
+                imageUrl: expData.image_url,
+                price: expData.price,
+                location: expData.location,
+                duration: expData.duration,
+                participants: expData.participants,
+                date: expData.date,
+                category: expData.category,
+                nicheCategory: expData.niche_category || undefined,
+                trending: expData.trending || false,
+                featured: expData.featured || false,
+                romantic: expData.romantic || false,
+                adventurous: expData.adventurous || false,
+                group: expData.group_activity || false
+              };
+              
+              experiences.push(experience);
+            }
+          }
+          
+          setRecentlyViewedExperiences(experiences);
+        }
+      } catch (error) {
+        console.error('Error loading viewed experiences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadRecentlyViewed();
+  }, [user]);
+  
+  // Load wishlist from Supabase
+  useEffect(() => {
+    const loadWishlist = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('wishlists')
+          .select('experience_id, added_at')
+          .eq('user_id', user.id)
+          .order('added_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Load experience details for each wishlist item
+        if (data && data.length > 0) {
+          const experiences = [];
+          
+          for (const item of data) {
+            const { data: expData, error: expError } = await supabase
+              .from('experiences')
+              .select('*')
+              .eq('id', item.experience_id)
+              .single();
+              
+            if (!expError && expData) {
+              const experience: Experience = {
+                id: expData.id,
+                title: expData.title,
+                description: expData.description,
+                imageUrl: expData.image_url,
+                price: expData.price,
+                location: expData.location,
+                duration: expData.duration,
+                participants: expData.participants,
+                date: expData.date,
+                category: expData.category,
+                nicheCategory: expData.niche_category || undefined,
+                trending: expData.trending || false,
+                featured: expData.featured || false,
+                romantic: expData.romantic || false,
+                adventurous: expData.adventurous || false,
+                group: expData.group_activity || false
+              };
+              
+              experiences.push(experience);
+            }
+          }
+          
+          setWishlistExperiences(experiences);
+        }
+      } catch (error) {
+        console.error('Error loading wishlist:', error);
+      }
+    };
+    
+    loadWishlist();
+  }, [user]);
+  
   if (!isAuthenticated || !user) {
     return null;
   }
   
+  // Function to track when a user views an experience
+  const trackExperienceView = async (experienceId: string) => {
+    if (!user) return;
+    
+    try {
+      // Upsert to viewed_experiences table
+      await supabase
+        .from('viewed_experiences')
+        .upsert(
+          { 
+            user_id: user.id,
+            experience_id: experienceId,
+            viewed_at: new Date().toISOString()
+          },
+          { 
+            onConflict: 'user_id,experience_id'
+          }
+        );
+    } catch (error) {
+      console.error('Error tracking experience view:', error);
+    }
+  };
+  
+  // Function to toggle wishlist
+  const toggleWishlist = async (experienceId: string, isInWishlist: boolean) => {
+    if (!user) return;
+    
+    try {
+      if (isInWishlist) {
+        // Remove from wishlist
+        const { error } = await supabase
+          .from('wishlists')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('experience_id', experienceId);
+          
+        if (error) throw error;
+        
+        setWishlistExperiences(prev => 
+          prev.filter(exp => exp.id !== experienceId)
+        );
+        
+        toast.success('Removed from wishlist');
+      } else {
+        // Add to wishlist
+        const { error } = await supabase
+          .from('wishlists')
+          .insert({
+            user_id: user.id,
+            experience_id: experienceId
+          });
+          
+        if (error) throw error;
+        
+        // Get the experience details and add to state
+        const experience = cachedExperiences[experienceId];
+        if (experience) {
+          setWishlistExperiences(prev => [experience, ...prev]);
+          toast.success('Added to wishlist');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      toast.error('Failed to update wishlist');
+    }
+  };
+  
   // Handle click to navigate to experience detail
   const handleExperienceClick = (experienceId: string) => {
+    trackExperienceView(experienceId);
     navigate(`/experience/${experienceId}`);
   };
   
@@ -177,7 +374,7 @@ const Profile = () => {
                 </Button>
                 <Button variant="outline" className="justify-start">
                   <Heart className="mr-2 h-4 w-4" />
-                  Wishlist
+                  Wishlist ({wishlistExperiences.length})
                 </Button>
                 
                 {!editMode && (
@@ -220,7 +417,7 @@ const Profile = () => {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="cart">Current Cart</TabsTrigger>
                 <TabsTrigger value="recent">Recent Views</TabsTrigger>
-                <TabsTrigger value="bookings">Bookings</TabsTrigger>
+                <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
               </TabsList>
               
               <TabsContent value="cart" className="mt-6">
@@ -252,21 +449,61 @@ const Profile = () => {
               </TabsContent>
               
               <TabsContent value="recent" className="mt-6">
-                <div className="text-center py-12">
-                  <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No recently viewed experiences</h3>
-                  <p className="text-gray-500 mb-6">Start exploring to see your recently viewed experiences</p>
-                  <Button onClick={() => navigate('/experiences')}>Start Exploring</Button>
-                </div>
+                {isLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                  </div>
+                ) : recentlyViewedExperiences.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {recentlyViewedExperiences.map(experience => {
+                      const expWithClick = {
+                        ...experience,
+                        onClick: () => handleExperienceClick(experience.id)
+                      };
+                      
+                      return (
+                        <ExperienceCard 
+                          key={experience.id} 
+                          experience={expWithClick}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No recently viewed experiences</h3>
+                    <p className="text-gray-500 mb-6">Start exploring to see your recently viewed experiences</p>
+                    <Button onClick={() => navigate('/experiences')}>Start Exploring</Button>
+                  </div>
+                )}
               </TabsContent>
               
-              <TabsContent value="bookings" className="mt-6">
-                <div className="text-center py-12">
-                  <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings yet</h3>
-                  <p className="text-gray-500 mb-6">Book your first unforgettable experience</p>
-                  <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
-                </div>
+              <TabsContent value="wishlist" className="mt-6">
+                {wishlistExperiences.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {wishlistExperiences.map(experience => {
+                      const expWithClick = {
+                        ...experience,
+                        onClick: () => handleExperienceClick(experience.id)
+                      };
+                      
+                      return (
+                        <ExperienceCard 
+                          key={experience.id} 
+                          experience={expWithClick}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Heart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
+                    <p className="text-gray-500 mb-6">Save your favorite experiences to revisit later</p>
+                    <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

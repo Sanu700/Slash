@@ -9,6 +9,110 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_items: {
+        Row: {
+          booking_id: string
+          experience_id: string
+          id: string
+          price_at_booking: number
+          quantity: number
+        }
+        Insert: {
+          booking_id: string
+          experience_id: string
+          id?: string
+          price_at_booking: number
+          quantity?: number
+        }
+        Update: {
+          booking_id?: string
+          experience_id?: string
+          id?: string
+          price_at_booking?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_items_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_items_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          booking_date: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          status: string
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          booking_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          total_amount: number
+          user_id: string
+        }
+        Update: {
+          booking_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          status?: string
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cart_items: {
+        Row: {
+          created_at: string
+          experience_id: string
+          id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_id: string
+          id?: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_id?: string
+          id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiences: {
         Row: {
           adventurous: boolean | null
@@ -92,6 +196,64 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      viewed_experiences: {
+        Row: {
+          experience_id: string
+          id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          experience_id: string
+          id?: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          experience_id?: string
+          id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewed_experiences_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wishlists: {
+        Row: {
+          added_at: string
+          experience_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          experience_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          experience_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

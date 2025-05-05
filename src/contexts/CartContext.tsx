@@ -4,18 +4,17 @@ import { getExperienceById } from '@/lib/data';
 import { CartItem, Experience } from '@/lib/data';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (experienceId: string) => void;
-  removeFromCart: (experienceId: string) => void;
-  updateQuantity: (experienceId: string, quantity: number) => void;
-  clearCart: () => void;
+  addToCart: (experienceId: string) => Promise<void>;
+  removeFromCart: (experienceId: string) => Promise<void>;
+  updateQuantity: (experienceId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   itemCount: number;
   totalPrice: number;
-  // Change return type from Experience to Promise<Experience | null>
   getExperienceById: (id: string) => Promise<Experience | null>;
-  // Add a new property for cached experiences
   cachedExperiences: Record<string, Experience>;
 }
 
@@ -31,15 +30,59 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const cartKey = user?.id ? `cart_${user.id}` : 'cart';
-    const savedCart = localStorage.getItem(cartKey);
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
   const [experienceCache, setExperienceCache] = useState<Record<string, Experience>>({});
   const [totalPrice, setTotalPrice] = useState(0);
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   
+  // Load cart items from Supabase when user is authenticated or from localStorage when not
+  useEffect(() => {
+    const loadCartItems = async () => {
+      if (user) {
+        // User is authenticated, fetch cart from Supabase
+        try {
+          const { data, error } = await supabase
+            .from('cart_items')
+            .select('*')
+            .eq('user_id', user.id);
+            
+          if (error) {
+            throw error;
+          }
+          
+          const cartItems: CartItem[] = data.map(item => ({
+            experienceId: item.experience_id,
+            quantity: item.quantity
+          }));
+          
+          setItems(cartItems);
+        } catch (error) {
+          console.error('Error loading cart from Supabase:', error);
+          toast.error('Failed to load your cart');
+        }
+      } else {
+        // User is not authenticated, use localStorage
+        try {
+          const savedCart = localStorage.getItem('cart');
+          if (savedCart) {
+            setItems(JSON.parse(savedCart));
+          }
+        } catch (error) {
+          console.error('Error loading cart from localStorage:', error);
+        }
+      }
+    };
+    
+    loadCartItems();
+  }, [user]);
+  
+  // Save cart items to localStorage when not authenticated
+  useEffect(() => {
+    if (!user) {
+      localStorage.setItem('cart', JSON.stringify(items));
+    }
+  }, [items, user]);
+
   // Load and cache experiences for the cart
   useEffect(() => {
     const fetchExperiencesForCart = async () => {
@@ -72,73 +115,170 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchExperiencesForCart();
   }, [items]);
 
-  useEffect(() => {
-    const cartKey = user?.id ? `cart_${user.id}` : 'cart';
-    localStorage.setItem(cartKey, JSON.stringify(items));
-  }, [items, user]);
-
-  useEffect(() => {
-    if (user?.id) {
-      const userCartKey = `cart_${user.id}`;
-      const savedUserCart = localStorage.getItem(userCartKey);
-      if (savedUserCart) {
-        setItems(JSON.parse(savedUserCart));
-      }
-    }
-  }, [user]);
-
   const addToCart = async (experienceId: string) => {
-    const experience = await getExperienceById(experienceId);
-    if (!experience) {
-      toast.error("Unable to add item to cart");
-      return;
-    }
-    
-    setItems(prevItems => {
-      const existingItem = prevItems.find(item => item.experienceId === experienceId);
-      if (existingItem) {
-        return prevItems.map(item => 
-          item.experienceId === experienceId 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
-      } else {
-        return [...prevItems, { experienceId, quantity: 1 }];
+    try {
+      const experience = await getExperienceById(experienceId);
+      if (!experience) {
+        toast.error("Unable to add item to cart");
+        return;
       }
-    });
-    
-    // Cache the experience
-    setExperienceCache(prev => ({
-      ...prev,
-      [experienceId]: experience
-    }));
-    
-    toast.success(`Added ${experience.title} to cart`);
-  };
-
-  const removeFromCart = (experienceId: string) => {
-    setItems(prevItems => prevItems.filter(item => item.experienceId !== experienceId));
-    toast.success('Item removed from cart');
-  };
-
-  const updateQuantity = (experienceId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(experienceId);
-      return;
+      
+      // Handle authenticated users
+      if (user) {
+        const existingItem = items.find(item => item.experienceId === experienceId);
+        const newQuantity = existingItem ? existingItem.quantity + 1 : 1;
+        
+        // Upsert to cart_items table
+        const { error } = await supabase
+          .from('cart_items')
+          .upsert(
+            { 
+              user_id: user.id,
+              experience_id: experienceId,
+              quantity: newQuantity,
+              updated_at: new Date().toISOString()
+            },
+            { 
+              onConflict: 'user_id,experience_id'
+            }
+          );
+          
+        if (error) {
+          console.error('Error adding item to cart:', error);
+          toast.error('Failed to add item to cart');
+          return;
+        }
+        
+        // Update local state
+        setItems(prevItems => {
+          if (existingItem) {
+            return prevItems.map(item => 
+              item.experienceId === experienceId 
+                ? { ...item, quantity: item.quantity + 1 } 
+                : item
+            );
+          } else {
+            return [...prevItems, { experienceId, quantity: 1 }];
+          }
+        });
+      } 
+      // Handle non-authenticated users
+      else {
+        setItems(prevItems => {
+          const existingItem = prevItems.find(item => item.experienceId === experienceId);
+          if (existingItem) {
+            return prevItems.map(item => 
+              item.experienceId === experienceId 
+                ? { ...item, quantity: item.quantity + 1 } 
+                : item
+            );
+          } else {
+            return [...prevItems, { experienceId, quantity: 1 }];
+          }
+        });
+      }
+      
+      // Cache the experience
+      setExperienceCache(prev => ({
+        ...prev,
+        [experienceId]: experience
+      }));
+      
+      toast.success(`Added ${experience.title} to cart`);
+    } catch (error) {
+      console.error('Error in addToCart:', error);
+      toast.error('Failed to add item to cart');
     }
-    
-    setItems(prevItems => 
-      prevItems.map(item => 
-        item.experienceId === experienceId 
-          ? { ...item, quantity } 
-          : item
-      )
-    );
   };
 
-  const clearCart = () => {
-    setItems([]);
-    toast.success('Cart cleared');
+  const removeFromCart = async (experienceId: string) => {
+    try {
+      // Handle authenticated users
+      if (user) {
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('experience_id', experienceId);
+          
+        if (error) {
+          console.error('Error removing item from cart:', error);
+          toast.error('Failed to remove item from cart');
+          return;
+        }
+      }
+      
+      // Update local state
+      setItems(prevItems => prevItems.filter(item => item.experienceId !== experienceId));
+      toast.success('Item removed from cart');
+    } catch (error) {
+      console.error('Error in removeFromCart:', error);
+      toast.error('Failed to remove item from cart');
+    }
+  };
+
+  const updateQuantity = async (experienceId: string, quantity: number) => {
+    try {
+      if (quantity <= 0) {
+        await removeFromCart(experienceId);
+        return;
+      }
+      
+      // Handle authenticated users
+      if (user) {
+        const { error } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('experience_id', experienceId);
+          
+        if (error) {
+          console.error('Error updating cart quantity:', error);
+          toast.error('Failed to update quantity');
+          return;
+        }
+      }
+      
+      // Update local state
+      setItems(prevItems => 
+        prevItems.map(item => 
+          item.experienceId === experienceId 
+            ? { ...item, quantity } 
+            : item
+        )
+      );
+    } catch (error) {
+      console.error('Error in updateQuantity:', error);
+      toast.error('Failed to update quantity');
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      // Handle authenticated users
+      if (user) {
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', user.id);
+          
+        if (error) {
+          console.error('Error clearing cart:', error);
+          toast.error('Failed to clear cart');
+          return;
+        }
+      }
+      
+      // Update local state
+      setItems([]);
+      toast.success('Cart cleared');
+    } catch (error) {
+      console.error('Error in clearCart:', error);
+      toast.error('Failed to clear cart');
+    }
   };
 
   return (
@@ -151,7 +291,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       itemCount,
       totalPrice,
       getExperienceById,
-      cachedExperiences: experienceCache // Expose cached experiences to components
+      cachedExperiences: experienceCache
     }}>
       {children}
     </CartContext.Provider>
