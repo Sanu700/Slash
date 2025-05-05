@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ExperienceCard from '@/components/ExperienceCard';
-import { getSavedExperiences } from '@/lib/data';
+import { getAllExperiences } from '@/lib/data';
 import { FormData } from '@/types/personalizerTypes';
+import { Experience } from '@/lib/data';
 
 interface ResultsSectionProps {
   suggestedExperiences: string[];
@@ -12,7 +13,31 @@ interface ResultsSectionProps {
 }
 
 const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps) => {
-  const experiences = getSavedExperiences();
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadExperiences = async () => {
+      try {
+        const data = await getAllExperiences();
+        setExperiences(data);
+      } catch (error) {
+        console.error('Error loading experiences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadExperiences();
+  }, []);
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-10">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">

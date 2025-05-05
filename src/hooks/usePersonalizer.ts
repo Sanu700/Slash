@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { experiences, categories } from '@/lib/data';
+import { categories, getAllExperiences } from '@/lib/data';
 import { QuestionStep, FormData } from '@/types/personalizerTypes';
+import { Experience } from '@/lib/data';
 
 export const usePersonalizer = () => {
   const { toast } = useToast();
@@ -141,74 +142,85 @@ export const usePersonalizer = () => {
   const generateRecommendations = () => {
     setIsGenerating(true);
     
-    setTimeout(() => {
-      let potentialMatches = [...experiences];
-      
-      if (formData.budget === 'low') {
-        potentialMatches = potentialMatches.filter(exp => exp.price < 20000);
-      } else if (formData.budget === 'medium') {
-        potentialMatches = potentialMatches.filter(exp => exp.price >= 20000 && exp.price <= 30000);
-      } else if (formData.budget === 'high') {
-        potentialMatches = potentialMatches.filter(exp => exp.price > 30000);
-      }
-      
-      const scoredExperiences = potentialMatches.map(exp => {
-        let score = 0;
+    // Use getAllExperiences to fetch experiences instead of directly accessing experiences array
+    getAllExperiences().then((allExperiences) => {
+      setTimeout(() => {
+        let potentialMatches = [...allExperiences];
         
-        const categoryMatch = formData.interests.some(interest => {
-          const matchingCategory = categories.find(cat => 
-            cat.name.toLowerCase() === interest.toLowerCase()
-          );
-          return matchingCategory?.id === exp.category;
+        if (formData.budget === 'low') {
+          potentialMatches = potentialMatches.filter(exp => exp.price < 20000);
+        } else if (formData.budget === 'medium') {
+          potentialMatches = potentialMatches.filter(exp => exp.price >= 20000 && exp.price <= 30000);
+        } else if (formData.budget === 'high') {
+          potentialMatches = potentialMatches.filter(exp => exp.price > 30000);
+        }
+        
+        const scoredExperiences = potentialMatches.map(exp => {
+          let score = 0;
+          
+          const categoryMatch = formData.interests.some(interest => {
+            const matchingCategory = categories.find(cat => 
+              cat.name.toLowerCase() === interest.toLowerCase()
+            );
+            return matchingCategory?.id === exp.category;
+          });
+          
+          if (categoryMatch) score += 10;
+          
+          // Only check these properties if they exist
+          if (formData.occasion === 'anniversary' && exp.romantic) score += 8;
+          if (formData.occasion === 'birthday' && exp.trending) score += 5;
+          if (formData.occasion === 'graduation' && exp.category === 'luxury') score += 5;
+          
+          if (formData.preferences.adventurous > 3 && exp.adventurous) score += 7;
+          if (formData.preferences.adventurous < 3 && exp.adventurous === false) score += 5;
+          
+          if (formData.preferences.social > 3 && exp.group) score += 6;
+          if (formData.preferences.social < 3 && exp.group === false) score += 4;
+          
+          if (formData.preferences.relaxation > 3 && exp.category === 'wellness') score += 7;
+          
+          if (formData.preferences.learning > 3 && 
+              (exp.category === 'learning' || exp.nicheCategory === 'Creative Workshops' || 
+               exp.nicheCategory === 'Literature & History')) score += 7;
+          
+          if (formData.relationship === 'partner' && exp.romantic) score += 8;
+          if (formData.relationship === 'family' && exp.group) score += 6;
+          if (formData.relationship === 'friend' && exp.category === 'adventure') score += 5;
+          
+          if (formData.occasion === 'anniversary' && exp.nicheCategory === 'Luxury Escapes') score += 10;
+          
+          return { 
+            experience: exp,
+            score
+          };
         });
         
-        if (categoryMatch) score += 10;
+        scoredExperiences.sort((a, b) => b.score - a.score);
         
-        // Only check these properties if they exist
-        if (formData.occasion === 'anniversary' && exp.romantic) score += 8;
-        if (formData.occasion === 'birthday' && exp.trending) score += 5;
-        if (formData.occasion === 'graduation' && exp.category === 'luxury') score += 5;
+        const topRecommendations = scoredExperiences
+          .slice(0, 5)
+          .map(item => item.experience.id);
         
-        if (formData.preferences.adventurous > 3 && exp.adventurous) score += 7;
-        if (formData.preferences.adventurous < 3 && exp.adventurous === false) score += 5;
+        setSuggestedExperiences(topRecommendations);
+        setCurrentStep('results');
+        setProgress(100);
+        setIsGenerating(false);
         
-        if (formData.preferences.social > 3 && exp.group) score += 6;
-        if (formData.preferences.social < 3 && exp.group === false) score += 4;
-        
-        if (formData.preferences.relaxation > 3 && exp.category === 'wellness') score += 7;
-        
-        if (formData.preferences.learning > 3 && 
-            (exp.category === 'learning' || exp.nicheCategory === 'Creative Workshops' || 
-             exp.nicheCategory === 'Literature & History')) score += 7;
-        
-        if (formData.relationship === 'partner' && exp.romantic) score += 8;
-        if (formData.relationship === 'family' && exp.group) score += 6;
-        if (formData.relationship === 'friend' && exp.category === 'adventure') score += 5;
-        
-        if (formData.occasion === 'anniversary' && exp.nicheCategory === 'Luxury Escapes') score += 10;
-        
-        return { 
-          experience: exp,
-          score
-        };
-      });
-      
-      scoredExperiences.sort((a, b) => b.score - a.score);
-      
-      const topRecommendations = scoredExperiences
-        .slice(0, 5)
-        .map(item => item.experience.id);
-      
-      setSuggestedExperiences(topRecommendations);
-      setCurrentStep('results');
-      setProgress(100);
+        toast({
+          title: "Personalized recommendations ready!",
+          description: `We've found the perfect experiences for ${formData.recipient}.`,
+        });
+      }, 1500);
+    }).catch(error => {
+      console.error('Error loading experiences:', error);
       setIsGenerating(false);
-      
       toast({
-        title: "Personalized recommendations ready!",
-        description: `We've found the perfect experiences for ${formData.recipient}.`,
+        title: "Error generating recommendations",
+        description: "Unable to load experiences data. Please try again.",
+        variant: "destructive",
       });
-    }, 1500);
+    });
   };
 
   return {
