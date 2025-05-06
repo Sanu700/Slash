@@ -38,6 +38,17 @@ interface UserProfile {
   bio?: string;
 }
 
+// Extended profile type that matches our database structure
+interface ExtendedProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  updated_at: string | null;
+  phone?: string | null;
+  address?: string | null;
+  bio?: string | null;
+}
+
 const Profile = () => {
   const { user, isAuthenticated, isAdmin, logout, updateProfile } = useAuth();
   const { items, cachedExperiences } = useCart();
@@ -98,11 +109,14 @@ const Profile = () => {
             .single();
             
           if (!error && data) {
+            // Cast data to the extended profile type to ensure TypeScript knows about all fields
+            const profileData = data as ExtendedProfile;
+            
             setProfileData(prev => ({
               ...prev,
-              phone: data.phone || '',
-              address: data.address || '',
-              bio: data.bio || ''
+              phone: profileData.phone || '',
+              address: profileData.address || '',
+              bio: profileData.bio || ''
             }));
           }
         } catch (error) {

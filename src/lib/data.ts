@@ -15,6 +15,7 @@ import {
 // Import categories and nicheCategories
 import { categories } from './data/categories';
 import { nicheCategories } from './data/nicheCategories';
+import { getSimilarExperiences } from './data/experiences';
 
 // Re-export them
 export {
@@ -25,6 +26,7 @@ export {
   getExperienceById,
   getSavedExperiences,
   useExperiencesManager,
+  getSimilarExperiences,
   categories,
   nicheCategories
 };
