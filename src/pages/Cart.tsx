@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -6,11 +7,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Experience } from '@/lib/data';
 import { formatRupees } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { CreditCard, Wallet, ShoppingBag } from "lucide-react";
 
 const Cart = () => {
   const { items, cachedExperiences, clearCart } = useCart();
@@ -60,12 +63,18 @@ const Cart = () => {
         throw bookingError;
       }
 
-      // Add each cart item to booking_items
-      const bookingItemsPromises = items.map(item => {
-        const experience = cachedExperiences[item.experienceId];
-        if (!experience) return null;
+      if (!bookingData || !bookingData.id) {
+        throw new Error('Booking data is missing or invalid');
+      }
 
-        return supabase
+      console.log('Booking created:', bookingData);
+
+      // Add each cart item to booking_items
+      for (const item of items) {
+        const experience = cachedExperiences[item.experienceId];
+        if (!experience) continue;
+
+        const { error: itemError } = await supabase
           .from('booking_items')
           .insert({
             booking_id: bookingData.id,
@@ -73,26 +82,15 @@ const Cart = () => {
             quantity: item.quantity,
             price_at_booking: experience.price
           });
-      });
 
-      // Filter out null promises and execute all remaining ones
-      const validPromises = bookingItemsPromises.filter(p => p !== null);
-      const bookingItemsResults = await Promise.all(validPromises);
-      
-      // Check for errors in booking items
-      const bookingItemsErrors = bookingItemsResults
-        .filter(result => result && result.error)
-        .map(result => result ? result.error : null)
-        .filter(error => error !== null);
-      
-      if (bookingItemsErrors.length > 0) {
-        console.error('Errors adding booking items:', bookingItemsErrors);
-        // Continue with checkout even if there are some errors with booking items
-        // The booking has been created successfully
+        if (itemError) {
+          console.error('Error adding booking item:', itemError);
+          // Continue with other items even if one fails
+        }
       }
 
       // Clear the cart
-      clearCart();
+      await clearCart();
       
       toast.success('Checkout successful!');
       navigate('/profile?tab=bookings');
@@ -129,7 +127,7 @@ const Cart = () => {
           </CardHeader>
           <CardContent>
             {cartExperiences.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {cartExperiences.map(experience => {
                   const cartItem = items.find(item => item.experienceId === experience.id);
                   const quantity = cartItem ? cartItem.quantity : 1;
@@ -143,33 +141,49 @@ const Cart = () => {
                           <p className="text-gray-500">{experience.location}</p>
                         </div>
                       </div>
-                      <div>
-                        <span className="mr-2">Quantity: {quantity}</span>
+                      <div className="text-right">
+                        <span className="block mb-1">Quantity: {quantity}</span>
                         <span className="font-semibold">{formatRupees(experience.price * quantity)}</span>
                       </div>
                     </div>
                   );
                 })}
-                <div className="flex justify-between font-semibold text-lg">
+                
+                <div className="flex justify-between font-semibold text-lg pt-2">
                   <span>Total:</span>
                   <span>{formatRupees(calculateTotal())}</span>
                 </div>
-                <div>
-                  <h4 className="text-md font-medium mb-2">Payment Method</h4>
-                  <div className="flex items-center">
-                    <Input
-                      type="radio"
-                      id="card"
-                      name="paymentMethod"
-                      value="card"
-                      checked={paymentMethod === 'card'}
-                      onChange={() => setPaymentMethod('card')}
-                      className="mr-2"
-                    />
-                    <label htmlFor="card" className="mr-4">Card</label>
-                  </div>
+                
+                <div className="mt-6">
+                  <h4 className="text-lg font-medium mb-3">Payment Method</h4>
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="gap-4">
+                    <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted/50 transition-colors">
+                      <RadioGroupItem value="card" id="card" />
+                      <Label htmlFor="card" className="flex items-center gap-2 cursor-pointer">
+                        <CreditCard className="h-4 w-4" />
+                        <span>Credit/Debit Card</span>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted/50 transition-colors">
+                      <RadioGroupItem value="upi" id="upi" />
+                      <Label htmlFor="upi" className="flex items-center gap-2 cursor-pointer">
+                        <Wallet className="h-4 w-4" />
+                        <span>UPI Payment</span>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted/50 transition-colors">
+                      <RadioGroupItem value="cod" id="cod" />
+                      <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
+                        <ShoppingBag className="h-4 w-4" />
+                        <span>Cash on Delivery</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <Button onClick={handleCheckout} className="w-full">
+                
+                <Button onClick={handleCheckout} className="w-full mt-4">
                   Checkout
                 </Button>
               </div>
@@ -177,7 +191,7 @@ const Cart = () => {
               <div className="text-center py-8">
                 <h3 className="text-lg font-medium">Your cart is empty.</h3>
                 <p className="text-gray-500">Add experiences to your cart to proceed.</p>
-                <Button onClick={() => navigate('/experiences')}>
+                <Button onClick={() => navigate('/experiences')} className="mt-4">
                   Browse Experiences
                 </Button>
               </div>
