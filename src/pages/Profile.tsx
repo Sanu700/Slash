@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -17,7 +16,7 @@ import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, Aler
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatRupees } from '@/lib/formatters';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 
 interface Booking {
   id: string;
