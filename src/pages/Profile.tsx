@@ -10,13 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ExperienceCard from '@/components/ExperienceCard';
-import { Experience, ExtendedProfile } from '@/lib/data/types';
+import { Experience } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, CalendarCheck, Phone, MapPin, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatRupees } from '@/lib/formatters';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 
 interface Booking {
   id: string;
@@ -37,6 +36,17 @@ interface UserProfile {
   phone?: string;
   address?: string;
   bio?: string;
+}
+
+// Extended profile type that matches our database structure
+interface ExtendedProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  updated_at: string | null;
+  phone?: string | null;
+  address?: string | null;
+  bio?: string | null;
 }
 
 const Profile = () => {
@@ -326,8 +336,6 @@ const Profile = () => {
         setBookingHistory(bookings);
       } catch (error) {
         console.error('Error loading booking history:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
     
@@ -432,12 +440,9 @@ const Profile = () => {
         .from('profiles')
         .upsert({
           id: user.id,
-          full_name: profileData.full_name,
-          avatar_url: profileData.avatar_url,
           phone: profileData.phone,
           address: profileData.address,
-          bio: profileData.bio,
-          updated_at: new Date().toISOString()
+          bio: profileData.bio
         });
         
       if (error) throw error;
@@ -712,75 +717,50 @@ const Profile = () => {
                 {bookingHistory.length > 0 ? (
                   <div className="space-y-6">
                     {bookingHistory.map((booking) => (
-                      <Card key={booking.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                        <CardHeader className="bg-muted/30 border-b">
+                      <Card key={booking.id} className="overflow-hidden">
+                        <CardHeader className="bg-muted/30">
                           <div className="flex justify-between items-center">
                             <div>
-                              <CardTitle className="text-lg flex items-center">
-                                <CalendarCheck className="h-5 w-5 mr-2 text-primary" />
+                              <CardTitle className="text-lg">
                                 Booking #{booking.id.substring(0, 8)}
                               </CardTitle>
-                              <CardDescription className="flex flex-wrap gap-2 mt-1">
-                                <span className="bg-muted px-2 py-0.5 rounded text-xs">
-                                  {new Date(booking.booking_date).toLocaleDateString()}
-                                </span>
-                                <span className="bg-muted px-2 py-0.5 rounded text-xs">
-                                  {formatRupees(booking.total_amount)}
-                                </span>
-                                <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium capitalize">
-                                  {booking.status}
-                                </span>
+                              <CardDescription>
+                                {new Date(booking.booking_date).toLocaleDateString()} • 
+                                {' ' + formatRupees(booking.total_amount)} • 
+                                Status: <span className="capitalize font-medium text-primary">{booking.status}</span>
                               </CardDescription>
                             </div>
-                            <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                            <div className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
                               {booking.payment_method || 'Card'}
                             </div>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-4">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-[100px]">Image</TableHead>
-                                <TableHead>Experience</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead className="text-right">Price</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {booking.items.map((item, index) => (
-                                <TableRow 
-                                  key={`${booking.id}-${item.experience.id}-${index}`}
-                                  className="cursor-pointer hover:bg-muted/40"
-                                  onClick={() => navigate(`/experience/${item.experience.id}`)}
-                                >
-                                  <TableCell>
-                                    <img 
-                                      src={item.experience.imageUrl}
-                                      alt={item.experience.title}
-                                      className="w-16 h-12 object-cover rounded"
-                                    />
-                                  </TableCell>
-                                  <TableCell className="font-medium">
-                                    {item.experience.title}
-                                    <div className="text-xs text-muted-foreground">
-                                      {item.experience.location}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>{item.quantity}</TableCell>
-                                  <TableCell className="text-right font-medium">
-                                    {formatRupees(item.price_at_booking * item.quantity)}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                            <TableFooter>
-                              <TableRow>
-                                <TableCell colSpan={3}>Total</TableCell>
-                                <TableCell className="text-right">{formatRupees(booking.total_amount)}</TableCell>
-                              </TableRow>
-                            </TableFooter>
-                          </Table>
+                          <div className="divide-y">
+                            {booking.items.map((item, index) => (
+                              <div 
+                                key={`${booking.id}-${item.experience.id}-${index}`}
+                                className="py-3 flex items-center gap-4"
+                              >
+                                <div className="w-16 h-16 flex-shrink-0">
+                                  <img 
+                                    src={item.experience.imageUrl}
+                                    alt={item.experience.title}
+                                    className="w-full h-full object-cover rounded"
+                                  />
+                                </div>
+                                <div className="flex-grow">
+                                  <h4 className="font-medium">{item.experience.title}</h4>
+                                  <div className="text-sm text-muted-foreground">
+                                    {formatRupees(item.price_at_booking)} × {item.quantity}
+                                  </div>
+                                </div>
+                                <div className="font-medium">
+                                  {formatRupees(item.price_at_booking * item.quantity)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
