@@ -1,4 +1,3 @@
-
 import { LucideIcon } from 'lucide-react';
 
 export interface Experience {
@@ -40,4 +39,15 @@ export interface NicheCategory {
 export interface CartItem {
   experienceId: string;
   quantity: number;
+}
+
+// Add this interface to properly type profile data
+export interface ExtendedProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  updated_at: string | null;
+  phone?: string | null;
+  address?: string | null;
+  bio?: string | null;
 }
