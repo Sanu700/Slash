@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -12,9 +11,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
-import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle } from 'lucide-react';
+import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { formatRupees } from '@/lib/formatters';
+
+interface Booking {
+  id: string;
+  booking_date: string;
+  total_amount: number;
+  status: string;
+  payment_method: string | null;
+  items: {
+    experience: Experience;
+    quantity: number;
+    price_at_booking: number;
+  }[];
+}
 
 const Profile = () => {
   const { user, isAuthenticated, isAdmin, logout, updateProfile } = useAuth();
@@ -22,10 +35,12 @@ const Profile = () => {
   const [cartExperiences, setCartExperiences] = useState<Experience[]>([]);
   const [recentlyViewedExperiences, setRecentlyViewedExperiences] = useState<Experience[]>([]);
   const [wishlistExperiences, setWishlistExperiences] = useState<Experience[]>([]);
+  const [bookingHistory, setBookingHistory] = useState<Booking[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [fullName, setFullName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('cart');
   const navigate = useNavigate();
   
   // Redirect if not authenticated
@@ -175,6 +190,95 @@ const Profile = () => {
     };
     
     loadWishlist();
+  }, [user]);
+  
+  // Load booking history from Supabase
+  useEffect(() => {
+    const loadBookingHistory = async () => {
+      if (!user) return;
+      
+      try {
+        // Fetch bookings for the current user
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('booking_date', { ascending: false });
+          
+        if (bookingsError) {
+          throw bookingsError;
+        }
+        
+        // For each booking, fetch the items
+        const bookings: Booking[] = [];
+        
+        for (const booking of bookingsData || []) {
+          // Get booking items
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('booking_items')
+            .select('*')
+            .eq('booking_id', booking.id);
+            
+          if (itemsError) {
+            console.error('Error loading booking items:', itemsError);
+            continue;
+          }
+          
+          // Get experience details for each item
+          const items = [];
+          
+          for (const item of itemsData || []) {
+            const { data: expData, error: expError } = await supabase
+              .from('experiences')
+              .select('*')
+              .eq('id', item.experience_id)
+              .single();
+              
+            if (!expError && expData) {
+              const experience: Experience = {
+                id: expData.id,
+                title: expData.title,
+                description: expData.description,
+                imageUrl: expData.image_url,
+                price: expData.price,
+                location: expData.location,
+                duration: expData.duration,
+                participants: expData.participants,
+                date: expData.date,
+                category: expData.category,
+                nicheCategory: expData.niche_category || undefined,
+                trending: expData.trending || false,
+                featured: expData.featured || false,
+                romantic: expData.romantic || false,
+                adventurous: expData.adventurous || false,
+                group: expData.group_activity || false
+              };
+              
+              items.push({
+                experience,
+                quantity: item.quantity,
+                price_at_booking: item.price_at_booking
+              });
+            }
+          }
+          
+          bookings.push({
+            id: booking.id,
+            booking_date: booking.booking_date,
+            total_amount: booking.total_amount,
+            status: booking.status,
+            payment_method: booking.payment_method,
+            items
+          });
+        }
+        
+        setBookingHistory(bookings);
+      } catch (error) {
+        console.error('Error loading booking history:', error);
+      }
+    };
+    
+    loadBookingHistory();
   }, [user]);
   
   if (!isAuthenticated || !user) {
@@ -363,16 +467,26 @@ const Profile = () => {
                 <Button 
                   variant="outline" 
                   className="justify-start"
-                  onClick={() => navigate('/cart')}
+                  onClick={() => { 
+                    navigate('/cart');
+                  }}
                 >
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   My Cart ({items.length} items)
                 </Button>
-                <Button variant="outline" className="justify-start">
-                  <Clock className="mr-2 h-4 w-4" />
-                  Booking History
+                <Button 
+                  variant="outline" 
+                  className={`justify-start ${activeTab === 'bookings' ? 'bg-secondary/20' : ''}`}
+                  onClick={() => setActiveTab('bookings')}
+                >
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  Booking History ({bookingHistory.length})
                 </Button>
-                <Button variant="outline" className="justify-start">
+                <Button 
+                  variant="outline" 
+                  className={`justify-start ${activeTab === 'wishlist' ? 'bg-secondary/20' : ''}`}
+                  onClick={() => setActiveTab('wishlist')}
+                >
                   <Heart className="mr-2 h-4 w-4" />
                   Wishlist ({wishlistExperiences.length})
                 </Button>
@@ -413,10 +527,10 @@ const Profile = () => {
           
           {/* User Activity */}
           <div className="md:col-span-2">
-            <Tabs defaultValue="cart">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="cart">Current Cart</TabsTrigger>
-                <TabsTrigger value="recent">Recent Views</TabsTrigger>
+                <TabsTrigger value="bookings">Booking History</TabsTrigger>
                 <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
               </TabsList>
               
@@ -448,33 +562,64 @@ const Profile = () => {
                 )}
               </TabsContent>
               
-              <TabsContent value="recent" className="mt-6">
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                  </div>
-                ) : recentlyViewedExperiences.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {recentlyViewedExperiences.map(experience => {
-                      const expWithClick = {
-                        ...experience,
-                        onClick: () => handleExperienceClick(experience.id)
-                      };
-                      
-                      return (
-                        <ExperienceCard 
-                          key={experience.id} 
-                          experience={expWithClick}
-                        />
-                      );
-                    })}
+              <TabsContent value="bookings" className="mt-6">
+                {bookingHistory.length > 0 ? (
+                  <div className="space-y-6">
+                    {bookingHistory.map((booking) => (
+                      <Card key={booking.id} className="overflow-hidden">
+                        <CardHeader className="bg-muted/30">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <CardTitle className="text-lg">
+                                Booking #{booking.id.substring(0, 8)}
+                              </CardTitle>
+                              <CardDescription>
+                                {new Date(booking.booking_date).toLocaleDateString()} • 
+                                {' ' + formatRupees(booking.total_amount)} • 
+                                Status: <span className="capitalize font-medium text-primary">{booking.status}</span>
+                              </CardDescription>
+                            </div>
+                            <div className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
+                              {booking.payment_method || 'Card'}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <div className="divide-y">
+                            {booking.items.map((item, index) => (
+                              <div 
+                                key={`${booking.id}-${item.experience.id}-${index}`}
+                                className="py-3 flex items-center gap-4"
+                              >
+                                <div className="w-16 h-16 flex-shrink-0">
+                                  <img 
+                                    src={item.experience.imageUrl}
+                                    alt={item.experience.title}
+                                    className="w-full h-full object-cover rounded"
+                                  />
+                                </div>
+                                <div className="flex-grow">
+                                  <h4 className="font-medium">{item.experience.title}</h4>
+                                  <div className="text-sm text-muted-foreground">
+                                    {formatRupees(item.price_at_booking)} × {item.quantity}
+                                  </div>
+                                </div>
+                                <div className="font-medium">
+                                  {formatRupees(item.price_at_booking * item.quantity)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
                     <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No recently viewed experiences</h3>
-                    <p className="text-gray-500 mb-6">Start exploring to see your recently viewed experiences</p>
-                    <Button onClick={() => navigate('/experiences')}>Start Exploring</Button>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No booking history</h3>
+                    <p className="text-gray-500 mb-6">You haven't made any bookings yet</p>
+                    <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
                   </div>
                 )}
               </TabsContent>

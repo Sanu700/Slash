@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
@@ -9,19 +8,32 @@ import { formatRupees } from '@/lib/formatters';
 import { Trash, Plus, Minus, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { Experience } from '@/lib/data';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/lib/auth';
 
 const Cart = () => {
-  const { items, removeFromCart, updateQuantity, clearCart, totalPrice, cachedExperiences } = useCart();
+  const { items, removeFromCart, updateQuantity, clearCart, totalPrice, cachedExperiences, checkout } = useCart();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cartExperiences, setCartExperiences] = useState<Record<string, Experience>>({});
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Load cart experiences from cache or fetch them
   useEffect(() => {
     setCartExperiences(cachedExperiences);
   }, [cachedExperiences]);
   
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to checkout",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+    
     if (items.length === 0) {
       toast({
         title: "Cart is empty",
@@ -33,15 +45,19 @@ const Cart = () => {
     
     setIsProcessing(true);
     
-    // Simulate checkout process
-    setTimeout(() => {
-      clearCart();
+    try {
+      const success = await checkout();
+      
+      if (success) {
+        toast({
+          title: "Order placed successfully!",
+          description: "Thank you for your purchase"
+        });
+        navigate('/profile');
+      }
+    } finally {
       setIsProcessing(false);
-      toast({
-        title: "Order placed successfully!",
-        description: "Thank you for your purchase"
-      });
-    }, 2000);
+    }
   };
   
   return (

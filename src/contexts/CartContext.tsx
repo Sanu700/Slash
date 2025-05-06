@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getExperienceById } from '@/lib/data';
 import { CartItem, Experience } from '@/lib/data';
@@ -16,6 +15,7 @@ interface CartContextType {
   totalPrice: number;
   getExperienceById: (id: string) => Promise<Experience | null>;
   cachedExperiences: Record<string, Experience>;
+  checkout: () => Promise<boolean>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -281,6 +281,76 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  /**
+   * Process checkout - create booking records in the database
+   * @returns boolean indicating success or failure
+   */
+  const checkout = async (): Promise<boolean> => {
+    if (!user) {
+      toast.error('Please log in to checkout');
+      return false;
+    }
+    
+    if (items.length === 0) {
+      toast.error('Your cart is empty');
+      return false;
+    }
+    
+    try {
+      // First, calculate total amount
+      const total = items.reduce((sum, item) => {
+        const experience = experienceCache[item.experienceId];
+        return sum + (experience?.price || 0) * item.quantity;
+      }, 0);
+      
+      // Create booking record
+      const { data: bookingData, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          user_id: user.id,
+          total_amount: total,
+          status: 'confirmed',
+          payment_method: 'credit_card', // This would come from payment form in a real app
+          notes: 'Processed via web checkout'
+        })
+        .select()
+        .single();
+      
+      if (bookingError || !bookingData) {
+        throw new Error(bookingError?.message || 'Failed to create booking');
+      }
+      
+      // Create booking items
+      const bookingItems = items.map(item => {
+        const experience = experienceCache[item.experienceId];
+        return {
+          booking_id: bookingData.id,
+          experience_id: item.experienceId,
+          quantity: item.quantity,
+          price_at_booking: experience?.price || 0
+        };
+      });
+      
+      const { error: itemsError } = await supabase
+        .from('booking_items')
+        .insert(bookingItems);
+      
+      if (itemsError) {
+        throw new Error(itemsError.message);
+      }
+      
+      // Clear the cart after successful checkout
+      await clearCart();
+      
+      toast.success('Checkout completed successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      toast.error('Failed to complete checkout');
+      return false;
+    }
+  };
+
   return (
     <CartContext.Provider value={{ 
       items, 
@@ -291,7 +361,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       itemCount,
       totalPrice,
       getExperienceById,
-      cachedExperiences: experienceCache
+      cachedExperiences: experienceCache,
+      checkout
     }}>
       {children}
     </CartContext.Provider>
