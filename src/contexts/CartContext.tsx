@@ -313,11 +313,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           payment_method: 'credit_card', // This would come from payment form in a real app
           notes: 'Processed via web checkout'
         })
-        .select()
+        .select('id')
         .single();
       
       if (bookingError || !bookingData) {
-        throw new Error(bookingError?.message || 'Failed to create booking');
+        console.error('Error creating booking record:', bookingError);
+        return false;
       }
       
       // Create booking items
@@ -336,17 +337,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .insert(bookingItems);
       
       if (itemsError) {
-        throw new Error(itemsError.message);
+        console.error('Error creating booking items:', itemsError);
+        return false;
       }
       
       // Clear the cart after successful checkout
       await clearCart();
       
-      toast.success('Checkout completed successfully!');
       return true;
     } catch (error) {
       console.error('Error during checkout:', error);
-      toast.error('Failed to complete checkout');
       return false;
     }
   };

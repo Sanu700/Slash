@@ -27,29 +27,48 @@ export const getSimilarExperiences = async (
       .limit(limit);
       
     if (error) {
+      console.error("Error fetching similar experiences:", error.message);
       throw error;
     }
     
-    return data.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url,
-      price: item.price,
-      location: item.location,
-      duration: item.duration,
-      participants: item.participants,
-      date: item.date,
-      category: item.category,
-      nicheCategory: item.niche_category || undefined,
-      trending: item.trending || false,
-      featured: item.featured || false,
-      romantic: item.romantic || false,
-      adventurous: item.adventurous || false,
-      group: item.group_activity || false
-    }));
+    if (!data || data.length === 0) {
+      // If no experiences in same category, just get other experiences
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('experiences')
+        .select('*')
+        .neq('id', currentExperienceId)
+        .limit(limit);
+        
+      if (fallbackError) {
+        throw fallbackError;
+      }
+      
+      return (fallbackData || []).map(mapDbExperienceToModel);
+    }
+    
+    return data.map(mapDbExperienceToModel);
   } catch (error) {
     console.error('Error fetching similar experiences:', error);
     return [];
   }
 };
+
+// Helper function to map database experience to Experience model
+const mapDbExperienceToModel = (item: any): Experience => ({
+  id: item.id,
+  title: item.title,
+  description: item.description,
+  imageUrl: item.image_url,
+  price: item.price,
+  location: item.location,
+  duration: item.duration,
+  participants: item.participants,
+  date: item.date,
+  category: item.category,
+  nicheCategory: item.niche_category || undefined,
+  trending: item.trending || false,
+  featured: item.featured || false,
+  romantic: item.romantic || false,
+  adventurous: item.adventurous || false,
+  group: item.group_activity || false
+});

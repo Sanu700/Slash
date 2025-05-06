@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/contexts/CartContext';
 import Navbar from '@/components/Navbar';
@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
-import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, CalendarCheck } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, CalendarCheck, Phone, MapPin, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatRupees } from '@/lib/formatters';
@@ -29,6 +30,14 @@ interface Booking {
   }[];
 }
 
+interface UserProfile {
+  full_name: string;
+  avatar_url: string;
+  phone?: string;
+  address?: string;
+  bio?: string;
+}
+
 const Profile = () => {
   const { user, isAuthenticated, isAdmin, logout, updateProfile } = useAuth();
   const { items, cachedExperiences } = useCart();
@@ -37,11 +46,21 @@ const Profile = () => {
   const [wishlistExperiences, setWishlistExperiences] = useState<Experience[]>([]);
   const [bookingHistory, setBookingHistory] = useState<Booking[]>([]);
   const [editMode, setEditMode] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [profileData, setProfileData] = useState<UserProfile>({
+    full_name: '',
+    avatar_url: '',
+    phone: '',
+    address: '',
+    bio: ''
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('cart');
+  const location = useLocation();
   const navigate = useNavigate();
+  
+  // Get tab from URL query parameter
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'cart');
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -59,12 +78,40 @@ const Profile = () => {
     setCartExperiences(experiences);
   }, [items, cachedExperiences]);
   
-  // Initialize profile edit form
+  // Initialize profile edit form and load extended profile data
   useEffect(() => {
-    if (user) {
-      setFullName(user.user_metadata?.full_name || '');
-      setAvatarUrl(user.user_metadata?.avatar_url || '');
-    }
+    const loadProfileData = async () => {
+      if (user) {
+        // Set basic fields from auth metadata
+        setProfileData(prev => ({
+          ...prev,
+          full_name: user.user_metadata?.full_name || '',
+          avatar_url: user.user_metadata?.avatar_url || '',
+        }));
+        
+        // Try to load extended profile data
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+          if (!error && data) {
+            setProfileData(prev => ({
+              ...prev,
+              phone: data.phone || '',
+              address: data.address || '',
+              bio: data.bio || ''
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading profile data:', error);
+        }
+      }
+    };
+    
+    loadProfileData();
   }, [user]);
   
   // Load recently viewed experiences from Supabase
@@ -281,6 +328,13 @@ const Profile = () => {
     loadBookingHistory();
   }, [user]);
   
+  // Update tab when URL parameter changes
+  useEffect(() => {
+    if (tabParam && ['cart', 'bookings', 'wishlist'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+  
   if (!isAuthenticated || !user) {
     return null;
   }
@@ -361,11 +415,26 @@ const Profile = () => {
   // Handle profile save
   const handleSaveProfile = async () => {
     try {
+      // Update auth metadata (name and avatar)
       await updateProfile({
-        full_name: fullName,
-        avatar_url: avatarUrl
+        full_name: profileData.full_name,
+        avatar_url: profileData.avatar_url
       });
+      
+      // Update extended profile data
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          phone: profileData.phone,
+          address: profileData.address,
+          bio: profileData.bio
+        });
+        
+      if (error) throw error;
+      
       setEditMode(false);
+      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error saving profile:', error);
       toast.error('Failed to save profile changes');
@@ -374,8 +443,16 @@ const Profile = () => {
   
   // Handle cancel edit
   const handleCancelEdit = () => {
-    setFullName(user.user_metadata?.full_name || '');
-    setAvatarUrl(user.user_metadata?.avatar_url || '');
+    // Reset form data
+    if (user) {
+      setProfileData({
+        full_name: user.user_metadata?.full_name || '',
+        avatar_url: user.user_metadata?.avatar_url || '',
+        phone: profileData.phone || '',
+        address: profileData.address || '',
+        bio: profileData.bio || ''
+      });
+    }
     setEditMode(false);
   };
   
@@ -392,18 +469,18 @@ const Profile = () => {
                 <div className="mb-4 w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
                   <Input 
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    value={profileData.avatar_url}
+                    onChange={(e) => setProfileData({...profileData, avatar_url: e.target.value})}
                     placeholder="Avatar URL"
                     className="mb-2"
                   />
                   <div className="flex justify-center">
                     <Avatar className="h-24 w-24 mt-2">
-                      {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt="Profile" />
+                      {profileData.avatar_url ? (
+                        <AvatarImage src={profileData.avatar_url} alt="Profile" />
                       ) : (
                         <AvatarFallback className="bg-primary text-white text-xl">
-                          {fullName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                          {profileData.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
                         </AvatarFallback>
                       )}
                     </Avatar>
@@ -426,18 +503,72 @@ const Profile = () => {
               )}
               
               {editMode ? (
-                <div className="w-full mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <Input 
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your name"
-                  />
+                <div className="w-full space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <Input 
+                      value={profileData.full_name}
+                      onChange={(e) => setProfileData({...profileData, full_name: e.target.value})}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <Input 
+                      value={profileData.phone || ''}
+                      onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                      placeholder="Your phone number"
+                      type="tel"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <Input 
+                      value={profileData.address || ''}
+                      onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                      placeholder="Your address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <Textarea 
+                      value={profileData.bio || ''}
+                      onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                      placeholder="Tell us about yourself"
+                      rows={3}
+                    />
+                  </div>
                 </div>
               ) : (
                 <>
                   <CardTitle>{user.user_metadata?.full_name || 'User'}</CardTitle>
                   <CardDescription>{user.email}</CardDescription>
+                  
+                  {/* Extra profile details when available */}
+                  {(profileData.phone || profileData.address || profileData.bio) && (
+                    <div className="mt-4 text-left w-full">
+                      {profileData.phone && (
+                        <div className="flex items-center text-sm mb-2">
+                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{profileData.phone}</span>
+                        </div>
+                      )}
+                      {profileData.address && (
+                        <div className="flex items-center text-sm mb-2">
+                          <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{profileData.address}</span>
+                        </div>
+                      )}
+                      {profileData.bio && (
+                        <div className="mt-3 text-sm">
+                          <p className="text-muted-foreground">{profileData.bio}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
               
@@ -477,7 +608,10 @@ const Profile = () => {
                 <Button 
                   variant="outline" 
                   className={`justify-start ${activeTab === 'bookings' ? 'bg-secondary/20' : ''}`}
-                  onClick={() => setActiveTab('bookings')}
+                  onClick={() => {
+                    setActiveTab('bookings');
+                    navigate('/profile?tab=bookings');
+                  }}
                 >
                   <CalendarCheck className="mr-2 h-4 w-4" />
                   Booking History ({bookingHistory.length})
@@ -485,7 +619,10 @@ const Profile = () => {
                 <Button 
                   variant="outline" 
                   className={`justify-start ${activeTab === 'wishlist' ? 'bg-secondary/20' : ''}`}
-                  onClick={() => setActiveTab('wishlist')}
+                  onClick={() => {
+                    setActiveTab('wishlist');
+                    navigate('/profile?tab=wishlist');
+                  }}
                 >
                   <Heart className="mr-2 h-4 w-4" />
                   Wishlist ({wishlistExperiences.length})
@@ -529,9 +666,9 @@ const Profile = () => {
           <div className="md:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="cart">Current Cart</TabsTrigger>
-                <TabsTrigger value="bookings">Booking History</TabsTrigger>
-                <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
+                <TabsTrigger value="cart" onClick={() => navigate('/profile?tab=cart')}>Current Cart</TabsTrigger>
+                <TabsTrigger value="bookings" onClick={() => navigate('/profile?tab=bookings')}>Booking History</TabsTrigger>
+                <TabsTrigger value="wishlist" onClick={() => navigate('/profile?tab=wishlist')}>Wishlist</TabsTrigger>
               </TabsList>
               
               <TabsContent value="cart" className="mt-6">

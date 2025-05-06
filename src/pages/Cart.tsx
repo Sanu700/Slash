@@ -53,8 +53,21 @@ const Cart = () => {
           title: "Order placed successfully!",
           description: "Thank you for your purchase"
         });
-        navigate('/profile');
+        navigate('/profile?tab=bookings');
+      } else {
+        toast({
+          title: "Checkout failed",
+          description: "There was an error processing your order",
+          variant: "destructive"
+        });
       }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast({
+        title: "Checkout failed",
+        description: "There was an error processing your order",
+        variant: "destructive"
+      });
     } finally {
       setIsProcessing(false);
     }

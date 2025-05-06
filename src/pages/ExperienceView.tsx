@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getExperienceById, getExperiencesByCategory, getSavedExperiences } from '@/lib/data';
+import { getExperienceById, getSimilarExperiences } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { formatRupees } from '@/lib/formatters';
-import { MapPin, Clock, Users, Calendar, ArrowLeft, Heart, ShoppingCart, Bookmark } from 'lucide-react';
+import { MapPin, Clock, Users, Calendar, ArrowLeft, Heart, ShoppingCart, Bookmark, Plus, Minus } from 'lucide-react';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
 import { useCart } from '@/contexts/CartContext';
@@ -18,15 +17,24 @@ import { supabase } from '@/integrations/supabase/client';
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, items, updateQuantity } = useCart();
   const [experience, setExperience] = useState<Experience | null>(null);
   const [loading, setLoading] = useState(true);
   const [similarExperiences, setSimilarExperiences] = useState<Experience[]>([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const { user } = useAuth();
+  const [quantityInCart, setQuantityInCart] = useState(0);
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
+  
+  // Get current quantity in cart
+  useEffect(() => {
+    if (id) {
+      const cartItem = items.find(item => item.experienceId === id);
+      setQuantityInCart(cartItem ? cartItem.quantity : 0);
+    }
+  }, [id, items]);
   
   useEffect(() => {
     const fetchExperience = async () => {
@@ -46,13 +54,8 @@ const ExperienceView = () => {
         // Fetch similar experiences by category
         if (data.category) {
           try {
-            const categoryExperiences = await getExperiencesByCategory(data.category);
-            // Filter out the current experience and take up to 4 similar experiences
-            const filtered = categoryExperiences
-              .filter(exp => exp.id !== id)
-              .slice(0, 4);
-              
-            setSimilarExperiences(filtered);
+            const similarExps = await getSimilarExperiences(data.category, id);
+            setSimilarExperiences(similarExps);
           } catch (error) {
             console.error('Error loading similar experiences:', error);
           }
@@ -96,6 +99,18 @@ const ExperienceView = () => {
   const handleAddToCart = () => {
     if (experience) {
       addToCart(experience.id);
+    }
+  };
+
+  const handleDecreaseQuantity = () => {
+    if (experience && quantityInCart > 0) {
+      updateQuantity(experience.id, quantityInCart - 1);
+    }
+  };
+
+  const handleIncreaseQuantity = () => {
+    if (experience) {
+      updateQuantity(experience.id, quantityInCart + 1);
     }
   };
   
@@ -318,14 +333,49 @@ const ExperienceView = () => {
                     </div>
                   </div>
                 </div>
-                
-                <Button 
-                  className="w-full mb-3"
-                  onClick={handleAddToCart}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
-                </Button>
+
+                {quantityInCart > 0 ? (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">In Your Cart</span>
+                      <span className="text-primary font-medium">{quantityInCart} {quantityInCart === 1 ? 'item' : 'items'}</span>
+                    </div>
+                    <div className="flex items-center border rounded-md">
+                      <Button 
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDecreaseQuantity}
+                        className="px-2 py-1 h-10"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="flex-1 text-center">{quantityInCart}</span>
+                      <Button 
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleIncreaseQuantity}
+                        className="px-2 py-1 h-10"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button 
+                      className="w-full mt-3"
+                      onClick={() => navigate('/cart')}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      View Cart
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    className="w-full mb-3"
+                    onClick={handleAddToCart}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                )}
                 
                 <Button 
                   variant="outline" 
