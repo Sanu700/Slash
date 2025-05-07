@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -16,6 +17,14 @@ import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, Aler
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatRupees } from '@/lib/formatters';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Booking {
   id: string;
@@ -440,9 +449,12 @@ const Profile = () => {
         .from('profiles')
         .upsert({
           id: user.id,
+          full_name: profileData.full_name,
+          avatar_url: profileData.avatar_url,
           phone: profileData.phone,
           address: profileData.address,
-          bio: profileData.bio
+          bio: profileData.bio,
+          updated_at: new Date().toISOString()
         });
         
       if (error) throw error;
@@ -715,53 +727,81 @@ const Profile = () => {
               
               <TabsContent value="bookings" className="mt-6">
                 {bookingHistory.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {bookingHistory.map((booking) => (
-                      <Card key={booking.id} className="overflow-hidden">
-                        <CardHeader className="bg-muted/30">
+                      <Card key={booking.id} className="overflow-hidden border-0 shadow-md">
+                        <CardHeader className="bg-gradient-to-r from-primary/10 to-background">
                           <div className="flex justify-between items-center">
                             <div>
-                              <CardTitle className="text-lg">
+                              <CardTitle className="text-xl font-bold">
                                 Booking #{booking.id.substring(0, 8)}
                               </CardTitle>
-                              <CardDescription>
-                                {new Date(booking.booking_date).toLocaleDateString()} • 
-                                {' ' + formatRupees(booking.total_amount)} • 
-                                Status: <span className="capitalize font-medium text-primary">{booking.status}</span>
+                              <CardDescription className="text-sm space-y-1 mt-2">
+                                <div className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2 text-primary" />
+                                  <span>{new Date(booking.booking_date).toLocaleDateString(undefined, { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CreditCard className="h-4 w-4 mr-2 text-primary" />
+                                  <span className="capitalize">{booking.payment_method || 'Card'}</span>
+                                </div>
                               </CardDescription>
                             </div>
-                            <div className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
-                              {booking.payment_method || 'Card'}
+                            <div className="text-sm bg-primary/20 text-primary px-4 py-2 rounded-full font-semibold">
+                              {booking.status.toUpperCase()}
                             </div>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-4">
-                          <div className="divide-y">
-                            {booking.items.map((item, index) => (
-                              <div 
-                                key={`${booking.id}-${item.experience.id}-${index}`}
-                                className="py-3 flex items-center gap-4"
-                              >
-                                <div className="w-16 h-16 flex-shrink-0">
-                                  <img 
-                                    src={item.experience.imageUrl}
-                                    alt={item.experience.title}
-                                    className="w-full h-full object-cover rounded"
-                                  />
-                                </div>
-                                <div className="flex-grow">
-                                  <h4 className="font-medium">{item.experience.title}</h4>
-                                  <div className="text-sm text-muted-foreground">
-                                    {formatRupees(item.price_at_booking)} × {item.quantity}
-                                  </div>
-                                </div>
-                                <div className="font-medium">
-                                  {formatRupees(item.price_at_booking * item.quantity)}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Experience</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead className="text-center">Qty</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {booking.items.map((item, index) => (
+                                <TableRow 
+                                  key={`${booking.id}-${item.experience.id}-${index}`}
+                                  className="hover:bg-primary/5 transition-colors"
+                                >
+                                  <TableCell>
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-16 h-12 flex-shrink-0">
+                                        <img 
+                                          src={item.experience.imageUrl}
+                                          alt={item.experience.title}
+                                          className="w-full h-full object-cover rounded"
+                                        />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium line-clamp-1">{item.experience.title}</p>
+                                        <p className="text-xs text-muted-foreground">{item.experience.location}</p>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>{formatRupees(item.price_at_booking)}</TableCell>
+                                  <TableCell className="text-center">{item.quantity}</TableCell>
+                                  <TableCell className="text-right font-semibold">{formatRupees(item.price_at_booking * item.quantity)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
                         </CardContent>
+                        <CardFooter className="bg-muted/20 flex justify-end pt-4 pb-4">
+                          <div className="text-lg font-bold">
+                            Total: {formatRupees(booking.total_amount)}
+                          </div>
+                        </CardFooter>
                       </Card>
                     ))}
                   </div>

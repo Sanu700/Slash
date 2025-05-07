@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -6,11 +7,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { Experience } from '@/lib/data';
 import { formatRupees } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
+import { CreditCard, Banknote, Wallet } from 'lucide-react';
 
 const Cart = () => {
   const { items, cachedExperiences, clearCart } = useCart();
@@ -122,68 +125,104 @@ const Cart = () => {
       <Navbar />
 
       <main className="flex-grow container mx-auto px-4 py-8 mt-16">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold">Your Cart</CardTitle>
-            <CardDescription>Review and manage the items in your cart.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {cartExperiences.length > 0 ? (
-              <div className="space-y-4">
-                {cartExperiences.map(experience => {
-                  const cartItem = items.find(item => item.experienceId === experience.id);
-                  const quantity = cartItem ? cartItem.quantity : 1;
+        <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Items</CardTitle>
+                <CardDescription>Review the experiences in your cart</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cartExperiences.length > 0 ? (
+                  <div className="space-y-6">
+                    {cartExperiences.map(experience => {
+                      const cartItem = items.find(item => item.experienceId === experience.id);
+                      const quantity = cartItem ? cartItem.quantity : 1;
 
-                  return (
-                    <div key={experience.id} className="flex items-center justify-between border-b pb-4">
-                      <div className="flex items-center">
-                        <img src={experience.imageUrl} alt={experience.title} className="w-24 h-20 object-cover rounded mr-4" />
-                        <div>
-                          <h3 className="text-lg font-medium">{experience.title}</h3>
-                          <p className="text-gray-500">{experience.location}</p>
+                      return (
+                        <div key={experience.id} className="flex items-center space-x-4">
+                          <div className="h-24 w-32 overflow-hidden rounded-md">
+                            <img 
+                              src={experience.imageUrl} 
+                              alt={experience.title}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <h3 className="font-semibold">{experience.title}</h3>
+                            <p className="text-sm text-gray-500">{experience.location}</p>
+                            <p className="text-sm">Quantity: {quantity}</p>
+                          </div>
+                          <div>
+                            <p className="font-medium">{formatRupees(experience.price * quantity)}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <span className="mr-2">Quantity: {quantity}</span>
-                        <span className="font-semibold">{formatRupees(experience.price * quantity)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total:</span>
-                  <span>{formatRupees(calculateTotal())}</span>
-                </div>
-                <div>
-                  <h4 className="text-md font-medium mb-2">Payment Method</h4>
-                  <div className="flex items-center">
-                    <Input
-                      type="radio"
-                      id="card"
-                      name="paymentMethod"
-                      value="card"
-                      checked={paymentMethod === 'card'}
-                      onChange={() => setPaymentMethod('card')}
-                      className="mr-2"
-                    />
-                    <label htmlFor="card" className="mr-4">Card</label>
+                      );
+                    })}
                   </div>
-                </div>
-                <Button onClick={handleCheckout} className="w-full">
-                  Checkout
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <h3 className="text-lg font-medium">Your cart is empty.</h3>
-                <p className="text-gray-500">Add experiences to your cart to proceed.</p>
-                <Button onClick={() => navigate('/experiences')}>
-                  Browse Experiences
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-lg font-medium mb-4">Your cart is empty</p>
+                    <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {cartExperiences.length > 0 && (
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex justify-between font-semibold text-lg">
+                    <span>Total:</span>
+                    <span>{formatRupees(calculateTotal())}</span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Payment Method</h3>
+                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                      <div className="flex items-center space-x-2 border p-3 rounded-md mb-2">
+                        <RadioGroupItem value="card" id="card" />
+                        <Label htmlFor="card" className="flex items-center">
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          <span>Credit/Debit Card</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-3 rounded-md mb-2">
+                        <RadioGroupItem value="upi" id="upi" />
+                        <Label htmlFor="upi" className="flex items-center">
+                          <Wallet className="h-4 w-4 mr-2" />
+                          <span>UPI Payment</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-3 rounded-md">
+                        <RadioGroupItem value="cod" id="cod" />
+                        <Label htmlFor="cod" className="flex items-center">
+                          <Banknote className="h-4 w-4 mr-2" />
+                          <span>Cash on Delivery</span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleCheckout}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Complete Checkout
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />
