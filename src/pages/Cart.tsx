@@ -13,10 +13,10 @@ import { toast } from 'sonner';
 import { Experience } from '@/lib/data';
 import { formatRupees } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
-import { CreditCard, Banknote, Wallet } from 'lucide-react';
+import { CreditCard, Banknote, Wallet, Plus, Minus, Trash } from 'lucide-react';
 
 const Cart = () => {
-  const { items, cachedExperiences, clearCart } = useCart();
+  const { items, cachedExperiences, clearCart, updateQuantity, removeFromCart } = useCart();
   const { user } = useAuth();
   const [cartExperiences, setCartExperiences] = useState<Experience[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('card');
@@ -36,6 +36,18 @@ const Cart = () => {
       const cartItem = items.find(item => item.experienceId === experience.id);
       return total + (experience.price * (cartItem ? cartItem.quantity : 1));
     }, 0);
+  };
+
+  const handleQuantityChange = (experienceId: string, change: number) => {
+    const item = items.find(item => item.experienceId === experienceId);
+    if (item) {
+      const newQuantity = Math.max(1, item.quantity + change);
+      updateQuantity(experienceId, newQuantity);
+    }
+  };
+
+  const handleExperienceClick = (experienceId: string) => {
+    navigate(`/experience/${experienceId}`);
   };
 
   const handleCheckout = async () => {
@@ -62,6 +74,8 @@ const Cart = () => {
         console.error('Error creating booking:', bookingError);
         throw bookingError;
       }
+
+      console.log('Booking created:', bookingData);
 
       // Add each cart item to booking_items
       const bookingItemsPromises = items.map(item => {
@@ -142,20 +156,59 @@ const Cart = () => {
                       const quantity = cartItem ? cartItem.quantity : 1;
 
                       return (
-                        <div key={experience.id} className="flex items-center space-x-4">
-                          <div className="h-24 w-32 overflow-hidden rounded-md">
+                        <div key={experience.id} className="flex items-center space-x-4 border border-gray-100 rounded-lg p-4 shadow-sm">
+                          <div 
+                            className="h-24 w-32 overflow-hidden rounded-md cursor-pointer"
+                            onClick={() => handleExperienceClick(experience.id)}
+                          >
                             <img 
                               src={experience.imageUrl} 
                               alt={experience.title}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover hover:opacity-90 transition-opacity"
                             />
                           </div>
-                          <div className="flex-1 space-y-1">
-                            <h3 className="font-semibold">{experience.title}</h3>
+                          <div 
+                            className="flex-1 space-y-1 cursor-pointer"
+                            onClick={() => handleExperienceClick(experience.id)}
+                          >
+                            <h3 className="font-semibold hover:text-primary transition-colors">{experience.title}</h3>
                             <p className="text-sm text-gray-500">{experience.location}</p>
-                            <p className="text-sm">Quantity: {quantity}</p>
+                            <p className="text-sm font-medium">{formatRupees(experience.price)}</p>
                           </div>
-                          <div>
+                          <div className="flex items-center">
+                            <div className="flex items-center space-x-2 border rounded-md p-1">
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleQuantityChange(experience.id, -1)}
+                                disabled={quantity <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                                <span className="sr-only">Decrease quantity</span>
+                              </Button>
+                              <span className="w-8 text-center">{quantity}</span>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleQuantityChange(experience.id, 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                                <span className="sr-only">Increase quantity</span>
+                              </Button>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 ml-2 text-destructive"
+                              onClick={() => removeFromCart(experience.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Remove item</span>
+                            </Button>
+                          </div>
+                          <div className="text-right min-w-[80px]">
                             <p className="font-medium">{formatRupees(experience.price * quantity)}</p>
                           </div>
                         </div>

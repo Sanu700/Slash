@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -123,6 +122,8 @@ const Profile = () => {
             
             setProfileData(prev => ({
               ...prev,
+              full_name: profileData.full_name || prev.full_name,
+              avatar_url: profileData.avatar_url || prev.avatar_url,
               phone: profileData.phone || '',
               address: profileData.address || '',
               bio: profileData.bio || ''
@@ -345,6 +346,8 @@ const Profile = () => {
         setBookingHistory(bookings);
       } catch (error) {
         console.error('Error loading booking history:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -435,14 +438,18 @@ const Profile = () => {
     navigate(`/experience/${experienceId}`);
   };
   
-  // Handle profile save
+  // Handle profile save - fixing the issue with profile changes not syncing
   const handleSaveProfile = async () => {
     try {
+      console.log("Saving profile data:", profileData);
+      
       // Update auth metadata (name and avatar)
       await updateProfile({
         full_name: profileData.full_name,
         avatar_url: profileData.avatar_url
       });
+      
+      console.log("Auth profile updated, now updating extended profile");
       
       // Update extended profile data
       const { error } = await supabase
@@ -451,14 +458,20 @@ const Profile = () => {
           id: user.id,
           full_name: profileData.full_name,
           avatar_url: profileData.avatar_url,
-          phone: profileData.phone,
-          address: profileData.address,
-          bio: profileData.bio,
+          phone: profileData.phone || null,
+          address: profileData.address || null,
+          bio: profileData.bio || null,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
         });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile in Supabase:", error);
+        throw error;
+      }
       
+      console.log("Profile updated successfully");
       setEditMode(false);
       toast.success('Profile updated successfully');
     } catch (error) {
@@ -609,7 +622,7 @@ const Profile = () => {
                     Save
                   </Button>
                   <Button 
-                    onClick={handleCancelEdit} 
+                    onClick={() => setEditMode(false)} 
                     className="flex-1"
                     variant="outline"
                   >
