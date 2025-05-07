@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Experience } from '@/lib/data';
 
-export const useExperienceInteractions = (userId: string | undefined) => {
-  const navigate = useNavigate();
+export const useExperienceInteractions = (userId: string | undefined, skipNavigation = false) => {
+  const navigate = skipNavigation ? undefined : useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Function to track when a user views an experience
@@ -222,7 +222,9 @@ export const useExperienceInteractions = (userId: string | undefined) => {
   // Handle click to navigate to experience detail
   const handleExperienceClick = (experienceId: string) => {
     trackExperienceView(experienceId);
-    navigate(`/experience/${experienceId}`);
+    if (navigate) {
+      navigate(`/experience/${experienceId}`);
+    }
   };
 
   return {

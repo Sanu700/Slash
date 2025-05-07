@@ -46,7 +46,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Get the authenticated user
   const { user } = useAuth();
-  const { syncCartItems } = useExperienceInteractions(user?.id);
+  // Use skipNavigation=true since this component is used outside Router context
+  const { syncCartItems } = useExperienceInteractions(user?.id, true);
 
   const loadExperiencesForCart = useCallback(async (experienceIds: string[]) => {
     if (experienceIds.length === 0) return;
