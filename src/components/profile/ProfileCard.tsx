@@ -39,6 +39,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
     address: '',
     bio: ''
   });
+  const [isSaving, setIsSaving] = React.useState(false);
 
   // Initialize profile edit form and load extended profile data
   React.useEffect(() => {
@@ -80,7 +81,10 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
 
   // Handle profile save - fixing the issue with profile changes not syncing
   const handleSaveProfile = async () => {
+    if (!user) return;
+    
     try {
+      setIsSaving(true);
       console.log("Saving profile data:", profileData);
       
       // Update auth metadata (name and avatar)
@@ -117,6 +121,8 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
     } catch (error) {
       console.error('Error saving profile:', error);
       toast.error('Failed to save profile changes');
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -169,11 +175,11 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
           </div>
         ) : (
           <Avatar className="h-24 w-24 mb-4">
-            {user.user_metadata?.avatar_url ? (
-              <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
+            {profileData.avatar_url ? (
+              <AvatarImage src={profileData.avatar_url} alt="Profile" />
             ) : (
               <AvatarFallback className="bg-primary text-white text-xl">
-                {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                {profileData.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
               </AvatarFallback>
             )}
           </Avatar>
@@ -221,7 +227,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
           </div>
         ) : (
           <>
-            <CardTitle>{user.user_metadata?.full_name || 'User'}</CardTitle>
+            <CardTitle>{profileData.full_name || 'User'}</CardTitle>
             <CardDescription>{user.email}</CardDescription>
             
             {/* Extra profile details when available */}
@@ -255,14 +261,25 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
               onClick={handleSaveProfile} 
               className="flex-1"
               variant="default"
+              disabled={isSaving}
             >
-              <Save className="mr-2 h-4 w-4" />
-              Save
+              {isSaving ? (
+                <>
+                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save
+                </>
+              )}
             </Button>
             <Button 
               onClick={handleCancelEdit} 
               className="flex-1"
               variant="outline"
+              disabled={isSaving}
             >
               <X className="mr-2 h-4 w-4" />
               Cancel
