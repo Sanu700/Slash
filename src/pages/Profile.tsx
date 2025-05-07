@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, CalendarCheck, Phone, MapPin, Mail } from 'lucide-react';
+import { User, Clock, ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, Calendar, Phone, MapPin, Mail, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatRupees } from '@/lib/formatters';
