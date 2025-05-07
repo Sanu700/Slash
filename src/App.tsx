@@ -18,36 +18,39 @@ import ExperienceManager from "./pages/ExperienceManager";
 import Profile from "./pages/Profile";
 import { requireAuth } from "./lib/auth";
 
+// Create a new QueryClient instance outside the component to avoid recreation on each render
 const queryClient = new QueryClient();
 
 // Apply authentication to the ExperienceManager component with admin required
 const ProtectedExperienceManager = requireAuth(ExperienceManager, true);
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <CartProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/experience/:id" element={<ExperienceView />} />
-              <Route path="/category/:id" element={<CategoryExplore />} />
-              <Route path="/experiences" element={<AllExperiences />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/gifting-guide" element={<GiftingGuide />} />
-              <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
-              <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </CartProvider>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/experience/:id" element={<ExperienceView />} />
+                <Route path="/category/:id" element={<CategoryExplore />} />
+                <Route path="/experiences" element={<AllExperiences />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/gifting-guide" element={<GiftingGuide />} />
+                <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
+                <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CartProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
