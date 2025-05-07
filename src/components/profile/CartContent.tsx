@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
-import { ShoppingCart, Plus, Minus } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+import { ShoppingCart } from 'lucide-react';
 
 interface CartContentProps {
   cartExperiences: Experience[];
@@ -14,17 +13,12 @@ interface CartContentProps {
 
 const CartContent = ({ cartExperiences, handleExperienceClick }: CartContentProps) => {
   const navigate = useNavigate();
-  const { updateQuantity } = useCart();
 
   return (
     <>
       {cartExperiences.length > 0 ? (
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {cartExperiences.map(experience => {
-            // Get cart item quantity from the context
-            const cartItem = useCart().items.find(item => item.experienceId === experience.id);
-            const quantity = cartItem ? cartItem.quantity : 0;
-            
             // Create a new experience object with onClick handler
             const expWithClick = {
               ...experience,
@@ -32,36 +26,10 @@ const CartContent = ({ cartExperiences, handleExperienceClick }: CartContentProp
             };
             
             return (
-              <div key={experience.id} className="relative">
-                <ExperienceCard 
-                  experience={expWithClick}
-                />
-                <div className="absolute bottom-4 right-4 flex items-center bg-background/90 p-2 rounded-lg shadow">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateQuantity(experience.id, Math.max(0, quantity - 1));
-                    }}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="mx-3 font-medium">{quantity}</span>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateQuantity(experience.id, quantity + 1);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <ExperienceCard 
+                key={experience.id} 
+                experience={expWithClick}
+              />
             );
           })}
         </div>

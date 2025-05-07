@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addItem: addToCart, items, updateQuantity } = useCart();
+  const { addToCart, items, updateQuantity } = useCart();
   const [experience, setExperience] = useState<Experience | null>(null);
   const [loading, setLoading] = useState(true);
   const [similarExperiences, setSimilarExperiences] = useState<Experience[]>([]);

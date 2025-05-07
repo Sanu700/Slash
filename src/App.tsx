@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,20 +18,19 @@ import ExperienceManager from "./pages/ExperienceManager";
 import Profile from "./pages/Profile";
 import { requireAuth } from "./lib/auth";
 
-// Create a new QueryClient instance outside the component to avoid recreation on each render
 const queryClient = new QueryClient();
 
 // Apply authentication to the ExperienceManager component with admin required
 const ProtectedExperienceManager = requireAuth(ExperienceManager, true);
 
 const App = () => (
-  <BrowserRouter>
-    <QueryClientProvider client={queryClient}>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
       <AuthProvider>
         <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/experience/:id" element={<ExperienceView />} />
@@ -45,11 +43,11 @@ const App = () => (
               <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </TooltipProvider>
+          </BrowserRouter>
         </CartProvider>
       </AuthProvider>
-    </QueryClientProvider>
-  </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
 
 export default App;

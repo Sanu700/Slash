@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -5,163 +6,278 @@ import { useAuth } from '@/lib/auth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
-
-// Add import for useExperienceInteractions
-import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
+import { Experience } from '@/lib/data';
+import { formatRupees } from '@/lib/formatters';
+import { supabase } from '@/integrations/supabase/client';
+import { CreditCard, Banknote, Wallet, Plus, Minus, Trash } from 'lucide-react';
 
 const Cart = () => {
-  const cart = useCart();
-  const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Get the user
+  const { items, cachedExperiences, clearCart, updateQuantity, removeFromCart } = useCart();
   const { user } = useAuth();
-  const { createBookingFromCart } = useExperienceInteractions(user?.id);
-  
+  const [cartExperiences, setCartExperiences] = useState<Experience[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    if (!cart.cachedExperiences) {
+    const experiences = items
+      .map(item => cachedExperiences[item.experienceId])
+      .filter(exp => exp !== undefined);
+
+    setCartExperiences(experiences);
+  }, [items, cachedExperiences]);
+
+  const calculateTotal = () => {
+    return cartExperiences.reduce((total, experience) => {
+      const cartItem = items.find(item => item.experienceId === experience.id);
+      return total + (experience.price * (cartItem ? cartItem.quantity : 1));
+    }, 0);
+  };
+
+  const handleQuantityChange = (experienceId: string, change: number) => {
+    const item = items.find(item => item.experienceId === experienceId);
+    if (item) {
+      const newQuantity = Math.max(1, item.quantity + change);
+      updateQuantity(experienceId, newQuantity);
+    }
+  };
+
+  const handleExperienceClick = (experienceId: string) => {
+    navigate(`/experience/${experienceId}`);
+  };
+
+  const handleCheckout = async () => {
+    if (!user) {
+      toast.error('Please log in to checkout');
       return;
     }
-  }, [cart.cachedExperiences]);
-  
-  // Handle checkout process
-  const handleCheckout = async () => {
+
+    setIsLoading(true);
     try {
-      setIsProcessing(true);
-      
-      if (!user) {
-        toast.error('You must be logged in to complete your purchase');
-        navigate('/login');
-        return;
+      // Create a new booking in the database
+      const { data: bookingData, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          user_id: user.id,
+          total_amount: calculateTotal(),
+          status: 'confirmed',
+          payment_method: paymentMethod
+        })
+        .select()
+        .single();
+
+      if (bookingError) {
+        console.error('Error creating booking:', bookingError);
+        throw bookingError;
       }
+
+      console.log('Booking created:', bookingData);
+
+      // Add each cart item to booking_items
+      const bookingItemsPromises = items.map(item => {
+        const experience = cachedExperiences[item.experienceId];
+        if (!experience) return null;
+
+        return supabase
+          .from('booking_items')
+          .insert({
+            booking_id: bookingData.id,
+            experience_id: item.experienceId,
+            quantity: item.quantity,
+            price_at_booking: experience.price
+          });
+      });
+
+      // Filter out null promises and execute all remaining ones
+      const validPromises = bookingItemsPromises.filter(p => p !== null);
+      const bookingItemsResults = await Promise.all(validPromises);
       
-      // Create booking in Supabase
-      const bookingId = await createBookingFromCart(cart.items, cart.totalPrice);
+      // Check for errors in booking items
+      const bookingItemsErrors = bookingItemsResults
+        .filter(result => result && result.error)
+        .map(result => result ? result.error : null)
+        .filter(error => error !== null);
       
-      if (bookingId) {
-        // Clear cart after successful checkout
-        cart.clearCart();
-        
-        // Show success message
-        toast.success('Order placed successfully!');
-        
-        // Navigate to profile/bookings
-        navigate('/profile?tab=bookings');
-      } else {
-        throw new Error('Failed to create booking');
+      if (bookingItemsErrors.length > 0) {
+        console.error('Errors adding booking items:', bookingItemsErrors);
+        // Continue with checkout even if there are some errors with booking items
+        // The booking has been created successfully
       }
+
+      // Clear the cart
+      clearCart();
+      
+      toast.success('Checkout successful!');
+      navigate('/profile?tab=bookings');
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Failed to complete checkout. Please try again.');
+      toast.error('There was an error processing your checkout. Please try again.');
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
-  
-  // Cart Item Component
-  const CartItem = ({ id, quantity }: { id: string; quantity: number }) => {
-    const experience = cart.cachedExperiences[id];
-    
-    if (!experience) {
-      return null;
-    }
-    
+
+  if (isLoading) {
     return (
-      <div className="flex items-center py-4 border-b">
-        <img 
-          src={experience.imageUrl} 
-          alt={experience.title} 
-          className="w-20 h-20 object-cover rounded-lg mr-4 cursor-pointer"
-          onClick={() => navigate(`/experience/${id}`)}
-        />
-        <div className="flex-1 cursor-pointer" onClick={() => navigate(`/experience/${id}`)}>
-          <h3 className="font-medium text-gray-900">{experience.title}</h3>
-          <p className="text-sm text-gray-500">{experience.location}</p>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center flex-grow p-6">
+          <div className="animate-spin w-10 h-10 border-4 border-primary rounded-full border-t-transparent"></div>
+          <p className="mt-4 text-lg">Processing checkout...</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8 rounded-full"
-            onClick={() => cart.updateQuantity(id, Math.max(0, quantity - 1))}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <span className="w-6 text-center">{quantity}</span>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8 rounded-full"
-            onClick={() => cart.updateQuantity(id, quantity + 1)}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="text-right ml-4 w-24">
-          <p className="font-medium">${(experience.price / 100).toFixed(2)}</p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-red-500 px-2 h-7"
-            onClick={() => cart.removeItem(id)}
-          >
-            Remove
-          </Button>
-        </div>
+        <Footer />
       </div>
     );
-  };
-  
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
+
       <main className="flex-grow container mx-auto px-4 py-8 mt-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <h2 className="text-2xl font-bold mb-4">Your Cart</h2>
-            
-            {cart.items.length === 0 ? (
-              <div className="text-center py-12">
-                <ShoppingCart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
-                <p className="text-gray-500 mb-6">Add experiences to your cart to book them</p>
-                <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
-              </div>
-            ) : (
-              <>
-                {cart.items.map(item => (
-                  <CartItem key={item.experienceId} id={item.experienceId} quantity={item.quantity} />
-                ))}
-                
-                <div className="mt-6 flex justify-between items-center">
-                  <div>
-                    <p className="text-gray-700">Total Items: {cart.totalItems}</p>
-                    <p className="text-2xl font-semibold">Total Price: ${cart.totalPrice.toFixed(2)}</p>
+        <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Items</CardTitle>
+                <CardDescription>Review the experiences in your cart</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cartExperiences.length > 0 ? (
+                  <div className="space-y-6">
+                    {cartExperiences.map(experience => {
+                      const cartItem = items.find(item => item.experienceId === experience.id);
+                      const quantity = cartItem ? cartItem.quantity : 1;
+
+                      return (
+                        <div key={experience.id} className="flex items-center space-x-4 border border-gray-100 rounded-lg p-4 shadow-sm">
+                          <div 
+                            className="h-24 w-32 overflow-hidden rounded-md cursor-pointer"
+                            onClick={() => handleExperienceClick(experience.id)}
+                          >
+                            <img 
+                              src={experience.imageUrl} 
+                              alt={experience.title}
+                              className="h-full w-full object-cover hover:opacity-90 transition-opacity"
+                            />
+                          </div>
+                          <div 
+                            className="flex-1 space-y-1 cursor-pointer"
+                            onClick={() => handleExperienceClick(experience.id)}
+                          >
+                            <h3 className="font-semibold hover:text-primary transition-colors">{experience.title}</h3>
+                            <p className="text-sm text-gray-500">{experience.location}</p>
+                            <p className="text-sm font-medium">{formatRupees(experience.price)}</p>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="flex items-center space-x-2 border rounded-md p-1">
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleQuantityChange(experience.id, -1)}
+                                disabled={quantity <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                                <span className="sr-only">Decrease quantity</span>
+                              </Button>
+                              <span className="w-8 text-center">{quantity}</span>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleQuantityChange(experience.id, 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                                <span className="sr-only">Increase quantity</span>
+                              </Button>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 ml-2 text-destructive"
+                              onClick={() => removeFromCart(experience.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Remove item</span>
+                            </Button>
+                          </div>
+                          <div className="text-right min-w-[80px]">
+                            <p className="font-medium">{formatRupees(experience.price * quantity)}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <Button 
-                    className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-                    onClick={handleCheckout}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <div className="animate-spin mr-2 h-5 w-5 border-2 border-current border-t-transparent rounded-full"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      'Checkout'
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-lg font-medium mb-4">Your cart is empty</p>
+                    <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
+
+          {cartExperiences.length > 0 && (
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex justify-between font-semibold text-lg">
+                    <span>Total:</span>
+                    <span>{formatRupees(calculateTotal())}</span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Payment Method</h3>
+                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                      <div className="flex items-center space-x-2 border p-3 rounded-md mb-2">
+                        <RadioGroupItem value="card" id="card" />
+                        <Label htmlFor="card" className="flex items-center">
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          <span>Credit/Debit Card</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-3 rounded-md mb-2">
+                        <RadioGroupItem value="upi" id="upi" />
+                        <Label htmlFor="upi" className="flex items-center">
+                          <Wallet className="h-4 w-4 mr-2" />
+                          <span>UPI Payment</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-3 rounded-md">
+                        <RadioGroupItem value="cod" id="cod" />
+                        <Label htmlFor="cod" className="flex items-center">
+                          <Banknote className="h-4 w-4 mr-2" />
+                          <span>Cash on Delivery</span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleCheckout}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Complete Checkout
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
