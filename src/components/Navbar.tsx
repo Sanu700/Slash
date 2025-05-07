@@ -23,7 +23,7 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const { itemCount } = useCart();
+  const { totalItems } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout, signInWithGoogle } = useAuth();
@@ -225,9 +225,9 @@ const Navbar = () => {
             )}
           >
             <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
+            {totalItems > 0 && (
               <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                {itemCount}
+                {totalItems}
               </span>
             )}
           </Link>
@@ -260,7 +260,7 @@ const Navbar = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/cart')}>
                   <ShoppingCart className="mr-2 h-4 w-4" />
-                  Cart ({itemCount})
+                  Cart ({totalItems})
                 </DropdownMenuItem>
                 {user?.app_metadata?.provider === 'email' ? (
                   <DropdownMenuItem onClick={() => navigate('/manage-experiences')}>
@@ -311,9 +311,9 @@ const Navbar = () => {
             )}
           >
             <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
+            {totalItems > 0 && (
               <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                {itemCount}
+                {totalItems}
               </span>
             )}
           </Link>
