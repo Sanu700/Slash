@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,20 @@ import GiftPersonalizer from "./pages/GiftPersonalizer";
 import ExperienceManager from "./pages/ExperienceManager";
 import Profile from "./pages/Profile";
 import { requireAuth } from "./lib/auth";
+
+// Import Company Pages
+import AboutUs from "./pages/AboutUs";
+import HowItWorks from "./pages/HowItWorks";
+import Testimonials from "./pages/Testimonials";
+import Careers from "./pages/Careers";
+import Press from "./pages/Press";
+
+// Import Support Pages
+import ContactUs from "./pages/ContactUs";
+import FAQ from "./pages/FAQ";
+import GiftRules from "./pages/GiftRules";
+import Shipping from "./pages/Shipping";
+import Returns from "./pages/Returns";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +56,21 @@ const App = () => (
               <Route path="/gifting-guide" element={<GiftingGuide />} />
               <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
               <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
+              
+              {/* Company Pages */}
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/testimonials" element={<Testimonials />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/press" element={<Press />} />
+              
+              {/* Support Pages */}
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/gift-rules" element={<GiftRules />} />
+              <Route path="/shipping" element={<Shipping />} />
+              <Route path="/returns" element={<Returns />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
