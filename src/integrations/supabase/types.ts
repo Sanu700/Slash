@@ -78,6 +78,48 @@ export type Database = {
         }
         Relationships: []
       }
+      career_listings: {
+        Row: {
+          created_at: string
+          department: string
+          description: string
+          id: string
+          is_active: boolean | null
+          is_remote: boolean | null
+          location: string
+          requirements: string
+          salary_range: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          description: string
+          id?: string
+          is_active?: boolean | null
+          is_remote?: boolean | null
+          location: string
+          requirements: string
+          salary_range?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          is_remote?: boolean | null
+          location?: string
+          requirements?: string
+          salary_range?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -112,6 +154,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      company_pages: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          meta_description: string | null
+          page_name: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          page_name: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          page_name?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       experiences: {
         Row: {
@@ -176,6 +248,75 @@ export type Database = {
         }
         Relationships: []
       }
+      faqs: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          display_order: number
+          id: string
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      press_releases: {
+        Row: {
+          created_at: string
+          excerpt: string
+          external_link: string | null
+          full_content: string | null
+          id: string
+          is_featured: boolean | null
+          publication: string
+          publication_logo_url: string | null
+          published_date: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          excerpt: string
+          external_link?: string | null
+          full_content?: string | null
+          id?: string
+          is_featured?: boolean | null
+          publication: string
+          publication_logo_url?: string | null
+          published_date: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          excerpt?: string
+          external_link?: string | null
+          full_content?: string | null
+          id?: string
+          is_featured?: boolean | null
+          publication?: string
+          publication_logo_url?: string | null
+          published_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -205,6 +346,83 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      support_pages: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          meta_description: string | null
+          page_name: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          page_name: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          page_name?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          avatar_url: string | null
+          company: string | null
+          created_at: string
+          experience_id: string | null
+          id: string
+          is_featured: boolean | null
+          name: string
+          quote: string
+          rating: number | null
+          role: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          experience_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          name: string
+          quote: string
+          rating?: number | null
+          role?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          experience_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          name?: string
+          quote?: string
+          rating?: number | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_experience_id_fkey"
+            columns: ["experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       viewed_experiences: {
         Row: {

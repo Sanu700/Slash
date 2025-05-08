@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Menu, X, Search, ShoppingCart, Gift, LogOut, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { getSavedExperiences } from '@/lib/data';
 import { useAuth } from '@/lib/auth';
+import { NavigationLinks } from '@/components/NavigationLinks';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -134,74 +136,10 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center space-x-8">
-          <Link 
-            to="/#experiences" 
-            className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
-              isScrolled || !isDarkPage 
-                ? "text-gray-800 dark:text-gray-200" 
-                : "text-white"
-            )}
-          >
-            Experiences
-          </Link>
-          <Link 
-            to="/#categories" 
-            className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
-              isScrolled || !isDarkPage 
-                ? "text-gray-800 dark:text-gray-200" 
-                : "text-white"
-            )}
-          >
-            Categories
-          </Link>
-          <Link 
-            to="/gifting-guide" 
-            className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
-              isScrolled || !isDarkPage 
-                ? "text-gray-800 dark:text-gray-200" 
-                : "text-white"
-            )}
-          >
-            Gifting Guide
-          </Link>
-          <Link 
-            to="/gift-personalizer" 
-            className={cn(
-              "transition-colors hover:text-gray-600 dark:hover:text-gray-300 font-medium",
-              isScrolled || !isDarkPage 
-                ? "text-gray-800 dark:text-gray-200" 
-                : "text-white"
-            )}
-          >
-            Gift Personalizer
-          </Link>
-          {isAuthenticated && (
-            <div className="flex items-center space-x-2">
-              <Link
-                to="/manage-experiences"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  isScrolled || !isDarkPage 
-                    ? "text-gray-800" 
-                    : "text-white"
-                )}
-              >
-                Manage Experiences
-              </Link>
-              <button 
-                onClick={() => logout()}
-                className="text-sm font-medium text-red-500 hover:text-red-600 flex items-center"
-              >
-                <LogOut className="h-4 w-4 mr-1" />
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
+        <NavigationLinks 
+          isDarkPage={isDarkPage} 
+          isScrolled={isScrolled} 
+        />
 
         <div className="hidden md:flex items-center space-x-4">
           <button 
@@ -330,6 +268,7 @@ const Navbar = () => {
           </button>
         </div>
 
+        {/* Search Overlay */}
         <div
           className={cn(
             "fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity z-50",
@@ -356,6 +295,7 @@ const Navbar = () => {
               </button>
             </form>
             
+            {/* Search Results */}
             {searchResults.length > 0 && (
               <div className="mt-4 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden divide-y divide-white/10">
                 {searchResults.map(result => (
@@ -392,6 +332,7 @@ const Navbar = () => {
               </div>
             )}
             
+            {/* Popular Searches */}
             <div className="mt-6 text-white">
               <p className="text-sm text-gray-400 mb-3">Popular Searches</p>
               <div className="flex flex-wrap gap-2">
@@ -411,6 +352,7 @@ const Navbar = () => {
           </div>
         </div>
 
+        {/* Mobile Menu */}
         <div
           className={cn(
             "fixed inset-0 bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out md:hidden z-40",
@@ -418,73 +360,13 @@ const Navbar = () => {
           )}
         >
           <div className="flex flex-col h-full pt-20 px-6">
-            <div className="flex flex-col space-y-6 text-xl">
-              <Link 
-                to="/#experiences" 
-                className="py-2 border-b border-gray-100 dark:border-gray-800"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Experiences
-              </Link>
-              <Link 
-                to="/#categories" 
-                className="py-2 border-b border-gray-100 dark:border-gray-800"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Categories
-              </Link>
-              <Link 
-                to="/gifting-guide" 
-                className="py-2 border-b border-gray-100 dark:border-gray-800"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="flex items-center">
-                  <Gift className="h-5 w-5 mr-2" />
-                  Gifting Guide
-                </div>
-              </Link>
-              <Link 
-                to="/gift-personalizer" 
-                className="py-2 border-b border-gray-100 dark:border-gray-800"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="flex items-center">
-                  <Gift className="h-5 w-5 mr-2" />
-                  Gift Personalizer
-                </div>
-              </Link>
-              {isAuthenticated && (
-                <>
-                  <Link 
-                    to="/profile" 
-                    className="py-2 border-b border-gray-100 dark:border-gray-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <User className="h-5 w-5 mr-2" />
-                      My Profile
-                    </div>
-                  </Link>
-                  <Link 
-                    to="/manage-experiences" 
-                    className="py-2 border-b border-gray-100 dark:border-gray-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Manage Experiences
-                  </Link>
-                  <button 
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="py-2 border-b border-gray-100 dark:border-gray-800 text-red-500 flex items-center"
-                  >
-                    <LogOut className="h-5 w-5 mr-2" />
-                    Logout
-                  </button>
-                </>
-              )}
-            </div>
+            <NavigationLinks 
+              isDarkPage={false}
+              isScrolled={true}
+              isMobile={true}
+              closeMobileMenu={() => setMobileMenuOpen(false)}
+            />
+            
             <div className="mt-auto mb-10">
               {isAuthenticated ? (
                 <div className="flex items-center space-x-3 py-4" onClick={handleProfileClick}>

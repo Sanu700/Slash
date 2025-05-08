@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import {
 } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Slash, Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -14,31 +16,31 @@ const Footer = () => {
     {
       title: "Experiences",
       links: [
-        { name: "Adventure", href: "#" },
-        { name: "Dining", href: "#" },
-        { name: "Wellness", href: "#" },
-        { name: "Luxury", href: "#" },
-        { name: "Learning", href: "#" }
+        { name: "Adventure", href: "/category/adventure" },
+        { name: "Dining", href: "/category/dining" },
+        { name: "Wellness", href: "/category/wellness" },
+        { name: "Luxury", href: "/category/luxury" },
+        { name: "Learning", href: "/category/learning" }
       ]
     },
     {
       title: "Company",
       links: [
-        { name: "About Us", href: "#" },
-        { name: "How It Works", href: "#" },
-        { name: "Testimonials", href: "#" },
-        { name: "Careers", href: "#" },
-        { name: "Press", href: "#" }
+        { name: "About Us", href: "/about-us" },
+        { name: "How It Works", href: "/how-it-works" },
+        { name: "Testimonials", href: "/testimonials" },
+        { name: "Careers", href: "/careers" },
+        { name: "Press", href: "/press" }
       ]
     },
     {
       title: "Support",
       links: [
-        { name: "Contact Us", href: "#" },
-        { name: "FAQ", href: "#" },
-        { name: "Gift Rules", href: "#" },
-        { name: "Shipping", href: "#" },
-        { name: "Returns", href: "#" }
+        { name: "Contact Us", href: "/contact" },
+        { name: "FAQ", href: "/faq" },
+        { name: "Gift Rules", href: "/gift-rules" },
+        { name: "Shipping", href: "/shipping" },
+        { name: "Returns", href: "/returns" }
       ]
     }
   ];
@@ -60,14 +62,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo and About */}
           <div className="lg:col-span-2">
-            <a href="/" className="flex items-center space-x-2 mb-6">
+            <Link to="/" className="flex items-center space-x-2 mb-6">
               <img 
                 src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
                 alt="Slash logo" 
                 className="h-8 w-8" 
               />
               <span className="font-medium text-xl">Slash</span>
-            </a>
+            </Link>
             <p className="text-muted-foreground mb-6 max-w-md">
               Curated experience gifts that create lasting memories. We believe in the power of experiences over material possessions.
             </p>
@@ -92,12 +94,12 @@ const Footer = () => {
               <ul className="space-y-3">
                 {column.links.map((link) => (
                   <li key={link.name}>
-                    <a 
-                      href={link.href}
+                    <Link 
+                      to={link.href}
                       className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.name}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -112,9 +114,9 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Slash. All rights reserved.
           </div>
           <div className="flex flex-wrap gap-4">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-foreground transition-colors">Cookie Policy</a>
+            <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link to="/cookie-policy" className="hover:text-foreground transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>

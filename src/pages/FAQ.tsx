@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useInView } from '@/lib/animations';
@@ -8,116 +8,42 @@ import { Input } from '@/components/ui/input';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-
-// FAQ data by category
-const faqData = [
-  {
-    category: 'General',
-    questions: [
-      {
-        id: 'q1',
-        question: 'What is Slash Experiences?',
-        answer: 'Slash Experiences is a curated marketplace for extraordinary experiences. We connect people with unique, high-quality experiences across various categories including adventure, dining, wellness, luxury, and learning. Our platform makes it easy to discover, book, and gift memorable experiences.'
-      },
-      {
-        id: 'q2',
-        question: 'How does Slash Experiences work?',
-        answer: 'We partner with premium experience providers to offer a curated selection of activities. You can browse experiences by category, location, or occasion, then book for yourself or purchase as a gift. Recipients can easily redeem their gift and schedule at their convenience.'
-      },
-      {
-        id: 'q3',
-        question: 'Where are experiences available?',
-        answer: 'We currently offer experiences in major cities across the United States and are continuously expanding. Each experience listing includes location details. You can use our search filters to find experiences in specific areas.'
-      }
-    ]
-  },
-  {
-    category: 'Bookings & Reservations',
-    questions: [
-      {
-        id: 'q4',
-        question: 'How do I book an experience?',
-        answer: 'Simply browse our experiences, select the one you want, choose your preferred date and time (if applicable), and complete the checkout process. You will receive a confirmation email with all the details about your booking.'
-      },
-      {
-        id: 'q5',
-        question: 'Can I reschedule my experience?',
-        answer: 'Yes, most experiences can be rescheduled. The specific reschedule policy varies by experience and is clearly displayed on each experience page. Generally, you can reschedule up to 72 hours before the scheduled time without any fee.'
-      },
-      {
-        id: 'q6',
-        question: 'What happens if the weather is bad?',
-        answer: 'For outdoor experiences affected by weather conditions, providers typically offer rescheduling options or alternative activities. The specific weather policy is listed on each experience page, and the provider will contact you directly if there are concerns about scheduled activities.'
-      }
-    ]
-  },
-  {
-    category: 'Gift Experiences',
-    questions: [
-      {
-        id: 'q7',
-        question: 'How do I purchase an experience as a gift?',
-        answer: 'When viewing an experience, simply select "Buy as Gift" during checkout. You can personalize the gift with a message and choose digital delivery (email) or a physical gift package. The recipient will receive instructions on how to redeem their experience.'
-      },
-      {
-        id: 'q8',
-        question: 'How long are gift vouchers valid?',
-        answer: 'Most gift vouchers are valid for 12 months from the date of purchase. The expiration date is clearly displayed on the voucher. Some seasonal experiences may have different validity periods, which will be clearly indicated.'
-      },
-      {
-        id: 'q9',
-        question: 'Can the gift recipient exchange for a different experience?',
-        answer: 'Yes! Recipients can exchange their gift for any experience of equal or lesser value. If they choose an experience of greater value, they can pay the difference. Exchanges can be made through our website or by contacting customer support.'
-      }
-    ]
-  },
-  {
-    category: 'Payment & Pricing',
-    questions: [
-      {
-        id: 'q10',
-        question: 'What payment methods do you accept?',
-        answer: 'We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, and Apple Pay. All transactions are processed securely using industry-standard encryption.'
-      },
-      {
-        id: 'q11',
-        question: 'Are there any hidden fees?',
-        answer: 'No, the price you see is the price you pay. All applicable taxes and fees are included in the displayed price. There are no hidden charges or booking fees added at checkout.'
-      },
-      {
-        id: 'q12',
-        question: 'Do you offer refunds?',
-        answer: 'Our refund policy varies by experience. Generally, full refunds are available if canceled within 14 days of purchase and at least 72 hours before the scheduled experience. Specific refund policies are displayed on each experience page before purchase.'
-      }
-    ]
-  },
-  {
-    category: 'Account & Support',
-    questions: [
-      {
-        id: 'q13',
-        question: 'How do I create an account?',
-        answer: 'Click on the "Sign Up" button in the top right corner of our website. You can create an account using your email address or sign in with your Google or Facebook account. Having an account allows you to track your bookings, save favorite experiences, and manage your profile.'
-      },
-      {
-        id: 'q14',
-        question: 'How do I contact customer support?',
-        answer: 'Our customer support team is available via email at support@slashexperiences.com, by phone at +1 (555) 123-4567, or through the live chat feature on our website. Support hours are Monday-Friday 9am-8pm, Saturday 10am-6pm, and Sunday 12pm-5pm EST.'
-      },
-      {
-        id: 'q15',
-        question: 'Can I leave a review for an experience?',
-        answer: 'Yes! After you have completed an experience, you will receive an email invitation to share your feedback. You can rate the experience and write a review that will help other customers make informed decisions. We value honest reviews from our community.'
-      }
-    ]
-  }
-];
+import { getFAQs, FAQItem } from '@/lib/services/contentService';
 
 const FAQ = () => {
   const [heroRef, heroInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  const [activeCategory, setActiveCategory] = useState('General');
+  const [activeCategory, setActiveCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [openQuestions, setOpenQuestions] = useState<{[key: string]: boolean}>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [faqsByCategory, setFaqsByCategory] = useState<{[category: string]: FAQItem[]}>({});
+  const [categories, setCategories] = useState<string[]>([]);
+  
+  // Fetch FAQs from Supabase
+  useEffect(() => {
+    const loadFAQs = async () => {
+      setIsLoading(true);
+      try {
+        const faqData = await getFAQs();
+        setFaqsByCategory(faqData);
+        
+        // Extract categories
+        const categoryList = Object.keys(faqData);
+        setCategories(categoryList);
+        
+        // Set initial active category
+        if (categoryList.length > 0 && !activeCategory) {
+          setActiveCategory(categoryList[0]);
+        }
+      } catch (error) {
+        console.error("Error loading FAQs:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadFAQs();
+  }, []);
   
   // Toggle question open/closed state
   const toggleQuestion = (id: string) => {
@@ -129,14 +55,23 @@ const FAQ = () => {
   
   // Filter questions based on search query
   const filteredFAQs = searchQuery 
-    ? faqData.map(category => ({
-        ...category,
-        questions: category.questions.filter(q => 
+    ? Object.entries(faqsByCategory).reduce((result, [category, questions]) => {
+        const filteredQuestions = questions.filter(q => 
           q.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
           q.answer.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      })).filter(category => category.questions.length > 0)
-    : faqData;
+        );
+        
+        if (filteredQuestions.length > 0) {
+          result[category] = filteredQuestions;
+        }
+        
+        return result;
+      }, {} as {[category: string]: FAQItem[]})
+    : faqsByCategory;
+  
+  // Count total filtered questions
+  const totalFilteredQuestions = Object.values(filteredFAQs)
+    .reduce((count, questions) => count + questions.length, 0);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -175,109 +110,119 @@ const FAQ = () => {
         {/* FAQ Content */}
         <section className="py-16 md:py-24">
           <div className="container max-w-6xl mx-auto px-6 md:px-10">
-            <div className="flex flex-col lg:flex-row gap-10">
-              {/* Categories Sidebar */}
-              {!searchQuery && (
-                <div className="lg:w-1/4">
-                  <h2 className="text-xl font-medium mb-6">Categories</h2>
-                  <div className="space-y-2">
-                    {faqData.map(category => (
-                      <button
-                        key={category.category}
-                        onClick={() => setActiveCategory(category.category)}
-                        className={cn(
-                          "block w-full text-left px-4 py-2 rounded-lg transition-colors",
-                          activeCategory === category.category
-                            ? "bg-primary text-white"
-                            : "hover:bg-secondary/50"
-                        )}
-                      >
-                        {category.category}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* FAQ Questions */}
-              <div className={searchQuery ? "w-full" : "lg:w-3/4"}>
-                {searchQuery ? (
-                  // Showing search results
-                  <>
-                    <h2 className="text-xl font-medium mb-6">
-                      {filteredFAQs.length > 0 
-                        ? `Search Results (${filteredFAQs.reduce((total, cat) => total + cat.questions.length, 0)})`
-                        : "No matching questions found"
-                      }
-                    </h2>
-                    <div className="space-y-8">
-                      {filteredFAQs.map(category => (
-                        <div key={category.category}>
-                          <h3 className="text-lg font-medium mb-4 border-b pb-2">{category.category}</h3>
-                          <div className="space-y-4">
-                            {category.questions.map(item => (
-                              <div 
-                                key={item.id} 
-                                className="border border-border rounded-lg overflow-hidden"
-                              >
-                                <button
-                                  onClick={() => toggleQuestion(item.id)}
-                                  className="flex items-center justify-between w-full p-4 text-left"
-                                >
-                                  <h4 className="font-medium">{item.question}</h4>
-                                  {openQuestions[item.id] ? (
-                                    <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                                  ) : (
-                                    <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                                  )}
-                                </button>
-                                
-                                {openQuestions[item.id] && (
-                                  <div className="p-4 pt-0 border-t">
-                                    <p className="text-muted-foreground">{item.answer}</p>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  // Showing selected category
-                  <>
-                    <h2 className="text-2xl font-medium mb-6">{activeCategory}</h2>
-                    <div className="space-y-4">
-                      {faqData.find(cat => cat.category === activeCategory)?.questions.map(item => (
-                        <div 
-                          key={item.id} 
-                          className="border border-border rounded-lg overflow-hidden"
-                        >
-                          <button
-                            onClick={() => toggleQuestion(item.id)}
-                            className="flex items-center justify-between w-full p-4 text-left"
-                          >
-                            <h4 className="font-medium">{item.question}</h4>
-                            {openQuestions[item.id] ? (
-                              <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                            )}
-                          </button>
-                          
-                          {openQuestions[item.id] && (
-                            <div className="p-4 pt-0 border-t">
-                              <p className="text-muted-foreground">{item.answer}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
+            {isLoading ? (
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col lg:flex-row gap-10">
+                {/* Categories Sidebar */}
+                {!searchQuery && categories.length > 0 && (
+                  <div className="lg:w-1/4">
+                    <h2 className="text-xl font-medium mb-6">Categories</h2>
+                    <div className="space-y-2">
+                      {categories.map(category => (
+                        <button
+                          key={category}
+                          onClick={() => setActiveCategory(category)}
+                          className={cn(
+                            "block w-full text-left px-4 py-2 rounded-lg transition-colors",
+                            activeCategory === category
+                              ? "bg-primary text-white"
+                              : "hover:bg-secondary/50"
+                          )}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* FAQ Questions */}
+                <div className={searchQuery || categories.length === 0 ? "w-full" : "lg:w-3/4"}>
+                  {searchQuery ? (
+                    // Showing search results
+                    <>
+                      <h2 className="text-xl font-medium mb-6">
+                        {totalFilteredQuestions > 0 
+                          ? `Search Results (${totalFilteredQuestions})`
+                          : "No matching questions found"
+                        }
+                      </h2>
+                      <div className="space-y-8">
+                        {Object.entries(filteredFAQs).map(([category, questions]) => (
+                          <div key={category}>
+                            <h3 className="text-lg font-medium mb-4 border-b pb-2">{category}</h3>
+                            <div className="space-y-4">
+                              {questions.map(item => (
+                                <div 
+                                  key={item.id} 
+                                  className="border border-border rounded-lg overflow-hidden"
+                                >
+                                  <button
+                                    onClick={() => toggleQuestion(item.id)}
+                                    className="flex items-center justify-between w-full p-4 text-left"
+                                  >
+                                    <h4 className="font-medium">{item.question}</h4>
+                                    {openQuestions[item.id] ? (
+                                      <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                    ) : (
+                                      <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                    )}
+                                  </button>
+                                  
+                                  {openQuestions[item.id] && (
+                                    <div className="p-4 pt-0 border-t">
+                                      <p className="text-muted-foreground">{item.answer}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : activeCategory && faqsByCategory[activeCategory] ? (
+                    // Showing selected category
+                    <>
+                      <h2 className="text-2xl font-medium mb-6">{activeCategory}</h2>
+                      <div className="space-y-4">
+                        {faqsByCategory[activeCategory].map(item => (
+                          <div 
+                            key={item.id} 
+                            className="border border-border rounded-lg overflow-hidden"
+                          >
+                            <button
+                              onClick={() => toggleQuestion(item.id)}
+                              className="flex items-center justify-between w-full p-4 text-left"
+                            >
+                              <h4 className="font-medium">{item.question}</h4>
+                              {openQuestions[item.id] ? (
+                                <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                              )}
+                            </button>
+                            
+                            {openQuestions[item.id] && (
+                              <div className="p-4 pt-0 border-t">
+                                <p className="text-muted-foreground">{item.answer}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">No FAQs available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </section>
         
