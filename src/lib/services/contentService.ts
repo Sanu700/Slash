@@ -61,7 +61,16 @@ export const getCompanyPageContent = async (pageName: string): Promise<PageConte
     return null;
   }
   
-  return data;
+  // Parse the JSON content to ensure it matches the PageContent interface
+  return {
+    id: data.id,
+    page_name: data.page_name,
+    title: data.title,
+    content: typeof data.content === 'string' 
+      ? JSON.parse(data.content) 
+      : data.content as { sections: PageSection[] },
+    meta_description: data.meta_description
+  };
 };
 
 // Support page content functions
@@ -77,5 +86,14 @@ export const getSupportPageContent = async (pageName: string): Promise<PageConte
     return null;
   }
   
-  return data;
+  // Parse the JSON content to ensure it matches the PageContent interface
+  return {
+    id: data.id,
+    page_name: data.page_name,
+    title: data.title,
+    content: typeof data.content === 'string' 
+      ? JSON.parse(data.content) 
+      : data.content as { sections: PageSection[] },
+    meta_description: data.meta_description
+  };
 };
