@@ -48,6 +48,37 @@ export const getFAQs = async (): Promise<{ [category: string]: FAQItem[] }> => {
   }, {} as { [category: string]: FAQItem[] });
 };
 
+// Helper function to ensure content is in the correct format
+const formatPageContent = (data: any): PageContent => {
+  let formattedContent;
+  
+  if (typeof data.content === 'string') {
+    try {
+      formattedContent = JSON.parse(data.content);
+    } catch (e) {
+      console.error('Error parsing JSON content:', e);
+      formattedContent = { sections: [] };
+    }
+  } else if (typeof data.content === 'object' && data.content !== null) {
+    formattedContent = data.content;
+  } else {
+    formattedContent = { sections: [] };
+  }
+  
+  // Ensure the content has the expected structure
+  if (!formattedContent.sections || !Array.isArray(formattedContent.sections)) {
+    formattedContent = { sections: [] };
+  }
+  
+  return {
+    id: data.id,
+    page_name: data.page_name,
+    title: data.title,
+    content: formattedContent as { sections: PageSection[] },
+    meta_description: data.meta_description
+  };
+};
+
 // Company page content functions
 export const getCompanyPageContent = async (pageName: string): Promise<PageContent | null> => {
   const { data, error } = await supabase
@@ -61,16 +92,7 @@ export const getCompanyPageContent = async (pageName: string): Promise<PageConte
     return null;
   }
   
-  // Parse the JSON content to ensure it matches the PageContent interface
-  return {
-    id: data.id,
-    page_name: data.page_name,
-    title: data.title,
-    content: typeof data.content === 'string' 
-      ? JSON.parse(data.content) 
-      : data.content as { sections: PageSection[] },
-    meta_description: data.meta_description
-  };
+  return formatPageContent(data);
 };
 
 // Support page content functions
@@ -86,14 +108,5 @@ export const getSupportPageContent = async (pageName: string): Promise<PageConte
     return null;
   }
   
-  // Parse the JSON content to ensure it matches the PageContent interface
-  return {
-    id: data.id,
-    page_name: data.page_name,
-    title: data.title,
-    content: typeof data.content === 'string' 
-      ? JSON.parse(data.content) 
-      : data.content as { sections: PageSection[] },
-    meta_description: data.meta_description
-  };
+  return formatPageContent(data);
 };
