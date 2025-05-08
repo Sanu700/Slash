@@ -110,13 +110,30 @@ const Navbar = () => {
     location.pathname.includes('/experience/') ||
     location.pathname.includes('/gift-personalizer');
 
+  // Determine background and text colors based on page context for better contrast
+  const navbarBgClass = isScrolled || !isDarkPage
+    ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm"
+    : "bg-black/30 backdrop-blur-md";
+    
+  const iconClass = cn(
+    "transition-colors",
+    isScrolled || !isDarkPage
+      ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
+      : "text-white hover:text-gray-200"
+  );
+
+  const logoTextClass = cn(
+    "font-medium text-xl transition-colors", 
+    isScrolled || !isDarkPage 
+      ? "text-gray-800 dark:text-gray-200" 
+      : "text-white"
+  );
+
   return (
     <nav
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4',
-        isScrolled || !isDarkPage
-          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm'
-          : 'bg-transparent'
+        navbarBgClass
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -124,14 +141,9 @@ const Navbar = () => {
           <img 
             src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
             alt="Slash logo" 
-            className={cn("h-8 w-8 transition-colors")} 
+            className="h-8 w-8" 
           />
-          <span className={cn(
-            "font-medium text-xl transition-colors", 
-            isScrolled || !isDarkPage 
-              ? "text-primary" 
-              : "text-white"
-          )}>
+          <span className={logoTextClass}>
             Slash
           </span>
         </Link>
@@ -147,9 +159,11 @@ const Navbar = () => {
             className={cn(
               "p-2 rounded-full transition-colors",
               isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "hover:bg-white/10",
+              iconClass
             )}
+            aria-label="Search"
           >
             <Search className="h-5 w-5" />
           </button>
@@ -158,9 +172,11 @@ const Navbar = () => {
             className={cn(
               "p-2 rounded-full transition-colors relative",
               isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "hover:bg-white/10",
+              iconClass
             )}
+            aria-label="Shopping cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
@@ -217,7 +233,7 @@ const Navbar = () => {
             <Button 
               variant={isScrolled || !isDarkPage ? "default" : "outline"}
               className={cn(
-                "transition-all",
+                "transition-all font-medium",
                 !isScrolled && isDarkPage && "text-white border-white hover:bg-white/20"
               )}
               onClick={handleSignIn}
@@ -233,9 +249,11 @@ const Navbar = () => {
             className={cn(
               "p-2 rounded-full transition-colors",
               isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "hover:bg-white/10",
+              iconClass
             )}
+            aria-label="Search"
           >
             <Search className="h-5 w-5" />
           </button>
@@ -244,9 +262,11 @@ const Navbar = () => {
             className={cn(
               "p-2 rounded-full transition-colors relative",
               isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "hover:bg-white/10",
+              iconClass
             )}
+            aria-label="Shopping cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
@@ -260,9 +280,11 @@ const Navbar = () => {
             className={cn(
               "p-2 rounded-full transition-colors",
               isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300" 
-                : "hover:bg-white/10 text-white"
+                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "hover:bg-white/10",
+              iconClass
             )}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>

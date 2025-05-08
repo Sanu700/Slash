@@ -25,10 +25,12 @@ export function NavigationLinks({
   isMobile = false,
   closeMobileMenu = () => {}
 }: NavigationLinksProps) {
+  // Create consistent link styling based on background context
+  // Always ensure good contrast with the background
   const linkClass = cn(
     "transition-colors font-medium",
     isScrolled || !isDarkPage 
-      ? "text-gray-800 dark:text-gray-200 hover:text-gray-600 dark:hover:text-gray-300" 
+      ? "text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary" 
       : "text-white hover:text-gray-200"
   );
 
@@ -38,18 +40,11 @@ export function NavigationLinks({
     return (
       <div className="flex flex-col space-y-6 text-xl">
         <Link 
-          to="/#experiences" 
+          to="/experiences" 
           className={mobileClass}
           onClick={closeMobileMenu}
         >
-          Experiences
-        </Link>
-        <Link 
-          to="/#categories" 
-          className={mobileClass}
-          onClick={closeMobileMenu}
-        >
-          Categories
+          All Experiences
         </Link>
         
         {/* Company Pages Dropdown */}
@@ -102,16 +97,17 @@ export function NavigationLinks({
             asChild 
             className={navigationMenuTriggerStyle()}
           >
-            <Link to="/#experiences" className={linkClass}>Experiences</Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        
-        <NavigationMenuItem>
-          <NavigationMenuLink 
-            asChild 
-            className={navigationMenuTriggerStyle()}
-          >
-            <Link to="/#categories" className={linkClass}>Categories</Link>
+            <Link 
+              to="/experiences" 
+              className={cn(
+                navigationMenuTriggerStyle(),
+                isScrolled || !isDarkPage 
+                  ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
+                  : "text-white hover:bg-white/10"
+              )}
+            >
+              All Experiences
+            </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
         
@@ -121,8 +117,8 @@ export function NavigationLinks({
             className={cn(
               navigationMenuTriggerStyle(),
               isScrolled || !isDarkPage 
-                ? "text-gray-800 dark:text-gray-200" 
-                : "text-white"
+                ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "text-white hover:bg-white/10"
             )}
           >
             Company
@@ -194,8 +190,8 @@ export function NavigationLinks({
             className={cn(
               navigationMenuTriggerStyle(),
               isScrolled || !isDarkPage 
-                ? "text-gray-800 dark:text-gray-200" 
-                : "text-white"
+                ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "text-white hover:bg-white/10"
             )}
           >
             Support
@@ -266,7 +262,17 @@ export function NavigationLinks({
             asChild 
             className={navigationMenuTriggerStyle()}
           >
-            <Link to="/gifting-guide" className={linkClass}>Gifting Guide</Link>
+            <Link 
+              to="/gifting-guide" 
+              className={cn(
+                navigationMenuTriggerStyle(),
+                isScrolled || !isDarkPage 
+                  ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
+                  : "text-white hover:bg-white/10"
+              )}
+            >
+              Gifting Guide
+            </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
         
@@ -275,7 +281,17 @@ export function NavigationLinks({
             asChild 
             className={navigationMenuTriggerStyle()}
           >
-            <Link to="/gift-personalizer" className={linkClass}>Gift Personalizer</Link>
+            <Link 
+              to="/gift-personalizer" 
+              className={cn(
+                navigationMenuTriggerStyle(),
+                isScrolled || !isDarkPage 
+                  ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
+                  : "text-white hover:bg-white/10"
+              )}
+            >
+              Gift Personalizer
+            </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
       </NavigationMenuList>

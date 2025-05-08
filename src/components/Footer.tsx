@@ -16,6 +16,7 @@ const Footer = () => {
     {
       title: "Experiences",
       links: [
+        { name: "All Experiences", href: "/experiences" },
         { name: "Adventure", href: "/category/adventure" },
         { name: "Dining", href: "/category/dining" },
         { name: "Wellness", href: "/category/wellness" },
