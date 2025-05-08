@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
-import { Truck, Mail, Clock, Calendar, PackageCheck, Globe } from 'lucide-react';
+import { Truck, Mail, Clock, Calendar, PackageCheck, Globe, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 

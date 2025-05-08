@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, Clock, Calendar, AlertCircle, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Calendar, AlertCircle, ArrowLeftRight, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
