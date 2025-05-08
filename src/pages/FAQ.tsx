@@ -37,7 +37,7 @@ const faqData = [
       {
         id: 'q4',
         question: 'How do I book an experience?',
-        answer: 'Simply browse our experiences, select the one you want, choose your preferred date and time (if applicable), and complete the checkout process. You'll receive a confirmation email with all the details about your booking.'
+        answer: 'Simply browse our experiences, select the one you want, choose your preferred date and time (if applicable), and complete the checkout process. You will receive a confirmation email with all the details about your booking.'
       },
       {
         id: 'q5',
@@ -107,7 +107,7 @@ const faqData = [
       {
         id: 'q15',
         question: 'Can I leave a review for an experience?',
-        answer: 'Yes! After you've completed an experience, you'll receive an email invitation to share your feedback. You can rate the experience and write a review that will help other customers make informed decisions. We value honest reviews from our community.'
+        answer: 'Yes! After you have completed an experience, you will receive an email invitation to share your feedback. You can rate the experience and write a review that will help other customers make informed decisions. We value honest reviews from our community.'
       }
     ]
   }
