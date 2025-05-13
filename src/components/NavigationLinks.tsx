@@ -42,11 +42,11 @@ export function NavigationLinks({
 
   if (isMobile) {
     return (
-      <div className="flex flex-col space-y-4 text-base bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-col space-y-6 text-lg bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
+        <div className="flex items-center justify-between mb-4">
           <button 
             onClick={closeMobileMenu}
-            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
+            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary text-base"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -57,7 +57,7 @@ export function NavigationLinks({
 
         <Link 
           to="/experiences" 
-          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
+          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary text-lg")}
           onClick={() => handleNavigation(closeMobileMenu)}
         >
           All Experiences
@@ -65,34 +65,38 @@ export function NavigationLinks({
         
         {/* Company Pages Dropdown */}
         <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
-          <div className="font-medium mb-2">Company</div>
-          <div className="pl-4 flex flex-col space-y-2 text-sm">
+          <div className="font-medium mb-3 text-lg">Company</div>
+          <div className="pl-4 flex flex-col space-y-3 text-base">
             <Link to="/about-us" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">About Us</Link>
             <Link to="/how-it-works" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
             <Link to="/testimonials" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
+            <Link to="/careers" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Careers</Link>
+            <Link to="/press" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Press</Link>
           </div>
         </div>
         
         {/* Support Pages Dropdown */}
         <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
-          <div className="font-medium mb-2">Support</div>
-          <div className="pl-4 flex flex-col space-y-2 text-sm">
+          <div className="font-medium mb-3 text-lg">Support</div>
+          <div className="pl-4 flex flex-col space-y-3 text-base">
             <Link to="/contact" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
             <Link to="/faq" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
             <Link to="/gift-rules" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
+            <Link to="/shipping" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
+            <Link to="/returns" onClick={() => handleNavigation(closeMobileMenu)} className="hover:text-primary dark:hover:text-primary">Returns</Link>
           </div>
         </div>
         
         <Link 
           to="/gifting-guide" 
-          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
+          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary text-lg")}
           onClick={() => handleNavigation(closeMobileMenu)}
         >
           Gifting Guide
         </Link>
         <Link 
           to="/gift-personalizer" 
-          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
+          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary text-lg")}
           onClick={() => handleNavigation(closeMobileMenu)}
         >
           Gift Personalizer
