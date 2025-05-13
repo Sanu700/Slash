@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,21 +12,99 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { Gift, Calendar, Heart, PenLine, Sparkles } from 'lucide-react';
+import { Gift, Calendar, Heart, PenLine, Sparkles, Mail } from 'lucide-react';
 import { categories } from '@/lib/data';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomizeSection = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
+  const { toast } = useToast();
   
   // Form states
   const [recipient, setRecipient] = useState('');
   const [giftMessage, setGiftMessage] = useState('');
   const [category, setCategory] = useState('');
   const [deliveryType, setDeliveryType] = useState('email');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Preview card state
   const [previewStyle, setPreviewStyle] = useState('classic');
+  
+  // Check if user is logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setUserId(data.session.user.id);
+      }
+    };
+    
+    checkUser();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUserId(session?.user.id || null);
+      }
+    );
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+  
+  const handleSavePersonalization = async () => {
+    if (!recipient) {
+      toast({
+        title: "Recipient name required",
+        description: "Please enter a recipient name to save your personalization.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (deliveryType === 'email' && !recipientEmail) {
+      toast({
+        title: "Recipient email required",
+        description: "Please enter a recipient email for email delivery.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      const { error } = await supabase.from('gift_personalizations').insert({
+        user_id: userId,
+        recipient_name: recipient,
+        category,
+        message: giftMessage,
+        delivery_method: deliveryType,
+        card_style: previewStyle,
+        recipient_email: recipientEmail,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Personalization saved",
+        description: "Your gift personalization has been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving personalization:', error);
+      toast({
+        title: "Error saving personalization",
+        description: "There was an error saving your personalization. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   return (
     <section 
@@ -124,6 +202,19 @@ const CustomizeSection = () => {
                 </div>
               </div>
               
+              {deliveryType === 'email' && (
+                <div className="space-y-2">
+                  <Label htmlFor="recipientEmail">Recipient's Email</Label>
+                  <Input 
+                    id="recipientEmail" 
+                    type="email"
+                    placeholder="Enter recipient's email" 
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                  />
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <Label>Card Style</Label>
                 <div className="grid grid-cols-3 gap-4 pt-1">
@@ -151,6 +242,14 @@ const CustomizeSection = () => {
                   ))}
                 </div>
               </div>
+              
+              <Button 
+                className="w-full mt-4" 
+                onClick={handleSavePersonalization}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Personalization"}
+              </Button>
             </div>
           </div>
           
@@ -209,9 +308,15 @@ const CustomizeSection = () => {
                       ? `Selected Category: ${categories.find(c => c.id === category)?.name}` 
                       : "Select a gift category"}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 mb-2">
                     Delivery Method: {deliveryType === 'email' ? 'Email' : 'Print at Home'}
                   </div>
+                  {deliveryType === 'email' && recipientEmail && (
+                    <div className="text-sm text-gray-500 flex items-center">
+                      <Mail className="h-3 w-3 mr-1" />
+                      {recipientEmail}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

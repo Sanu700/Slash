@@ -278,6 +278,99 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_personalizations: {
+        Row: {
+          card_style: string
+          category: string | null
+          created_at: string
+          delivery_method: string
+          id: string
+          message: string | null
+          recipient_email: string | null
+          recipient_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          card_style: string
+          category?: string | null
+          created_at?: string
+          delivery_method: string
+          id?: string
+          message?: string | null
+          recipient_email?: string | null
+          recipient_name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          card_style?: string
+          category?: string | null
+          created_at?: string
+          delivery_method?: string
+          id?: string
+          message?: string | null
+          recipient_email?: string | null
+          recipient_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      gift_questionnaire_responses: {
+        Row: {
+          adventurous: number | null
+          amazon: string | null
+          budget: string
+          created_at: string
+          facebook: string | null
+          id: string
+          instagram: string | null
+          interests: string[]
+          learning: number | null
+          occasion: string
+          recipient: string
+          relationship: string
+          relaxation: number | null
+          social: number | null
+          user_id: string | null
+        }
+        Insert: {
+          adventurous?: number | null
+          amazon?: string | null
+          budget: string
+          created_at?: string
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          interests: string[]
+          learning?: number | null
+          occasion: string
+          recipient: string
+          relationship: string
+          relaxation?: number | null
+          social?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          adventurous?: number | null
+          amazon?: string | null
+          budget?: string
+          created_at?: string
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          interests?: string[]
+          learning?: number | null
+          occasion?: string
+          recipient?: string
+          relationship?: string
+          relaxation?: number | null
+          social?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       press_releases: {
         Row: {
           created_at: string
