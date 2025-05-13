@@ -1,5 +1,5 @@
 
-import { Activity, Utensils, Spa, Crown, BookOpen } from "lucide-react";
+import { Activity, UtensilsCrossed, Leaf, Crown, BookOpen } from "lucide-react";
 
 export interface Category {
   id: string;
@@ -22,14 +22,14 @@ export const categories: Category[] = [
     name: "Dining",
     description: "Exceptional culinary experiences",
     imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=2574&auto=format&fit=crop",
-    icon: Utensils
+    icon: UtensilsCrossed
   },
   {
     id: "cat3",
     name: "Wellness",
     description: "Relaxation and rejuvenation",
     imageUrl: "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?q=80&w=2678&auto=format&fit=crop",
-    icon: Spa
+    icon: Leaf
   },
   {
     id: "cat4",
