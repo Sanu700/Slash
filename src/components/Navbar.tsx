@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Menu, X, Search, ShoppingCart, Gift, LogOut, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -233,9 +234,7 @@ const Navbar = () => {
               variant={isScrolled || !isDarkPage ? "default" : "outline"}
               className={cn(
                 "transition-all font-medium",
-                isScrolled || !isDarkPage 
-                  ? "bg-primary text-white hover:bg-primary/90" 
-                  : "border-white text-white hover:bg-white/10"
+                !isScrolled && isDarkPage && "text-white border-white hover:bg-white/20"
               )}
               onClick={handleSignIn}
             >
