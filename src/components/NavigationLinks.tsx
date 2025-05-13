@@ -37,49 +37,49 @@ export function NavigationLinks({
 
   if (isMobile) {
     return (
-      <div className="flex flex-col space-y-6 text-xl">
+      <div className="flex flex-col space-y-6 text-xl bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
         <Link 
           to="/experiences" 
-          className={mobileClass}
+          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
           onClick={closeMobileMenu}
         >
           All Experiences
         </Link>
         
         {/* Company Pages Dropdown */}
-        <div className="py-2 border-b border-gray-100 dark:border-gray-800">
+        <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
           <div className="font-medium mb-2">Company</div>
           <div className="pl-4 flex flex-col space-y-3 text-base">
-            <Link to="/about-us" onClick={closeMobileMenu}>About Us</Link>
-            <Link to="/how-it-works" onClick={closeMobileMenu}>How It Works</Link>
-            <Link to="/testimonials" onClick={closeMobileMenu}>Testimonials</Link>
-            <Link to="/careers" onClick={closeMobileMenu}>Careers</Link>
-            <Link to="/press" onClick={closeMobileMenu}>Press</Link>
+            <Link to="/about-us" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">About Us</Link>
+            <Link to="/how-it-works" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
+            <Link to="/testimonials" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
+            <Link to="/careers" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Careers</Link>
+            <Link to="/press" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Press</Link>
           </div>
         </div>
         
         {/* Support Pages Dropdown */}
-        <div className="py-2 border-b border-gray-100 dark:border-gray-800">
+        <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
           <div className="font-medium mb-2">Support</div>
           <div className="pl-4 flex flex-col space-y-3 text-base">
-            <Link to="/contact" onClick={closeMobileMenu}>Contact Us</Link>
-            <Link to="/faq" onClick={closeMobileMenu}>FAQ</Link>
-            <Link to="/gift-rules" onClick={closeMobileMenu}>Gift Rules</Link>
-            <Link to="/shipping" onClick={closeMobileMenu}>Shipping</Link>
-            <Link to="/returns" onClick={closeMobileMenu}>Returns</Link>
+            <Link to="/contact" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
+            <Link to="/faq" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
+            <Link to="/gift-rules" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
+            <Link to="/shipping" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
+            <Link to="/returns" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Returns</Link>
           </div>
         </div>
         
         <Link 
           to="/gifting-guide" 
-          className={mobileClass}
+          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
           onClick={closeMobileMenu}
         >
           Gifting Guide
         </Link>
         <Link 
           to="/gift-personalizer" 
-          className={mobileClass}
+          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
           onClick={closeMobileMenu}
         >
           Gift Personalizer
