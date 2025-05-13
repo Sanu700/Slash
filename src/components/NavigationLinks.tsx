@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -103,7 +102,7 @@ export function NavigationLinks({
                 navigationMenuTriggerStyle(),
                 isScrolled || !isDarkPage 
                   ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
-                  : "text-white hover:bg-white/10"
+                  : "text-gray-900 hover:bg-gray-100/20"
               )}
             >
               All Experiences
@@ -118,7 +117,7 @@ export function NavigationLinks({
               navigationMenuTriggerStyle(),
               isScrolled || !isDarkPage 
                 ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
-                : "text-white hover:bg-white/10"
+                : "text-gray-900 hover:bg-gray-100/20"
             )}
           >
             Company
@@ -191,7 +190,7 @@ export function NavigationLinks({
               navigationMenuTriggerStyle(),
               isScrolled || !isDarkPage 
                 ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
-                : "text-white hover:bg-white/10"
+                : "text-gray-900 hover:bg-gray-100/20"
             )}
           >
             Support
@@ -268,7 +267,7 @@ export function NavigationLinks({
                 navigationMenuTriggerStyle(),
                 isScrolled || !isDarkPage 
                   ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
-                  : "text-white hover:bg-white/10"
+                  : "text-gray-900 hover:bg-gray-100/20"
               )}
             >
               Gifting Guide
@@ -287,7 +286,7 @@ export function NavigationLinks({
                 navigationMenuTriggerStyle(),
                 isScrolled || !isDarkPage 
                   ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
-                  : "text-white hover:bg-white/10"
+                  : "text-gray-900 hover:bg-gray-100/20"
               )}
             >
               Gift Personalizer
