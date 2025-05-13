@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -94,6 +93,14 @@ const CustomizeSection = () => {
         title: "Personalization saved",
         description: "Your gift personalization has been saved successfully.",
       });
+
+      // Clear all form fields after successful submission
+      setRecipient('');
+      setGiftMessage('');
+      setCategory('');
+      setDeliveryType('email');
+      setRecipientEmail('');
+      setPreviewStyle('classic');
     } catch (error) {
       console.error('Error saving personalization:', error);
       toast({
