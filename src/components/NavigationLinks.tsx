@@ -48,7 +48,7 @@ export function NavigationLinks({
       <div className="flex flex-col space-y-4 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
         {/* Back Button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={closeMobileMenu}
           className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary mb-2"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
