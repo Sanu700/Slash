@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -83,33 +82,14 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
     try {
       console.log("Saving profile data:", profileData);
       
-      // Update auth metadata (name and avatar)
+      // Update profile with all fields
       await updateProfile({
         full_name: profileData.full_name,
-        avatar_url: profileData.avatar_url
+        avatar_url: profileData.avatar_url,
+        phone: profileData.phone,
+        address: profileData.address,
+        bio: profileData.bio
       });
-      
-      console.log("Auth profile updated, now updating extended profile");
-      
-      // Update extended profile data
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: profileData.full_name,
-          avatar_url: profileData.avatar_url,
-          phone: profileData.phone || null,
-          address: profileData.address || null,
-          bio: profileData.bio || null,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
-        });
-        
-      if (error) {
-        console.error("Error updating profile in Supabase:", error);
-        throw error;
-      }
       
       console.log("Profile updated successfully");
       setEditMode(false);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +18,13 @@ type AuthContextType = {
   login: (id: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  updateProfile: (data: { full_name?: string; avatar_url?: string }) => Promise<void>;
+  updateProfile: (data: { 
+    full_name?: string; 
+    avatar_url?: string;
+    phone?: string;
+    address?: string;
+    bio?: string;
+  }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -125,28 +130,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   // Profile update function
-  const updateProfile = async (data: { full_name?: string; avatar_url?: string }) => {
+  const updateProfile = async (data: { 
+    full_name?: string; 
+    avatar_url?: string;
+    phone?: string;
+    address?: string;
+    bio?: string;
+  }) => {
     try {
       if (!user) {
         throw new Error('User not authenticated');
       }
       
-      // First update the user metadata
+      // First update the user metadata (only name and avatar)
       const { error: updateError } = await supabase.auth.updateUser({
-        data: data
+        data: {
+          full_name: data.full_name,
+          avatar_url: data.avatar_url
+        }
       });
       
       if (updateError) {
         throw updateError;
       }
       
-      // Update the profiles table if it exists
+      // Update the profiles table with all fields
       const { error: profileError } = await supabase
         .from('profiles')
-        .update(data)
-        .eq('id', user.id);
+        .upsert({
+          id: user.id,
+          full_name: data.full_name,
+          avatar_url: data.avatar_url,
+          phone: data.phone || null,
+          address: data.address || null,
+          bio: data.bio || null,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
       
-      if (profileError && profileError.code !== 'PGRST116') { // Ignore if table doesn't exist
+      if (profileError) {
         throw profileError;
       }
       
@@ -161,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
+      throw error;
     }
   };
   
