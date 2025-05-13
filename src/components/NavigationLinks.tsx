@@ -18,13 +18,15 @@ interface NavigationLinksProps {
   isScrolled: boolean;
   isMobile?: boolean;
   closeMobileMenu?: () => void;
+  className?: string;
 }
 
 export function NavigationLinks({ 
   isDarkPage, 
   isScrolled, 
   isMobile = false,
-  closeMobileMenu = () => {}
+  closeMobileMenu = () => {},
+  className
 }: NavigationLinksProps) {
   const navigate = useNavigate();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
