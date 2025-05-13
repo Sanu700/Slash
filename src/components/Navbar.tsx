@@ -62,20 +62,21 @@ export function Navbar({ isDarkPage = false, className }: NavbarProps) {
           />
 
           {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4 h-12">
             <Search className={cn(
-              "w-64",
+              "h-12 min-w-[180px] max-w-xs flex items-center",
               isScrolled || !isDarkPage 
                 ? "text-gray-900 dark:text-white" 
-                : "text-white",
-              "[&_input]:h-10 [&_input]:py-2 [&_input]:text-base"
+                : "text-white"
             )} />
             <CartButton className={cn(
+              "h-12 flex items-center justify-center",
               isScrolled || !isDarkPage 
                 ? "text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800" 
                 : "text-white hover:bg-white/10"
             )} />
             <UserMenu className={cn(
+              "h-12 flex items-center justify-center",
               isScrolled || !isDarkPage 
                 ? "text-gray-900 dark:text-white" 
                 : "text-white"
@@ -94,6 +95,7 @@ export function Navbar({ isDarkPage = false, className }: NavbarProps) {
                     ? "text-gray-900 dark:text-white" 
                     : "text-white"
                 )}
+                aria-label="Open mobile menu"
               >
                 <Menu className="h-6 w-6" />
               </Button>
@@ -112,35 +114,50 @@ export function Navbar({ isDarkPage = false, className }: NavbarProps) {
                     variant="ghost"
                     size="icon"
                     onClick={closeMobileMenu}
+                    aria-label="Close mobile menu"
                   >
                     <X className="h-6 w-6" />
                   </Button>
                 </div>
 
+                {/* Mobile Navigation Links */}
                 <div className="flex-1 overflow-y-auto">
                   <NavigationLinks 
                     isDarkPage={isDarkPage} 
                     isScrolled={isScrolled}
-                    isMobile
+                    isMobile={true}
                     closeMobileMenu={closeMobileMenu}
                   />
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-4 mt-4">
                   <div className="flex flex-col space-y-4">
-                    <Search className={cn(
-                      "w-full",
-                      "[&_input]:h-10 [&_input]:py-2 [&_input]:text-base"
-                    )} />
+                    <Search className="w-full h-12" />
                     <div className="flex items-center justify-between">
-                      <CartButton className="flex-1" />
-                      <UserMenu className="flex-1" />
+                      <CartButton className="flex-1 h-12" />
+                      <UserMenu className="flex-1 h-12" />
                     </div>
                   </div>
                 </div>
               </div>
             </SheetContent>
           </Sheet>
+
+          {/* Fallback for mobile nav if Sheet is not working */}
+          <div className="md:hidden">
+            {isMobileMenuOpen && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex flex-col">
+                <div className="bg-white dark:bg-gray-900 p-4 flex-1 overflow-y-auto">
+                  <NavigationLinks 
+                    isDarkPage={isDarkPage} 
+                    isScrolled={isScrolled}
+                    isMobile={true}
+                    closeMobileMenu={closeMobileMenu}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
