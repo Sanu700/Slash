@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   NavigationMenu,
@@ -10,6 +10,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { ChevronLeft } from 'lucide-react';
 
 interface NavigationLinksProps {
   isDarkPage: boolean;
@@ -24,6 +25,13 @@ export function NavigationLinks({
   isMobile = false,
   closeMobileMenu = () => {}
 }: NavigationLinksProps) {
+  const navigate = useNavigate();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const toggleDropdown = (name: string) => {
+    setOpenDropdown(openDropdown === name ? null : name);
+  };
+
   // Create consistent link styling based on background context
   // Always ensure good contrast with the background
   const linkClass = cn(
@@ -37,7 +45,16 @@ export function NavigationLinks({
 
   if (isMobile) {
     return (
-      <div className="flex flex-col space-y-6 text-xl bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
+      <div className="flex flex-col space-y-4 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary mb-2"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" />
+          Back
+        </button>
+
         <Link 
           to="/experiences" 
           className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
@@ -46,28 +63,44 @@ export function NavigationLinks({
           All Experiences
         </Link>
         
-        {/* Company Pages Dropdown */}
+        {/* Company Dropdown */}
         <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
-          <div className="font-medium mb-2">Company</div>
-          <div className="pl-4 flex flex-col space-y-3 text-base">
-            <Link to="/about-us" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">About Us</Link>
-            <Link to="/how-it-works" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
-            <Link to="/testimonials" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
-            <Link to="/careers" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Careers</Link>
-            <Link to="/press" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Press</Link>
-          </div>
+          <button
+            onClick={() => toggleDropdown('company')}
+            className="flex justify-between items-center w-full font-medium"
+          >
+            Company
+            <ChevronLeft className={cn("w-5 h-5 transition-transform", openDropdown === 'company' ? 'rotate-90' : '')} />
+          </button>
+          {openDropdown === 'company' && (
+            <div className="pl-4 mt-2 flex flex-col space-y-3 text-base">
+              <Link to="/about-us" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">About Us</Link>
+              <Link to="/how-it-works" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
+              <Link to="/testimonials" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
+              <Link to="/careers" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Careers</Link>
+              <Link to="/press" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Press</Link>
+            </div>
+          )}
         </div>
         
-        {/* Support Pages Dropdown */}
+        {/* Support Dropdown */}
         <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
-          <div className="font-medium mb-2">Support</div>
-          <div className="pl-4 flex flex-col space-y-3 text-base">
-            <Link to="/contact" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
-            <Link to="/faq" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
-            <Link to="/gift-rules" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
-            <Link to="/shipping" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
-            <Link to="/returns" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Returns</Link>
-          </div>
+          <button
+            onClick={() => toggleDropdown('support')}
+            className="flex justify-between items-center w-full font-medium"
+          >
+            Support
+            <ChevronLeft className={cn("w-5 h-5 transition-transform", openDropdown === 'support' ? 'rotate-90' : '')} />
+          </button>
+          {openDropdown === 'support' && (
+            <div className="pl-4 mt-2 flex flex-col space-y-3 text-base">
+              <Link to="/contact" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
+              <Link to="/faq" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
+              <Link to="/gift-rules" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
+              <Link to="/shipping" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
+              <Link to="/returns" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Returns</Link>
+            </div>
+          )}
         </div>
         
         <Link 
