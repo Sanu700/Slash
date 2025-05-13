@@ -60,11 +60,11 @@ export const Search = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsOpen(true)}
           className={cn(
-            "pl-10 pr-4 rounded-lg bg-white/10 backdrop-blur-md border-0 focus-visible:ring-2 focus-visible:ring-primary",
-            "placeholder:text-gray-500 dark:placeholder:text-gray-400"
+            "pl-10 pr-4 h-12 rounded-full bg-white dark:bg-white/90 text-base border-0 shadow-none focus-visible:ring-2 focus-visible:ring-primary transition placeholder:text-gray-500 dark:placeholder:text-gray-400",
+            "min-w-[180px] max-w-xs"
           )}
         />
-        <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
       </form>
       
       {isOpen && searchResults.length > 0 && (
