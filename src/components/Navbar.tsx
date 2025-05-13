@@ -67,7 +67,8 @@ export function Navbar({ isDarkPage = false, className }: NavbarProps) {
               "w-64",
               isScrolled || !isDarkPage 
                 ? "text-gray-900 dark:text-white" 
-                : "text-white"
+                : "text-white",
+              "[&_input]:h-10 [&_input]:py-2 [&_input]:text-base"
             )} />
             <CartButton className={cn(
               isScrolled || !isDarkPage 
@@ -127,7 +128,10 @@ export function Navbar({ isDarkPage = false, className }: NavbarProps) {
 
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-4 mt-4">
                   <div className="flex flex-col space-y-4">
-                    <Search className="w-full" />
+                    <Search className={cn(
+                      "w-full",
+                      "[&_input]:h-10 [&_input]:py-2 [&_input]:text-base"
+                    )} />
                     <div className="flex items-center justify-between">
                       <CartButton className="flex-1" />
                       <UserMenu className="flex-1" />
