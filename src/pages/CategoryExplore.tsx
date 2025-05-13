@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { categories } from '@/lib/data/categories';
-import { getExperiencesByCategory } from '@/lib/data';
+import { getExperiencesByCategoryTags } from '@/lib/data';
 import { Experience, Category } from '@/lib/data/types';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -14,6 +13,7 @@ import { useInView } from '@/lib/animations';
 
 const CategoryExplore = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
   const [filteredExperiences, setFilteredExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +35,7 @@ const CategoryExplore = () => {
         setIsLoading(true);
         try {
           if (id) {
-            const experiences = await getExperiencesByCategory(id);
+            const experiences = await getExperiencesByCategoryTags(id);
             setFilteredExperiences(experiences);
           }
         } catch (error) {
@@ -105,9 +105,9 @@ const CategoryExplore = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           
           <div className="absolute top-6 left-6">
-            <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
+            <button onClick={() => navigate(-1)} className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
               <ArrowLeft className="h-5 w-5 text-white" />
-            </Link>
+            </button>
           </div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">

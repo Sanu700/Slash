@@ -1,4 +1,3 @@
-
 // Export types directly
 export * from './types';
 
@@ -549,6 +548,52 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
     const categoryObj = categories.find(cat => cat.id === categoryId);
     return localExperiences.filter(exp => 
       categoryObj && exp.category?.toLowerCase() === categoryObj.name.toLowerCase()
+    );
+  }
+};
+
+// Get experiences by category's associated nicheCategoryIds
+export const getExperiencesByCategoryTags = async (categoryId: string): Promise<Experience[]> => {
+  try {
+    const categoryObj = categories.find(cat => cat.id === categoryId);
+    if (!categoryObj) return [];
+    if (!categoryObj.nicheCategoryIds || categoryObj.nicheCategoryIds.length === 0) return [];
+
+    // Fetch all experiences from Supabase
+    const { data, error } = await supabase
+      .from('experiences')
+      .select('*')
+      .in('niche_category', categoryObj.nicheCategoryIds);
+
+    if (error) throw error;
+    if (!data) return [];
+
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      imageUrl: item.image_url,
+      price: item.price,
+      location: item.location,
+      duration: item.duration,
+      participants: item.participants,
+      date: item.date,
+      category: item.category,
+      nicheCategory: item.niche_category,
+      trending: item.trending,
+      featured: item.featured,
+      romantic: item.romantic,
+      adventurous: item.adventurous,
+      group: item.group_activity
+    })) as Experience[];
+  } catch (err) {
+    console.error('Error loading experiences by category tags:', err);
+    // Fallback: filter local experiences
+    const localExperiences = getSavedExperiences();
+    const categoryObj = categories.find(cat => cat.id === categoryId);
+    if (!categoryObj) return [];
+    return localExperiences.filter(exp =>
+      exp.nicheCategory && categoryObj.nicheCategoryIds.includes(exp.nicheCategory)
     );
   }
 };
