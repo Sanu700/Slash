@@ -48,19 +48,7 @@ export function NavigationLinks({
 
   if (isMobile) {
     return (
-      <div className="flex flex-col space-y-4 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
-        {/* Back Button */}
-        <button
-          onClick={() => {
-            closeMobileMenu();
-            scrollToTop();
-          }}
-          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary mb-2"
-        >
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          Back
-        </button>
-
+      <div className={cn("flex flex-col space-y-4", className)}>
         <Link 
           to="/experiences" 
           className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
@@ -137,7 +125,7 @@ export function NavigationLinks({
   }
 
   return (
-    <NavigationMenu className="hidden md:flex">
+    <NavigationMenu className={cn("hidden md:flex", className)}>
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuLink 
