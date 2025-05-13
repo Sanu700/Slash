@@ -19,11 +19,11 @@ type AuthContextType = {
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   updateProfile: (data: { 
-    full_name?: string; 
-    avatar_url?: string;
-    phone?: string;
-    address?: string;
-    bio?: string;
+    full_name?: string | null; 
+    avatar_url?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    bio?: string | null;
   }) => Promise<void>;
 };
 
@@ -131,16 +131,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Profile update function
   const updateProfile = async (data: { 
-    full_name?: string; 
-    avatar_url?: string;
-    phone?: string;
-    address?: string;
-    bio?: string;
+    full_name?: string | null; 
+    avatar_url?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    bio?: string | null;
   }) => {
     try {
       if (!user) {
         throw new Error('User not authenticated');
       }
+      
+      console.log('Starting profile update with data:', data);
       
       // First update the user metadata (only name and avatar)
       const { error: updateError } = await supabase.auth.updateUser({
@@ -151,8 +153,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (updateError) {
-        throw updateError;
+        console.error('Error updating auth metadata:', updateError);
+        throw new Error(`Failed to update profile: ${updateError.message}`);
       }
+      
+      console.log('Auth metadata updated successfully');
       
       // Update the profiles table with all fields
       const { error: profileError } = await supabase
@@ -161,30 +166,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: user.id,
           full_name: data.full_name,
           avatar_url: data.avatar_url,
-          phone: data.phone || null,
-          address: data.address || null,
-          bio: data.bio || null,
+          phone: data.phone,
+          address: data.address,
+          bio: data.bio,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'id'
         });
       
       if (profileError) {
-        throw profileError;
+        console.error('Error updating profiles table:', profileError);
+        throw new Error(`Failed to update profile data: ${profileError.message}`);
       }
       
-      toast.success('Profile updated successfully');
+      console.log('Profiles table updated successfully');
       
       // Refresh the session to get updated user data
-      const { data: { session: newSession } } = await supabase.auth.getSession();
+      const { data: { session: newSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error refreshing session:', sessionError);
+        throw new Error(`Failed to refresh session: ${sessionError.message}`);
+      }
+      
       if (newSession) {
         setSession(newSession);
         setUser(newSession.user);
+        console.log('Session refreshed successfully');
       }
+      
+      toast.success('Profile updated successfully');
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-      throw error;
+      console.error('Error in updateProfile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
+      toast.error(errorMessage);
+      throw error; // Re-throw to let the component handle it
     }
   };
   

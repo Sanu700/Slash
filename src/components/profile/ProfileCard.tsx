@@ -82,21 +82,28 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
     try {
       console.log("Saving profile data:", profileData);
       
+      // Convert empty strings to null for optional fields
+      const updateData = {
+        full_name: profileData.full_name || null,
+        avatar_url: profileData.avatar_url || null,
+        phone: profileData.phone?.trim() || null,
+        address: profileData.address?.trim() || null,
+        bio: profileData.bio?.trim() || null
+      };
+      
+      console.log("Processed update data:", updateData);
+      
       // Update profile with all fields
-      await updateProfile({
-        full_name: profileData.full_name,
-        avatar_url: profileData.avatar_url,
-        phone: profileData.phone,
-        address: profileData.address,
-        bio: profileData.bio
-      });
+      await updateProfile(updateData);
       
       console.log("Profile updated successfully");
       setEditMode(false);
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast.error('Failed to save profile changes');
+      // Show more detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save profile changes';
+      toast.error(errorMessage);
     }
   };
   
