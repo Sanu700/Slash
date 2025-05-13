@@ -11,12 +11,10 @@ import { getFeaturedExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data/types';
 import { cn } from '@/lib/utils';
-import GiftBoxAnimation from '@/components/GiftBoxAnimation';
 
 const Index = () => {
   const [featuredExperiences, setFeaturedExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showGiftBox, setShowGiftBox] = useState(false);
 
   // Load featured experiences from Supabase
   useEffect(() => {
@@ -33,11 +31,6 @@ const Index = () => {
     };
 
     loadFeaturedExperiences();
-  }, []);
-
-  // Show gift box animation after hero section is visible
-  useEffect(() => {
-    setShowGiftBox(true);
   }, []);
 
   // Smooth scroll for anchor links
@@ -62,8 +55,6 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
-      {showGiftBox && <GiftBoxAnimation />}
       
       <main>
         {/* Hero Section */}
