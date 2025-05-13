@@ -1,8 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { QuestionStep } from '@/types/personalizerTypes';
-import { useNavigate } from 'react-router-dom';
-import { scrollToTop } from '@/lib/animations';
+import { useNavigation } from '@/lib/hooks/useNavigation';
 
 interface NavButtonsProps {
   currentStep: QuestionStep;
@@ -12,13 +11,12 @@ interface NavButtonsProps {
 }
 
 const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerating }: NavButtonsProps) => {
-  const navigate = useNavigate();
+  const { navigateTo } = useNavigation();
   
   // If we're on the first step and user clicks back, navigate to home
   const handleBackAction = () => {
     if (currentStep === 'basics') {
-      navigate('/');
-      scrollToTop();
+      navigateTo('/');
     } else {
       handlePreviousStep();
     }
@@ -36,10 +34,7 @@ const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerat
       </Button>
       <Button
         type="button"
-        onClick={() => {
-          handleNextStep();
-          scrollToTop();
-        }}
+        onClick={handleNextStep}
         disabled={isGenerating}
       >
         {currentStep === 'social' ? (

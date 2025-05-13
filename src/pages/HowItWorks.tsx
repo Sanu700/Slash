@@ -5,6 +5,7 @@ import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Gift, Search, Calendar, Clock, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NavLink } from '@/components/ui/nav-link';
 import { Link } from 'react-router-dom';
 import { scrollToTop } from '@/lib/animations';
 
@@ -30,11 +31,11 @@ const HowItWorks = () => {
                 Discovering, gifting, and experiencing something extraordinary has never been easier.
                 Follow our simple process to create unforgettable memories.
               </p>
-              <Link to="/experiences" onClick={scrollToTop}>
+              <NavLink to="/experiences">
                 <Button size="lg" className="bg-white text-blue-900 hover:bg-white/90">
                   Browse Experiences
                 </Button>
-              </Link>
+              </NavLink>
             </div>
           </div>
         </div>
