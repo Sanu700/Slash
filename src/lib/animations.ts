@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, RefObject } from "react";
 
 interface UseInViewOptions {
@@ -96,4 +95,11 @@ export const useParallax = <T extends HTMLElement>(speed: number = 0.1) => {
   }, [speed]);
   
   return { ref, offset };
+};
+
+export const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
 };

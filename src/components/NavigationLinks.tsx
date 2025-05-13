@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { scrollToTop } from '@/lib/animations';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -48,7 +49,10 @@ export function NavigationLinks({
       <div className="flex flex-col space-y-4 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
         {/* Back Button */}
         <button
-          onClick={closeMobileMenu}
+          onClick={() => {
+            closeMobileMenu();
+            scrollToTop();
+          }}
           className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary mb-2"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
@@ -58,7 +62,10 @@ export function NavigationLinks({
         <Link 
           to="/experiences" 
           className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
-          onClick={closeMobileMenu}
+          onClick={() => {
+            closeMobileMenu();
+            scrollToTop();
+          }}
         >
           All Experiences
         </Link>
@@ -74,11 +81,11 @@ export function NavigationLinks({
           </button>
           {openDropdown === 'company' && (
             <div className="pl-4 mt-2 flex flex-col space-y-3 text-base">
-              <Link to="/about-us" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">About Us</Link>
-              <Link to="/how-it-works" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
-              <Link to="/testimonials" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
-              <Link to="/careers" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Careers</Link>
-              <Link to="/press" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Press</Link>
+              <Link to="/about-us" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">About Us</Link>
+              <Link to="/how-it-works" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
+              <Link to="/testimonials" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
+              <Link to="/careers" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Careers</Link>
+              <Link to="/press" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Press</Link>
             </div>
           )}
         </div>
@@ -94,11 +101,11 @@ export function NavigationLinks({
           </button>
           {openDropdown === 'support' && (
             <div className="pl-4 mt-2 flex flex-col space-y-3 text-base">
-              <Link to="/contact" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
-              <Link to="/faq" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
-              <Link to="/gift-rules" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
-              <Link to="/shipping" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
-              <Link to="/returns" onClick={closeMobileMenu} className="hover:text-primary dark:hover:text-primary">Returns</Link>
+              <Link to="/contact" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
+              <Link to="/faq" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
+              <Link to="/gift-rules" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
+              <Link to="/shipping" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
+              <Link to="/returns" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Returns</Link>
             </div>
           )}
         </div>
@@ -106,14 +113,20 @@ export function NavigationLinks({
         <Link 
           to="/gifting-guide" 
           className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
-          onClick={closeMobileMenu}
+          onClick={() => {
+            closeMobileMenu();
+            scrollToTop();
+          }}
         >
           Gifting Guide
         </Link>
         <Link 
           to="/gift-personalizer" 
           className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
-          onClick={closeMobileMenu}
+          onClick={() => {
+            closeMobileMenu();
+            scrollToTop();
+          }}
         >
           Gift Personalizer
         </Link>
@@ -137,6 +150,7 @@ export function NavigationLinks({
                   ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
                   : "text-gray-900 hover:bg-gray-100/20"
               )}
+              onClick={scrollToTop}
             >
               All Experiences
             </Link>
@@ -161,6 +175,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/about-us"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">About Us</div>
@@ -172,6 +187,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/how-it-works"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">How It Works</div>
@@ -183,6 +199,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/testimonials"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Testimonials</div>
@@ -194,6 +211,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/careers"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Careers</div>
@@ -205,6 +223,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/press"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Press</div>
@@ -234,6 +253,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/contact"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Contact Us</div>
@@ -245,6 +265,7 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/faq"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">FAQ</div>
@@ -256,10 +277,11 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/gift-rules"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Gift Rules</div>
-                    <p className="text-sm text-muted-foreground">Our gift policies and procedures</p>
+                    <p className="text-sm text-muted-foreground">Understanding our gifting policies</p>
                   </Link>
                 </NavigationMenuLink>
               </li>
@@ -267,10 +289,11 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/shipping"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Shipping</div>
-                    <p className="text-sm text-muted-foreground">Shipping options and delivery information</p>
+                    <p className="text-sm text-muted-foreground">Shipping information and policies</p>
                   </Link>
                 </NavigationMenuLink>
               </li>
@@ -278,10 +301,11 @@ export function NavigationLinks({
                 <NavigationMenuLink asChild>
                   <Link
                     to="/returns"
+                    onClick={scrollToTop}
                     className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     <div className="font-medium">Returns</div>
-                    <p className="text-sm text-muted-foreground">Our return and exchange policies</p>
+                    <p className="text-sm text-muted-foreground">Return and refund policies</p>
                   </Link>
                 </NavigationMenuLink>
               </li>
@@ -302,6 +326,7 @@ export function NavigationLinks({
                   ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
                   : "text-gray-900 hover:bg-gray-100/20"
               )}
+              onClick={scrollToTop}
             >
               Gifting Guide
             </Link>
@@ -321,6 +346,7 @@ export function NavigationLinks({
                   ? "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" 
                   : "text-gray-900 hover:bg-gray-100/20"
               )}
+              onClick={scrollToTop}
             >
               Gift Personalizer
             </Link>

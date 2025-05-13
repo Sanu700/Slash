@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Gift, Search, Calendar, Clock, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { scrollToTop } from '@/lib/animations';
 
 const HowItWorks = () => {
   const [heroRef, heroInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -30,7 +30,7 @@ const HowItWorks = () => {
                 Discovering, gifting, and experiencing something extraordinary has never been easier.
                 Follow our simple process to create unforgettable memories.
               </p>
-              <Link to="/experiences">
+              <Link to="/experiences" onClick={scrollToTop}>
                 <Button size="lg" className="bg-white text-blue-900 hover:bg-white/90">
                   Browse Experiences
                 </Button>

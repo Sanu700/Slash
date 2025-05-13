@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { QuestionStep } from '@/types/personalizerTypes';
 import { useNavigate } from 'react-router-dom';
+import { scrollToTop } from '@/lib/animations';
 
 interface NavButtonsProps {
   currentStep: QuestionStep;
@@ -18,6 +18,7 @@ const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerat
   const handleBackAction = () => {
     if (currentStep === 'basics') {
       navigate('/');
+      scrollToTop();
     } else {
       handlePreviousStep();
     }
@@ -35,7 +36,10 @@ const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerat
       </Button>
       <Button
         type="button"
-        onClick={handleNextStep}
+        onClick={() => {
+          handleNextStep();
+          scrollToTop();
+        }}
         disabled={isGenerating}
       >
         {currentStep === 'social' ? (
