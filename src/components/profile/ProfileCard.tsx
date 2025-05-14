@@ -121,7 +121,23 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
         bio: profileData.bio?.trim() || null
       };
       
-      await updateUserProfile(user.id, updateData);
+      const result = await updateUserProfile(user.id, updateData);
+      
+      if (result && result.success && result.session) {
+        // Update local state with the latest data
+        // The session contains updated user_metadata (full_name, avatar_url)
+        // Other fields (phone, address, bio) are from the current profileData that was just saved
+        setProfileData({
+          full_name: result.session.user?.user_metadata?.full_name || profileData.full_name,
+          avatar_url: result.session.user?.user_metadata?.avatar_url || profileData.avatar_url,
+          phone: profileData.phone,
+          address: profileData.address,
+          bio: profileData.bio,
+        });
+        // Also, it's good practice to update the auth context's user object if possible,
+        // though useAuth() might handle this automatically if session changes trigger a refresh.
+        // For now, we'll rely on the local profileData state for the form.
+      }
       
       setEditMode(false);
       toast({
