@@ -43,29 +43,61 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
   // Initialize profile edit form and load extended profile data
   React.useEffect(() => {
     const loadProfileData = async () => {
-      if (user) {
-        // Set basic fields from auth metadata
-        setProfileData(prev => ({
-          ...prev,
-          full_name: user.user_metadata?.full_name || '',
-          avatar_url: user.user_metadata?.avatar_url || '',
+      if (user) { // Check if user object exists
+        // Default values for profile state
+        let newProfileDataState: UserProfile = {
+          full_name: '',
+          avatar_url: '',
+          phone: '', // Keep existing phone, address, bio from state if any, or default
+          address: '',
+          bio: ''
+        };
+
+        // 1. Populate from auth user_metadata (these are considered defaults)
+        const umFullName = user.user_metadata?.full_name;
+        const umAvatarUrl = user.user_metadata?.avatar_url;
+
+        if (typeof umFullName === 'string') {
+          newProfileDataState.full_name = umFullName;
+        }
+        if (typeof umAvatarUrl === 'string') {
+          newProfileDataState.avatar_url = umAvatarUrl;
+        }
+
+        // Preserve other fields if they were already loaded (e.g., from a previous render or partial load)
+        // This ensures fields not covered by metadata/DB fetch (if any) or loaded earlier are not wiped.
+        // However, typically phone, address, bio will be overwritten by DB fetch if available.
+        setProfileData(currentProfileData => ({
+            ...currentProfileData, // spread current to keep phone, address, bio if not yet fetched
+            full_name: newProfileDataState.full_name,
+            avatar_url: newProfileDataState.avatar_url,
         }));
-        
-        // Try to load extended profile data
+
+        // 2. Fetch from 'profiles' table and override/fill in if user.id is available
         if (user.id) {
-          const profileData = await fetchUserProfile(user.id);
-          
-          if (profileData) {
-            setProfileData(prev => ({
-              ...prev,
-              full_name: profileData.full_name || prev.full_name,
-              avatar_url: profileData.avatar_url || prev.avatar_url,
-              phone: profileData.phone || '',
-              address: profileData.address || '',
-              bio: profileData.bio || ''
+          const dbProfile = await fetchUserProfile(user.id); // ExtendedProfile | null
+          if (dbProfile) {
+            setProfileData(prevProfileData => ({
+              full_name: typeof dbProfile.full_name === 'string' ? dbProfile.full_name : prevProfileData.full_name,
+              avatar_url: typeof dbProfile.avatar_url === 'string' ? dbProfile.avatar_url : prevProfileData.avatar_url,
+              phone: typeof dbProfile.phone === 'string' ? dbProfile.phone : '',
+              address: typeof dbProfile.address === 'string' ? dbProfile.address : '',
+              bio: typeof dbProfile.bio === 'string' ? dbProfile.bio : ''
+            }));
+          } else {
+            // If no dbProfile, ensure phone/address/bio are at least empty strings from initial defaults
+            // if they weren't set from a previous state that had them.
+             setProfileData(prevProfileData => ({
+                ...prevProfileData, // full_name, avatar_url already set from metadata
+                phone: prevProfileData.phone || '', // Ensure these are at least empty strings
+                address: prevProfileData.address || '',
+                bio: prevProfileData.bio || '',
             }));
           }
         }
+      } else {
+        // No user, reset to default empty profile
+        setProfileData({ full_name: '', avatar_url: '', phone: '', address: '', bio: '' });
       }
     };
     
