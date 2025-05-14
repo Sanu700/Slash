@@ -108,14 +108,14 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
             
             <div className={cn(
               "transition-all duration-300 transform",
-              ""
+              isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
               <Link to={`/experience/${experience.id}`}>
                 <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
                   View Experience
                 </Button>
               </Link>
-              <Button size="sm" className="w-full mt-2 bg-primary text-white hover:bg-primary/90" onClick={handleAddToCart}>
+              <Button size="sm" variant="outline" className="w-full mt-2" onClick={handleAddToCart}>
                 Add to Cart
               </Button>
             </div>
