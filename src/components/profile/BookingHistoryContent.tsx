@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,13 @@ const BookingHistoryContent = ({ bookingHistory }: BookingHistoryContentProps) =
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-xl font-bold">
-                      Booking #{booking.id.substring(0, 8)}
+                      Booking on {new Date(booking.booking_date).toLocaleDateString(undefined, { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </CardTitle>
                     <CardDescription className="text-sm space-y-1 mt-2">
                       <div className="flex items-center">
@@ -59,8 +64,10 @@ const BookingHistoryContent = ({ bookingHistory }: BookingHistoryContentProps) =
                       </div>
                     </CardDescription>
                   </div>
-                  <div className="text-sm bg-primary/20 text-primary px-4 py-2 rounded-full font-semibold">
-                    {booking.status.toUpperCase()}
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm bg-primary/20 text-primary px-4 py-2 rounded-full font-semibold mb-2">
+                      {booking.status.toUpperCase()}
+                    </span>
                   </div>
                 </div>
               </CardHeader>
@@ -90,7 +97,14 @@ const BookingHistoryContent = ({ bookingHistory }: BookingHistoryContentProps) =
                               />
                             </div>
                             <div>
-                              <p className="font-medium line-clamp-1">{item.experience.title}</p>
+                              <a
+                                href={`/experience/${item.experience.id}`}
+                                className="font-medium line-clamp-1 text-primary hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {item.experience.title}
+                              </a>
                               <p className="text-xs text-muted-foreground">{item.experience.location}</p>
                             </div>
                           </div>
