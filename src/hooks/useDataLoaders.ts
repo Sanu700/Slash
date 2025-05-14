@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Experience } from '@/lib/data';
@@ -48,7 +47,9 @@ export const useBookingHistory = (userId: string | undefined) => {
             .from('booking_items')
             .select('*')
             .eq('booking_id', booking.id);
-            
+          
+          console.log('Booking ID:', booking.id, 'Booking Items:', itemsData, 'Error:', itemsError);
+          
           if (itemsError) {
             console.error('Error loading booking items:', itemsError);
             continue;
@@ -63,7 +64,9 @@ export const useBookingHistory = (userId: string | undefined) => {
               .select('*')
               .eq('id', item.experience_id)
               .single();
-              
+            
+            console.log('Booking Item:', item, 'Experience Data:', expData, 'Error:', expError);
+            
             if (!expError && expData) {
               const experience: Experience = {
                 id: expData.id,
