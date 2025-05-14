@@ -26,6 +26,24 @@ interface BookingHistoryContentProps {
   bookingHistory: Booking[];
 }
 
+const paymentMethodDisplay = (method: string | null) => {
+  if (!method) return 'Card';
+  switch (method.toLowerCase()) {
+    case 'cod':
+      return 'Cash on Delivery';
+    case 'upi':
+      return 'UPI';
+    case 'credit_card':
+      return 'Credit Card';
+    case 'debit_card':
+      return 'Debit Card';
+    case 'net_banking':
+      return 'Net Banking';
+    default:
+      return method.charAt(0).toUpperCase() + method.slice(1);
+  }
+};
+
 const BookingHistoryContent = ({ bookingHistory }: BookingHistoryContentProps) => {
   const navigate = useNavigate();
 
@@ -60,7 +78,7 @@ const BookingHistoryContent = ({ bookingHistory }: BookingHistoryContentProps) =
                       </div>
                       <div className="flex items-center">
                         <CreditCard className="h-4 w-4 mr-2 text-primary" />
-                        <span className="capitalize">{booking.payment_method || 'Card'}</span>
+                        <span className="capitalize">{paymentMethodDisplay(booking.payment_method)}</span>
                       </div>
                     </CardDescription>
                   </div>
@@ -100,8 +118,6 @@ const BookingHistoryContent = ({ bookingHistory }: BookingHistoryContentProps) =
                               <a
                                 href={`/experience/${item.experience.id}`}
                                 className="font-medium line-clamp-1 text-primary hover:underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
                               >
                                 {item.experience.title}
                               </a>
