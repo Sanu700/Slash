@@ -6,7 +6,7 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 5
+const TOAST_LIMIT = 10
 const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = ToastProps & {
@@ -26,7 +26,7 @@ const actionTypes = {
 let count = 0
 
 function genId() {
-  count = (count + 1) % Number.MAX_VALUE
+  count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
 }
 
@@ -84,7 +84,9 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
+          t.id === action.toast.id
+            ? { ...t, ...action.toast }
+            : t
         ),
       }
 
@@ -138,8 +140,9 @@ function dispatch(action: Action) {
   })
 }
 
-// Fix the type here
-type Toast = Omit<ToasterToast, "id"> & { id?: string }
+interface Toast extends Omit<ToasterToast, "id"> {
+  id?: string
+}
 
 function toast({ id, ...props }: Toast) {
   const toastId = id || genId()

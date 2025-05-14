@@ -584,6 +584,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      update_profile_secure: {
+        Args: {
+          user_id: string
+          user_full_name: string
+          user_avatar_url: string
+          user_phone: string
+          user_address: string
+          user_bio: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
