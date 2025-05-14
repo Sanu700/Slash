@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -10,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, Phone, MapPin, CalendarCheck } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchUserProfile, updateUserProfile } from '@/lib/profileService';
 
 interface UserProfile {
   full_name: string;
@@ -28,7 +27,7 @@ interface ProfileCardProps {
 }
 
 const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCount }: ProfileCardProps) => {
-  const { user, isAuthenticated, isAdmin, logout, updateProfile } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
   const [editMode, setEditMode] = React.useState(false);
@@ -53,27 +52,19 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
         }));
         
         // Try to load extended profile data
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-            
-          if (!error && data) {
+        if (user.id) {
+          const profileData = await fetchUserProfile(user.id);
+          
+          if (profileData) {
             setProfileData(prev => ({
               ...prev,
-              full_name: data.full_name || prev.full_name,
-              avatar_url: data.avatar_url || prev.avatar_url,
-              phone: data.phone || '',
-              address: data.address || '',
-              bio: data.bio || ''
+              full_name: profileData.full_name || prev.full_name,
+              avatar_url: profileData.avatar_url || prev.avatar_url,
+              phone: profileData.phone || '',
+              address: profileData.address || '',
+              bio: profileData.bio || ''
             }));
-          } else if (error) {
-            console.error('Error loading profile data:', error);
           }
-        } catch (error) {
-          console.error('Error loading profile data:', error);
         }
       }
     };
@@ -83,7 +74,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
 
   // Handle profile save
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
     
     try {
       setIsUpdating(true);
@@ -98,54 +89,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
         bio: profileData.bio?.trim() || null
       };
       
-      console.log("Processed update data:", updateData);
-      
-      // First, try to update the auth metadata
-      const { error: metadataError } = await supabase.auth.updateUser({
-        data: {
-          full_name: updateData.full_name,
-          avatar_url: updateData.avatar_url
-        }
-      });
-      
-      if (metadataError) {
-        console.error('Error updating auth metadata:', metadataError);
-        throw new Error(`Failed to update profile: ${metadataError.message}`);
-      }
-      
-      // Then update the profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: updateData.full_name,
-          avatar_url: updateData.avatar_url,
-          phone: updateData.phone,
-          address: updateData.address,
-          bio: updateData.bio,
-          updated_at: new Date().toISOString()
-        }, { 
-          onConflict: 'id'
-        });
-      
-      if (profileError) {
-        console.error('Error updating profiles table:', profileError);
-        throw new Error(`Failed to update profile data: ${profileError.message}`);
-      }
-      
-      // Refresh auth session to get updated user data
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Error refreshing session:', sessionError);
-      } else if (sessionData.session) {
-        // Update local state with the latest data
-        setProfileData(prev => ({
-          ...prev,
-          full_name: sessionData.session?.user?.user_metadata?.full_name || prev.full_name,
-          avatar_url: sessionData.session?.user?.user_metadata?.avatar_url || prev.avatar_url
-        }));
-      }
+      await updateUserProfile(user.id, updateData);
       
       setEditMode(false);
       toast({
@@ -154,12 +98,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
       });
     } catch (error) {
       console.error('Error saving profile:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save profile changes';
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      // Error is already handled in updateUserProfile
     } finally {
       setIsUpdating(false);
     }

@@ -29,7 +29,7 @@ const Profile = () => {
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
   
-  // Load data using custom hooks
+  // Load data using custom hooks - only load if user is authenticated
   const { bookingHistory } = useBookingHistory(user?.id);
   const { wishlistExperiences } = useWishlistExperiences(user?.id);
   const { handleExperienceClick } = useExperienceInteractions(user?.id);
