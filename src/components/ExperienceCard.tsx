@@ -15,7 +15,6 @@ interface ExperienceCardProps {
 const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const cardRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
 
@@ -26,11 +25,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await addToCart(experience.id, quantity);
-  };
-
-  const handleQuantityChange = (delta: number) => {
-    setQuantity((prev) => Math.max(1, prev + delta));
+    await addToCart(experience.id);
   };
 
   return (
@@ -120,17 +115,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
                   View Experience
                 </Button>
               </Link>
-              {/* Quantity Selector */}
-              <div className="flex items-center justify-center w-full mt-2 mb-2 gap-2">
-                <Button size="icon" variant="outline" onClick={() => handleQuantityChange(-1)} disabled={quantity === 1}>
-                  -
-                </Button>
-                <span className="px-2 min-w-[24px] text-center">{quantity}</span>
-                <Button size="icon" variant="outline" onClick={() => handleQuantityChange(1)}>
-                  +
-                </Button>
-              </div>
-              <Button size="sm" variant="outline" className="w-full text-black" onClick={handleAddToCart}>
+              <Button size="sm" variant="outline" className="w-full mt-2 text-black" onClick={handleAddToCart}>
                 Add to Cart
               </Button>
             </div>
