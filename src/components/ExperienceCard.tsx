@@ -1,4 +1,3 @@
-
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Experience } from '@/lib/data';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MapPin, Clock, Users, Calendar, Heart } from 'lucide-react';
 import { formatRupees } from '@/lib/formatters';
+import { useCart } from '@/contexts/CartContext';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -16,10 +16,16 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const { addToCart } = useCart();
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsFavorite(!isFavorite);
+  };
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await addToCart(experience.id);
   };
 
   return (
@@ -109,6 +115,9 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
                   View Experience
                 </Button>
               </Link>
+              <Button size="sm" variant="outline" className="w-full mt-2" onClick={handleAddToCart}>
+                Add to Cart
+              </Button>
             </div>
           </div>
         </div>
