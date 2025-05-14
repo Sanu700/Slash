@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ShoppingCart, Heart, LogOut, Settings, Edit, Save, X, AlertCircle, Phone, MapPin, CalendarCheck } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
@@ -38,6 +39,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
     address: '',
     bio: ''
   });
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
   // Initialize profile edit form and load extended profile data
   React.useEffect(() => {
@@ -67,6 +69,8 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
               address: data.address || '',
               bio: data.bio || ''
             }));
+          } else if (error) {
+            console.error('Error loading profile data:', error);
           }
         } catch (error) {
           console.error('Error loading profile data:', error);
@@ -77,9 +81,12 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
     loadProfileData();
   }, [user]);
 
-  // Handle profile save - fixing the issue with profile changes not syncing
+  // Handle profile save
   const handleSaveProfile = async () => {
+    if (!user) return;
+    
     try {
+      setIsUpdating(true);
       console.log("Saving profile data:", profileData);
       
       // Convert empty strings to null for optional fields
@@ -93,17 +100,68 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
       
       console.log("Processed update data:", updateData);
       
-      // Update profile with all fields
-      await updateProfile(updateData);
+      // First, try to update the auth metadata
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          full_name: updateData.full_name,
+          avatar_url: updateData.avatar_url
+        }
+      });
       
-      console.log("Profile updated successfully");
+      if (metadataError) {
+        console.error('Error updating auth metadata:', metadataError);
+        throw new Error(`Failed to update profile: ${metadataError.message}`);
+      }
+      
+      // Then update the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          full_name: updateData.full_name,
+          avatar_url: updateData.avatar_url,
+          phone: updateData.phone,
+          address: updateData.address,
+          bio: updateData.bio,
+          updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'id'
+        });
+      
+      if (profileError) {
+        console.error('Error updating profiles table:', profileError);
+        throw new Error(`Failed to update profile data: ${profileError.message}`);
+      }
+      
+      // Refresh auth session to get updated user data
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error refreshing session:', sessionError);
+      } else if (sessionData.session) {
+        // Update local state with the latest data
+        setProfileData(prev => ({
+          ...prev,
+          full_name: sessionData.session?.user?.user_metadata?.full_name || prev.full_name,
+          avatar_url: sessionData.session?.user?.user_metadata?.avatar_url || prev.avatar_url
+        }));
+      }
+      
       setEditMode(false);
-      toast.success('Profile updated successfully');
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
     } catch (error) {
       console.error('Error saving profile:', error);
-      // Show more detailed error message
       const errorMessage = error instanceof Error ? error.message : 'Failed to save profile changes';
-      toast.error(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
   
@@ -242,14 +300,28 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
               onClick={handleSaveProfile} 
               className="flex-1"
               variant="default"
+              disabled={isUpdating}
             >
-              <Save className="mr-2 h-4 w-4" />
-              Save
+              {isUpdating ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save
+                </>
+              )}
             </Button>
             <Button 
               onClick={handleCancelEdit} 
               className="flex-1"
               variant="outline"
+              disabled={isUpdating}
             >
               <X className="mr-2 h-4 w-4" />
               Cancel
