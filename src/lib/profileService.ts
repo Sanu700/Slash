@@ -33,7 +33,38 @@ export const updateUserProfile = async (userId: string, data: ProfileUpdateData)
     
     console.log('Auth metadata updated successfully');
     
-    // Update the profiles table with all fields
+    // Try the security definer function first
+    try {
+      const { data: fnResult, error: fnError } = await supabase.rpc('update_profile_secure', {
+        user_id: userId,
+        user_full_name: data.full_name,
+        user_avatar_url: data.avatar_url,
+        user_phone: data.phone,
+        user_address: data.address,
+        user_bio: data.bio
+      });
+      
+      if (!fnError) {
+        console.log('Profile updated via secure function');
+        // Function succeeded, no need to try the fallback
+        const { data: { session: newSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error refreshing session:', sessionError);
+          throw new Error(`Failed to refresh session: ${sessionError.message}`);
+        }
+        
+        return { success: true, session: newSession };
+      }
+      
+      // If function fails, log the error but continue with the direct update approach
+      console.warn('Secure function update failed, trying direct update:', fnError);
+    } catch (fnCatchError) {
+      console.warn('Error using secure function:', fnCatchError);
+      // Continue with direct update as fallback
+    }
+    
+    // Fallback: Update the profiles table directly
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({

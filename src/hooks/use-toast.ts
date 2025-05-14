@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -137,23 +138,24 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+// Fix the type here
+type Toast = Omit<ToasterToast, "id"> & { id?: string }
 
-function toast({ ...props }: Toast) {
-  const id = genId()
+function toast({ id, ...props }: Toast) {
+  const toastId = id || genId()
 
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
-      toast: { ...props, id },
+      toast: { ...props, id: toastId },
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId })
 
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
-      id,
+      id: toastId,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
@@ -162,7 +164,7 @@ function toast({ ...props }: Toast) {
   })
 
   return {
-    id,
+    id: toastId,
     dismiss,
     update,
   }
