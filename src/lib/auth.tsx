@@ -5,8 +5,8 @@ import { Session } from '@supabase/supabase-js';
 import { Navigate } from 'react-router-dom';
 
 // Simple predefined admin credentials for admin access
-const ADMIN_ID = "admin123";
-const ADMIN_PASSWORD = "slash2025";
+const ADMIN_ID = "admin";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 
 // Auth context
 type AuthContextType = {
