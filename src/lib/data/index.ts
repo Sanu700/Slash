@@ -1,4 +1,3 @@
-
 // Export types directly
 export * from './types';
 
@@ -520,6 +519,14 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
     
     if (error) {
       throw error;
+    }
+    
+    // If no experiences found in database, use local fallback
+    if (!data || data.length === 0) {
+      const localExperiences = getSavedExperiences();
+      return localExperiences.filter(exp => 
+        exp.category?.toLowerCase() === categoryObj.name.toLowerCase()
+      );
     }
     
     // Map Supabase data to our Experience type

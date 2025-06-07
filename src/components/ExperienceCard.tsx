@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Experience } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,10 @@ import { cn } from '@/lib/utils';
 import { MapPin, Clock, Users, Calendar, Heart } from 'lucide-react';
 import { formatRupees } from '@/lib/formatters';
 import { useCart } from '@/contexts/CartContext';
+import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -14,13 +18,46 @@ interface ExperienceCardProps {
 
 const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
 
-  const toggleFavorite = (e: React.MouseEvent) => {
+  // Check if experience is in wishlist
+  useEffect(() => {
+    const checkWishlist = async () => {
+      if (!user) {
+        setIsInWishlist(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('wishlists')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('experience_id', experience.id)
+          .single();
+          
+        setIsInWishlist(!!data);
+      } catch (error) {
+        console.error('Error checking wishlist status:', error);
+      }
+    };
+    
+    checkWishlist();
+  }, [user, experience.id]);
+
+  const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    if (!user) {
+      toast.error('Please log in to add items to your wishlist');
+      return;
+    }
+    await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, (experiences) => {
+      setIsInWishlist(!isInWishlist);
+    });
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -61,15 +98,17 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
         
         {/* Favorite Button */}
         <button
-          onClick={toggleFavorite}
+          onClick={handleToggleWishlist}
+          disabled={isProcessing}
           className={cn(
-            "absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all",
-            isFavorite 
+            "absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all z-10",
+            isInWishlist 
               ? "bg-white text-red-500" 
               : "bg-black/30 text-white hover:bg-black/50"
           )}
+          type="button"
         >
-          <Heart className={cn("h-4 w-4", isFavorite && "fill-red-500")} />
+          <Heart className={cn("h-4 w-4", isInWishlist && "fill-red-500")} />
         </button>
         
         {/* Content */}
