@@ -106,6 +106,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
               ? "bg-white text-red-500" 
               : "bg-black/30 text-white hover:bg-black/50"
           )}
+          type="button"
         >
           <Heart className={cn("h-4 w-4", isInWishlist && "fill-red-500")} />
         </button>

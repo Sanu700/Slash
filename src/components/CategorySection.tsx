@@ -1,14 +1,38 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { categories } from '@/lib/data';
 import { useInView } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
+import { getExperiencesByCategory } from '@/lib/data';
+import { Experience } from '@/lib/data/types';
 
 const CategorySection = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [categoryCounts, setCategoryCounts] = useState<{[key: string]: number}>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load experience counts for each category
+  useEffect(() => {
+    const loadCategoryCounts = async () => {
+      setIsLoading(true);
+      try {
+        const counts: {[key: string]: number} = {};
+        for (const category of categories) {
+          const experiences = await getExperiencesByCategory(category.id);
+          counts[category.id] = experiences.length;
+        }
+        setCategoryCounts(counts);
+      } catch (error) {
+        console.error('Error loading category counts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCategoryCounts();
+  }, []);
 
   return (
     <section 
@@ -36,13 +60,11 @@ const CategorySection = () => {
           </p>
         </div>
 
-        <div 
-          className={cn(
-            "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 stagger-children",
-            isInView ? "opacity-100" : "opacity-0"
-          )}
-        >
-          {categories.map((category, index) => (
+        <div className={cn(
+          "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 stagger-children",
+          isInView ? "opacity-100" : "opacity-0"
+        )}>
+          {categories.map((category) => (
             <Link 
               key={category.id}
               to={`/category/${category.id}`}
@@ -85,7 +107,7 @@ const CategorySection = () => {
                   "flex items-center text-sm font-medium transition-all duration-300",
                   hoveredCategory === category.id ? "translate-x-2" : "translate-x-0"
                 )}>
-                  <span>Explore</span>
+                  <span>{isLoading ? '...' : `${categoryCounts[category.id] || 0} Experiences`}</span>
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </div>
               </div>
