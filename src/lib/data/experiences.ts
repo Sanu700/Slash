@@ -1,6 +1,5 @@
-
 import { Experience } from "./types";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 // This is just a placeholder for type definitions
 // All experience data will be fetched from Supabase

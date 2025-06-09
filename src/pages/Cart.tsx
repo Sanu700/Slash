@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -12,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { Experience } from '@/lib/data';
 import { formatRupees } from '@/lib/formatters';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { CreditCard, Banknote, Wallet, Plus, Minus, Trash } from 'lucide-react';
 
 const Cart = () => {

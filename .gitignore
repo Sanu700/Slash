@@ -18,6 +18,13 @@ dist-ssr
 .env.*
 !.env.example
 
+# Config files with sensitive data
+src/config.ts
+
+# Supabase
+supabase/config.toml
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

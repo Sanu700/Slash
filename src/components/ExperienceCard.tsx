@@ -8,7 +8,7 @@ import { formatRupees } from '@/lib/formatters';
 import { useCart } from '@/contexts/CartContext';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface ExperienceCardProps {

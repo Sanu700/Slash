@@ -5,8 +5,9 @@ export * from './types';
 import { categories } from './categories';
 import { experiences } from './experiences';
 import { Experience } from './types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
 
 // This function checks if there are saved experiences in localStorage for fallback
 export const getSavedExperiences = (): Experience[] => {
@@ -18,6 +19,26 @@ export const getSavedExperiences = (): Experience[] => {
     return experiences;
   }
 };
+
+// Helper function to map database experience to application experience type
+const mapDbExperienceToModel = (item: any): Experience => ({
+  id: item.id,
+  title: item.title,
+  description: item.description,
+  imageUrl: item.image_url,
+  price: item.price,
+  location: item.location,
+  duration: item.duration,
+  participants: item.participants,
+  date: item.date,
+  category: item.category,
+  nicheCategory: item.niche_category,
+  trending: item.trending || false,
+  featured: item.featured || false,
+  romantic: item.romantic || false,
+  adventurous: item.adventurous || false,
+  group: item.group_activity || false
+});
 
 // This hook manages the experiences data
 export const useExperiencesManager = () => {
@@ -41,26 +62,11 @@ export const useExperiencesManager = () => {
         }
         
         // Map Supabase data to our Experience type
-        const mappedExperiences = data.map(item => ({
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          imageUrl: item.image_url,
-          price: item.price,
-          location: item.location,
-          duration: item.duration,
-          participants: item.participants,
-          date: item.date,
-          category: item.category,
-          nicheCategory: item.niche_category,
-          trending: item.trending,
-          featured: item.featured,
-          romantic: item.romantic,
-          adventurous: item.adventurous,
-          group: item.group_activity
-        })) as Experience[];
-        
+        const mappedExperiences = data.map(mapDbExperienceToModel);
         setExperiences(mappedExperiences);
+        
+        // Save to localStorage as fallback
+        localStorage.setItem('experiences', JSON.stringify(mappedExperiences));
       } catch (err) {
         console.error('Error fetching experiences:', err);
         setError('Failed to load experiences');
@@ -108,26 +114,7 @@ export const useExperiencesManager = () => {
         throw error;
       }
       
-      // Map the returned data to our Experience type
-      const newExperience = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        imageUrl: data.image_url,
-        price: data.price,
-        location: data.location,
-        duration: data.duration,
-        participants: data.participants,
-        date: data.date,
-        category: data.category,
-        nicheCategory: data.niche_category,
-        trending: data.trending,
-        featured: data.featured,
-        romantic: data.romantic,
-        adventurous: data.adventurous,
-        group: data.group_activity
-      } as Experience;
-      
+      const newExperience = mapDbExperienceToModel(data);
       setExperiences(prev => [...prev, newExperience]);
       return newExperience;
     } catch (err) {
@@ -244,24 +231,7 @@ export const useExperiencesManager = () => {
       }
       
       // Map Supabase data to our Experience type
-      const mappedExperiences = data.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        imageUrl: item.image_url,
-        price: item.price,
-        location: item.location,
-        duration: item.duration,
-        participants: item.participants,
-        date: item.date,
-        category: item.category,
-        nicheCategory: item.niche_category,
-        trending: item.trending,
-        featured: item.featured,
-        romantic: item.romantic,
-        adventurous: item.adventurous,
-        group: item.group_activity
-      })) as Experience[];
+      const mappedExperiences = data.map(mapDbExperienceToModel);
       
       setExperiences(mappedExperiences);
       
@@ -287,24 +257,7 @@ export const useExperiencesManager = () => {
       }
       
       // Map Supabase data to our Experience type for export
-      const exportData = data.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        imageUrl: item.image_url,
-        price: item.price,
-        location: item.location,
-        duration: item.duration,
-        participants: item.participants,
-        date: item.date,
-        category: item.category,
-        nicheCategory: item.niche_category,
-        trending: item.trending,
-        featured: item.featured,
-        romantic: item.romantic,
-        adventurous: item.adventurous,
-        group: item.group_activity
-      }));
+      const exportData = data.map(mapDbExperienceToModel);
       
       return JSON.stringify(exportData, null, 2);
     } catch (err) {
@@ -339,9 +292,6 @@ export const useExperiencesManager = () => {
   };
 };
 
-// Add import for React hooks
-import { useState, useEffect } from 'react';
-
 // Create a standalone function to get all experiences
 export const getAllExperiences = async (): Promise<Experience[]> => {
   try {
@@ -353,29 +303,9 @@ export const getAllExperiences = async (): Promise<Experience[]> => {
       throw error;
     }
     
-    // Map Supabase data to our Experience type
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url,
-      price: item.price,
-      location: item.location,
-      duration: item.duration,
-      participants: item.participants,
-      date: item.date,
-      category: item.category,
-      nicheCategory: item.niche_category,
-      trending: item.trending,
-      featured: item.featured,
-      romantic: item.romantic,
-      adventurous: item.adventurous,
-      group: item.group_activity
-    })) as Experience[];
+    return data.map(mapDbExperienceToModel);
   } catch (err) {
     console.error('Error loading experiences:', err);
-    
-    // Return local fallback on error
     return getSavedExperiences();
   }
 };
@@ -392,29 +322,9 @@ export const getTrendingExperiences = async (): Promise<Experience[]> => {
       throw error;
     }
     
-    // Map Supabase data to our Experience type
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url,
-      price: item.price,
-      location: item.location,
-      duration: item.duration,
-      participants: item.participants,
-      date: item.date,
-      category: item.category,
-      nicheCategory: item.niche_category,
-      trending: item.trending,
-      featured: item.featured,
-      romantic: item.romantic,
-      adventurous: item.adventurous,
-      group: item.group_activity
-    })) as Experience[];
+    return data.map(mapDbExperienceToModel);
   } catch (err) {
     console.error('Error loading trending experiences:', err);
-    
-    // Filter local fallback by trending
     const localExperiences = getSavedExperiences();
     return localExperiences.filter(exp => exp.trending);
   }
@@ -432,29 +342,9 @@ export const getFeaturedExperiences = async (): Promise<Experience[]> => {
       throw error;
     }
     
-    // Map Supabase data to our Experience type
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url,
-      price: item.price,
-      location: item.location,
-      duration: item.duration,
-      participants: item.participants,
-      date: item.date,
-      category: item.category,
-      nicheCategory: item.niche_category,
-      trending: item.trending,
-      featured: item.featured,
-      romantic: item.romantic,
-      adventurous: item.adventurous,
-      group: item.group_activity
-    })) as Experience[];
+    return data.map(mapDbExperienceToModel);
   } catch (err) {
     console.error('Error loading featured experiences:', err);
-    
-    // Filter local fallback by featured
     const localExperiences = getSavedExperiences();
     return localExperiences.filter(exp => exp.featured);
   }
@@ -475,29 +365,9 @@ export const getExperienceById = async (id: string): Promise<Experience | null> 
     
     if (!data) return null;
     
-    // Map Supabase data to our Experience type
-    return {
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      imageUrl: data.image_url,
-      price: data.price,
-      location: data.location,
-      duration: data.duration,
-      participants: data.participants,
-      date: data.date,
-      category: data.category,
-      nicheCategory: data.niche_category,
-      trending: data.trending,
-      featured: data.featured,
-      romantic: data.romantic,
-      adventurous: data.adventurous,
-      group: data.group_activity
-    } as Experience;
+    return mapDbExperienceToModel(data);
   } catch (err) {
     console.error('Error loading experience by ID:', err);
-    
-    // Try to find in local fallback
     const localExperiences = getSavedExperiences();
     return localExperiences.find(exp => exp.id === id) || null;
   }
@@ -521,7 +391,6 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
       throw error;
     }
     
-    // If no experiences found in database, use local fallback
     if (!data || data.length === 0) {
       const localExperiences = getSavedExperiences();
       return localExperiences.filter(exp => 
@@ -529,29 +398,9 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
       );
     }
     
-    // Map Supabase data to our Experience type
-    return data.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      imageUrl: item.image_url,
-      price: item.price,
-      location: item.location,
-      duration: item.duration,
-      participants: item.participants,
-      date: item.date,
-      category: item.category,
-      nicheCategory: item.niche_category,
-      trending: item.trending,
-      featured: item.featured,
-      romantic: item.romantic,
-      adventurous: item.adventurous,
-      group: item.group_activity
-    })) as Experience[];
+    return data.map(mapDbExperienceToModel);
   } catch (err) {
     console.error('Error loading experiences by category:', err);
-    
-    // Filter local fallback by category
     const localExperiences = getSavedExperiences();
     const categoryObj = categories.find(cat => cat.id === categoryId);
     return localExperiences.filter(exp => 

@@ -3,7 +3,7 @@ import { getExperienceById } from '@/lib/data';
 import { CartItem, Experience } from '@/lib/data';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface CartContextType {
   items: CartItem[];

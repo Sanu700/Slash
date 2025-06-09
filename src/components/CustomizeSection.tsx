@@ -15,7 +15,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { Gift, Calendar, Heart, PenLine, Sparkles, Mail } from 'lucide-react';
 import { categories } from '@/lib/data';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 const CustomizeSection = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
