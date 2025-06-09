@@ -4,14 +4,9 @@ import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { Navigate } from 'react-router-dom';
 
-// Admin credentials from environment variables
-const ADMIN_ID = import.meta.env.VITE_ADMIN_ID;
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
-
-// Validate admin credentials are set
-if (!ADMIN_ID || !ADMIN_PASSWORD) {
-  console.error('Admin credentials not properly configured in environment variables');
-}
+// Simple predefined admin credentials for admin access
+const ADMIN_ID = "admin123";
+const ADMIN_PASSWORD = "slash2025";
 
 // Auth context
 type AuthContextType = {
