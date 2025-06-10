@@ -153,6 +153,17 @@ const Navbar = () => {
         />
 
         <div className="hidden md:flex items-center space-x-4">
+          <Link
+            to="/host-experience"
+            className={cn(
+              "px-4 py-2 rounded-lg transition-colors font-medium",
+              isScrolled || !isDarkPage
+                ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
+            )}
+          >
+            Host an Experience
+          </Link>
           <button 
             onClick={toggleSearch}
             className={cn(
@@ -243,6 +254,17 @@ const Navbar = () => {
         </div>
 
         <div className="md:hidden flex items-center space-x-3">
+          <Link
+            to="/host-experience"
+            className={cn(
+              "px-3 py-1.5 rounded-lg transition-colors font-medium text-sm",
+              isScrolled || !isDarkPage
+                ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
+            )}
+          >
+            Host
+          </Link>
           <button 
             onClick={toggleSearch}
             className={cn(
