@@ -385,7 +385,7 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
     const { data, error } = await supabase
       .from('experiences')
       .select('*')
-      .eq('category', categoryObj.name.toLowerCase());
+      .ilike('category', categoryObj.name.toLowerCase());
     
     if (error) {
       throw error;

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,6 +17,7 @@ import GiftPersonalizer from "./pages/GiftPersonalizer";
 import ExperienceManager from "./pages/ExperienceManager";
 import Profile from "./pages/Profile";
 import { requireAuth } from "./lib/auth";
+import Booking from '@/pages/Booking';
 
 // Import Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -56,6 +56,7 @@ const App = () => (
               <Route path="/gifting-guide" element={<GiftingGuide />} />
               <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
               <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
+              <Route path="/booking/:experienceId" element={<Booking />} />
               
               {/* Company Pages */}
               <Route path="/about-us" element={<AboutUs />} />
