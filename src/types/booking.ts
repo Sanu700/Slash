@@ -1,10 +1,11 @@
 export interface User {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  createdAt: Date;
+  full_name: string;
+  avatar_url: string;
+  bio: string;
+  address: string;
+  phone: string;
+  updated_at: string;
 }
 
 export interface Experience {
@@ -16,8 +17,8 @@ export interface Experience {
   location: string;
   category: string;
   image_url: string;
-  max_participants: number;
-  available_dates: string[];
+  participants: string;
+  date: string;
   created_at: string;
   updated_at: string;
   adventurous: boolean;
@@ -25,35 +26,10 @@ export interface Experience {
   group_activity: boolean;
 }
 
-export interface Booking {
-  id: string;
-  userId: string;
-  experienceId: string;
-  date: Date;
-  numberOfParticipants: number;
-  totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  paymentStatus: 'pending' | 'completed' | 'failed';
-  createdAt: Date;
-}
-
-export interface Payment {
-  id: string;
-  bookingId: string;
-  amount: number;
-  currency: string;
-  status: 'pending' | 'completed' | 'failed';
-  paymentMethod: 'card' | 'bank_transfer';
-  createdAt: Date;
-}
-
 export interface BookingFormData {
   experienceId: string;
-  bookingId?: string;
-  userId?: string;
   date: Date;
   numberOfParticipants: number;
-  totalPrice?: number;
   firstName: string;
   lastName: string;
   email: string;

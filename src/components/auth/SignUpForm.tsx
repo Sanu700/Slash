@@ -27,7 +27,7 @@ export function SignUpForm() {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       await signUp(data.email, data.password, data.firstName, data.lastName);
-      toast.success('Account created successfully! Please check your email for verification.');
+      toast.success('Account created successfully!');
     } catch (error) {
       toast.error('Failed to create account. Please try again.');
       console.error('Sign up error:', error);
@@ -86,7 +86,7 @@ export function SignUpForm() {
             <Input
               id="password"
               type="password"
-              placeholder="Create a password"
+              placeholder="Enter your password"
               {...register('password')}
             />
             {errors.password && (
@@ -99,7 +99,7 @@ export function SignUpForm() {
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            {isSubmitting ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
       </CardContent>

@@ -5,17 +5,15 @@ import { SignInForm } from '@/components/auth/SignInForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { BookingForm } from '@/components/booking/BookingForm';
 import { CheckoutSummary } from '@/components/booking/CheckoutSummary';
-import { PaymentForm } from '@/components/booking/PaymentForm';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { BookingFormData, Experience } from '@/types/booking';
-import { initiatePayment, handlePaymentFailure } from '@/services/payment';
 import { sendBookingConfirmation } from '@/services/notifications';
 import { supabase } from '@/lib/supabase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type BookingStep = 'auth' | 'details' | 'checkout' | 'payment' | 'confirmation';
+type BookingStep = 'auth' | 'details' | 'checkout' | 'confirmation';
 
 export default function Booking() {
   const { experienceId } = useParams<{ experienceId: string }>();
@@ -69,32 +67,30 @@ export default function Booking() {
     }
   };
 
-  const handleProceedToPayment = async () => {
+  const handleConfirmBooking = async () => {
     try {
       if (!bookingData || !experience) return;
 
-      // Add user ID to booking data
-      const bookingDataWithUser = {
-        ...bookingData,
-        userId: user?.id,
-        totalPrice: totalAmount,
-      };
+      // Create booking in database
+      const { data: booking, error } = await supabase
+        .from('bookings')
+        .insert([
+          {
+            user_id: user?.id,
+            booking_date: bookingData.date.toISOString(),
+            total_amount: totalAmount,
+            status: 'confirmed',
+            notes: `Experience: ${experience.title}, Participants: ${bookingData.numberOfParticipants}, Contact: ${bookingData.email}, Phone: ${bookingData.phone}`
+          },
+        ])
+        .select()
+        .single();
 
-      // Initiate payment
-      await initiatePayment(bookingDataWithUser);
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error('Failed to process payment. Please try again.');
-    }
-  };
-
-  const handlePaymentSuccess = async () => {
-    try {
-      if (!bookingData || !experience) return;
+      if (error) throw error;
 
       // Send confirmation notifications
       await sendBookingConfirmation({
-        bookingId: bookingData.bookingId!,
+        bookingId: booking.id,
         experienceId: experience.id,
         userEmail: bookingData.email,
         userPhone: bookingData.phone,
@@ -108,23 +104,8 @@ export default function Booking() {
       setCurrentStep('confirmation');
       toast.success('Booking confirmed! Check your email for details.');
     } catch (error) {
-      console.error('Notification error:', error);
-      // Don't show error to user as booking is still successful
-    }
-  };
-
-  const handlePaymentFailure = async () => {
-    if (bookingData) {
-      await handlePaymentFailure(bookingData.bookingId!);
-      toast.error('Payment failed. Please try again or use a different payment method.');
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep === 'payment') {
-      setCurrentStep('details');
-    } else if (currentStep === 'details') {
-      setCurrentStep('auth');
+      console.error('Booking error:', error);
+      toast.error('Failed to confirm booking. Please try again.');
     }
   };
 
@@ -160,19 +141,9 @@ export default function Booking() {
             experience={experience}
             bookingData={bookingData}
             totalAmount={totalAmount}
-            onProceedToPayment={handleProceedToPayment}
+            onConfirmBooking={handleConfirmBooking}
           />
         ) : null;
-
-      case 'payment':
-        return (
-          <PaymentForm
-            bookingData={bookingData!}
-            totalAmount={totalAmount}
-            onSuccess={handlePaymentSuccess}
-            onBack={handleBack}
-          />
-        );
 
       case 'confirmation':
         return (
@@ -213,7 +184,6 @@ export default function Booking() {
             {currentStep === 'auth' && 'Sign in or create an account to continue'}
             {currentStep === 'details' && 'Fill in your booking details'}
             {currentStep === 'checkout' && 'Review your booking details'}
-            {currentStep === 'payment' && 'Complete your payment'}
             {currentStep === 'confirmation' && 'Your booking is confirmed!'}
           </p>
         </div>

@@ -38,9 +38,9 @@ export function BookingForm({ experienceId, onSuccess }: BookingFormProps) {
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       experienceId,
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || '',
+      firstName: user?.full_name?.split(' ')[0] || '',
+      lastName: user?.full_name?.split(' ')[1] || '',
+      email: '',
     },
   });
 
@@ -166,7 +166,7 @@ export function BookingForm({ experienceId, onSuccess }: BookingFormProps) {
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Processing...' : 'Continue to Payment'}
+            {isSubmitting ? 'Processing...' : 'Continue to Review'}
           </Button>
         </form>
       </CardContent>

@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { BookingFormData } from '@/types/booking';
 
 interface NotificationData {
   bookingId: string;
@@ -15,12 +14,16 @@ interface NotificationData {
 
 export const sendBookingConfirmation = async (data: NotificationData) => {
   try {
-    // Send email confirmation
-    await sendEmailConfirmation(data);
+    // For now, just log the notification data
+    console.log('Sending booking confirmation:', {
+      bookingId: data.bookingId,
+      experienceTitle: data.experienceTitle,
+      userName: data.userName,
+      date: data.date.toLocaleDateString(),
+      totalAmount: data.totalAmount,
+    });
 
-    // Send SMS confirmation
-    await sendSMSConfirmation(data);
-
+    // TODO: Implement actual email and SMS sending when backend is ready
     return { success: true };
   } catch (error) {
     console.error('Error sending notifications:', error);
@@ -28,62 +31,8 @@ export const sendBookingConfirmation = async (data: NotificationData) => {
   }
 };
 
-const sendEmailConfirmation = async (data: NotificationData) => {
-  try {
-    const response = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: data.userEmail,
-        subject: 'Booking Confirmation - Slash Experiences',
-        template: 'booking-confirmation',
-        data: {
-          name: data.userName,
-          experience: data.experienceTitle,
-          date: data.date.toLocaleDateString(),
-          time: data.date.toLocaleTimeString(),
-          participants: data.numberOfParticipants,
-          amount: data.totalAmount,
-          bookingId: data.bookingId,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to send email');
-    }
-  } catch (error) {
-    console.error('Error sending email:', error);
-    throw error;
-  }
-};
-
-const sendSMSConfirmation = async (data: NotificationData) => {
-  try {
-    const response = await fetch('/api/send-sms', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: data.userPhone,
-        message: `Your booking for ${data.experienceTitle} on ${data.date.toLocaleDateString()} has been confirmed. Booking ID: ${data.bookingId}. Thank you for choosing Slash Experiences!`,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to send SMS');
-    }
-  } catch (error) {
-    console.error('Error sending SMS:', error);
-    throw error;
-  }
-};
-
 // Email template for booking confirmation
-export const bookingConfirmationEmailTemplate = `
+export const getBookingConfirmationEmail = (data: NotificationData) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -101,18 +50,17 @@ export const bookingConfirmationEmailTemplate = `
       <h1>Booking Confirmation</h1>
     </div>
     
-    <p>Dear {{name}},</p>
+    <p>Dear ${data.userName},</p>
     
     <p>Thank you for booking with Slash Experiences! Your booking has been confirmed.</p>
     
     <div class="details">
       <h2>Booking Details:</h2>
-      <p><strong>Experience:</strong> {{experience}}</p>
-      <p><strong>Date:</strong> {{date}}</p>
-      <p><strong>Time:</strong> {{time}}</p>
-      <p><strong>Number of Participants:</strong> {{participants}}</p>
-      <p><strong>Total Amount:</strong> ${{amount}}</p>
-      <p><strong>Booking ID:</strong> {{bookingId}}</p>
+      <p><strong>Experience:</strong> ${data.experienceTitle}</p>
+      <p><strong>Date:</strong> ${data.date.toLocaleDateString()}</p>
+      <p><strong>Number of Participants:</strong> ${data.numberOfParticipants}</p>
+      <p><strong>Total Amount:</strong> $${data.totalAmount}</p>
+      <p><strong>Booking ID:</strong> ${data.bookingId}</p>
     </div>
     
     <p>Please keep this email for your records. We look forward to seeing you!</p>
