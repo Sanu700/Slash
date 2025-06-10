@@ -18,6 +18,7 @@ import ExperienceManager from "./pages/ExperienceManager";
 import Profile from "./pages/Profile";
 import { requireAuth } from "./lib/auth";
 import Booking from '@/pages/Booking';
+import HostExperience from './pages/HostExperience';
 
 // Import Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
               <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
               <Route path="/booking/:experienceId" element={<Booking />} />
+              <Route path="/host-experience" element={<HostExperience />} />
               
               {/* Company Pages */}
               <Route path="/about-us" element={<AboutUs />} />
