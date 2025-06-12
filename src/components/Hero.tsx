@@ -106,28 +106,34 @@ const Hero = () => {
           </div>
         </div>
         
-        {/* Stats */}
-        <div className={cn("mt-0 md:mt-5 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl transition-all duration-1000 delay-300 ml-20", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
-          {[{
-            value: "500+",
-            label: "Experiences"
-          }, {
-            value: "50k+",
-            label: "Happy Recipients"
-          }, {
-            value: "4.9",
-            label: "Average Rating"
-          }, {
-            value: "100%",
-            label: "Satisfaction"
-          }].map((stat, index) => (
-            <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-6">
-              <p className="text-2xl md:text-3xl font-medium">
-                <AnimatedCounter value={stat.value} />
-              </p>
-              <p className="text-sm text-white/90">{stat.label}</p>
-            </div>
-          ))}
+        <div className="flex items-center justify-between">
+          <NavLink to="/gifting-guide" onClick={scrollToTop} className="mt-6">
+            <Button size="lg" variant="outline" className="border-white text-base transition-all bg-gray-50 text-gray-950">
+              Gift Inspiration
+            </Button>
+          </NavLink>
+          <div className={cn("mt-0 md:mt-5 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
+            {[{
+              value: "500+",
+              label: "Experiences"
+            }, {
+              value: "50k+",
+              label: "Happy Recipients"
+            }, {
+              value: "4.9",
+              label: "Average Rating"
+            }, {
+              value: "100%",
+              label: "Satisfaction"
+            }].map((stat, index) => (
+              <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-6">
+                <p className="text-2xl md:text-3xl font-medium">
+                  <AnimatedCounter value={stat.value} />
+                </p>
+                <p className="text-sm text-white/90">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       
