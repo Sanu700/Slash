@@ -5,6 +5,7 @@ import { Users, Package, TrendingUp, DollarSign, Calendar, ArrowUpRight, ArrowDo
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 
 const stats = [
   {
@@ -58,6 +59,25 @@ const recentActivity = [
     description: "New 5-star review for 'Mountain Trek'",
     time: "2 hours ago"
   }
+];
+
+// Add mockApplications data
+const mockApplications = [
+  {
+    id: "app1",
+    companyName: "New Adventure Co.",
+    email: "apply@adventureco.com",
+    contactNo: "+91 99999 88888",
+    experienceName: "Jungle Safari",
+    description: "A thrilling jungle safari experience.",
+    price: "2000",
+    location: "Goa",
+    duration: "5 hours",
+    participants: "20",
+    date: "2024-07-01",
+    category: "Adventure"
+  },
+  // ...more applications
 ];
 
 export default function Dashboard() {
@@ -162,7 +182,7 @@ export default function Dashboard() {
             <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <Button 
                 variant="outline" 
                 className="flex items-center justify-start px-4"
@@ -194,6 +214,16 @@ export default function Dashboard() {
               >
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
+              </Button>
+            </div>
+            <div className="flex">
+              <Button 
+                variant="default" 
+                className="flex items-center justify-start px-4"
+                onClick={() => navigate('/admin/users/providers')}
+              >
+                <UserCog className="mr-2 h-4 w-4" />
+                View Provider Applications
               </Button>
             </div>
           </CardContent>

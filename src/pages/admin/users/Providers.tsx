@@ -58,6 +58,24 @@ const Providers = () => {
     return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
   };
 
+  const mockApplications = [
+    {
+      id: "app1",
+      companyName: "New Adventure Co.",
+      email: "apply@adventureco.com",
+      contactNo: "+91 99999 88888",
+      experienceName: "Jungle Safari",
+      description: "A thrilling jungle safari experience.",
+      price: "2000",
+      location: "Goa",
+      duration: "5 hours",
+      participants: "20",
+      date: "2024-07-01",
+      category: "Adventure"
+    },
+    // ...more applications
+  ];
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -156,6 +174,39 @@ const Providers = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Provider Applications</CardTitle>
+            <CardDescription>Review new provider applications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Experience</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mockApplications.map(app => (
+                  <TableRow key={app.id}>
+                    <TableCell>{app.companyName}</TableCell>
+                    <TableCell>{app.email}</TableCell>
+                    <TableCell>{app.experienceName}</TableCell>
+                    <TableCell>{app.location}</TableCell>
+                    <TableCell>{app.date}</TableCell>
+                    <TableCell>{app.category}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
