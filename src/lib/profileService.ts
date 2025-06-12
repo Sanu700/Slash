@@ -1,5 +1,4 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { ExtendedProfile } from './data/types';
 

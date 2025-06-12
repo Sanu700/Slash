@@ -12,7 +12,7 @@ import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import useTrackExperienceView from '@/hooks/useTrackExperienceView';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();

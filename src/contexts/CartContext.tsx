@@ -3,7 +3,7 @@ import { getExperienceById } from '@/lib/data';
 import { CartItem, Experience } from '@/lib/data';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface CartContextType {
   items: CartItem[];
@@ -117,66 +117,54 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = async (experienceId: string) => {
     try {
+      // Check if user is authenticated
+      if (!user) {
+        toast.error("Please log in to add items to your cart");
+        return;
+      }
+
       const experience = await getExperienceById(experienceId);
       if (!experience) {
         toast.error("Unable to add item to cart");
         return;
       }
       
-      // Handle authenticated users
-      if (user) {
-        const existingItem = items.find(item => item.experienceId === experienceId);
-        const newQuantity = existingItem ? existingItem.quantity + 1 : 1;
-        
-        // Upsert to cart_items table
-        const { error } = await supabase
-          .from('cart_items')
-          .upsert(
-            { 
-              user_id: user.id,
-              experience_id: experienceId,
-              quantity: newQuantity,
-              updated_at: new Date().toISOString()
-            },
-            { 
-              onConflict: 'user_id,experience_id'
-            }
-          );
-          
-        if (error) {
-          console.error('Error adding item to cart:', error);
-          toast.error('Failed to add item to cart');
-          return;
-        }
-        
-        // Update local state
-        setItems(prevItems => {
-          if (existingItem) {
-            return prevItems.map(item => 
-              item.experienceId === experienceId 
-                ? { ...item, quantity: item.quantity + 1 } 
-                : item
-            );
-          } else {
-            return [...prevItems, { experienceId, quantity: 1 }];
+      const existingItem = items.find(item => item.experienceId === experienceId);
+      const newQuantity = existingItem ? existingItem.quantity + 1 : 1;
+      
+      // Upsert to cart_items table
+      const { error } = await supabase
+        .from('cart_items')
+        .upsert(
+          { 
+            user_id: user.id,
+            experience_id: experienceId,
+            quantity: newQuantity,
+            updated_at: new Date().toISOString()
+          },
+          { 
+            onConflict: 'user_id,experience_id'
           }
-        });
-      } 
-      // Handle non-authenticated users
-      else {
-        setItems(prevItems => {
-          const existingItem = prevItems.find(item => item.experienceId === experienceId);
-          if (existingItem) {
-            return prevItems.map(item => 
-              item.experienceId === experienceId 
-                ? { ...item, quantity: item.quantity + 1 } 
-                : item
-            );
-          } else {
-            return [...prevItems, { experienceId, quantity: 1 }];
-          }
-        });
+        );
+        
+      if (error) {
+        console.error('Error adding item to cart:', error);
+        toast.error('Failed to add item to cart');
+        return;
       }
+      
+      // Update local state
+      setItems(prevItems => {
+        if (existingItem) {
+          return prevItems.map(item => 
+            item.experienceId === experienceId 
+              ? { ...item, quantity: item.quantity + 1 } 
+              : item
+          );
+        } else {
+          return [...prevItems, { experienceId, quantity: 1 }];
+        }
+      });
       
       // Cache the experience
       setExperienceCache(prev => ({

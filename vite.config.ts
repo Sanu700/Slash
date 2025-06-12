@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     SUPABASE_KEY: process.env.VITE_SUPABASE_KEY ? 'exists' : 'missing'
   });
-  
+
   return {
     server: {
       host: "::",
@@ -27,13 +27,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-      }
+      },
     },
     envPrefix: 'VITE_',
-    // Explicitly define environment variables
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
-      'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(process.env.VITE_SUPABASE_KEY)
-    }
+      'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(process.env.VITE_SUPABASE_KEY),
+    },
   };
 });

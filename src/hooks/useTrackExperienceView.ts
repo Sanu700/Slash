@@ -1,7 +1,6 @@
-
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Hook to track when a user views an experience

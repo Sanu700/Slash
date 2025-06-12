@@ -9,6 +9,7 @@ import { ArrowLeft, Filter } from 'lucide-react';
 import { getAllExperiences } from '@/lib/data';
 import { Experience } from '@/lib/data/types';
 import { useInView } from '@/lib/animations';
+import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
 
 const AllExperiences = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -17,6 +18,8 @@ const AllExperiences = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const experiencesPerPage = 12;
   const location = useLocation();
   
@@ -50,27 +53,76 @@ const AllExperiences = () => {
   const filteredExperiences = useMemo(() => {
     if (isLoading) return [];
     
-    let sorted = [...experiences];
+    let filtered = [...experiences];
     
-    // Apply sorting
-    if (sortOrder === 'price-low') {
-      sorted.sort((a, b) => a.price - b.price);
-    } else if (sortOrder === 'price-high') {
-      sorted.sort((a, b) => b.price - a.price);
-    }
-    
-    // Apply search filtering if there's a search term
+    // Apply search filtering
     if (searchTerm.trim()) {
       const lowercasedSearch = searchTerm.toLowerCase();
-      sorted = sorted.filter(exp => 
+      filtered = filtered.filter(exp => 
         exp.title.toLowerCase().includes(lowercasedSearch) ||
         exp.description.toLowerCase().includes(lowercasedSearch) ||
         exp.location.toLowerCase().includes(lowercasedSearch)
       );
     }
+
+    // Apply active filters
+    if (activeFilters) {
+      // Price range filter
+      filtered = filtered.filter(exp => 
+        exp.price >= activeFilters.priceRange[0] && 
+        exp.price <= activeFilters.priceRange[1]
+      );
+
+      // Categories filter
+      if (activeFilters.categories.length > 0) {
+        filtered = filtered.filter(exp => 
+          activeFilters.categories.includes(exp.category)
+        );
+      }
+
+      // Experience types filter
+      const hasExperienceTypeFilter = Object.values(activeFilters.experienceTypes).some(Boolean);
+      if (hasExperienceTypeFilter) {
+        filtered = filtered.filter(exp => {
+          if (activeFilters.experienceTypes.romantic && !exp.romantic) return false;
+          if (activeFilters.experienceTypes.adventurous && !exp.adventurous) return false;
+          if (activeFilters.experienceTypes.group && !exp.group) return false;
+          if (activeFilters.experienceTypes.trending && !exp.trending) return false;
+          if (activeFilters.experienceTypes.featured && !exp.featured) return false;
+          return true;
+        });
+      }
+
+      // Duration filter
+      if (activeFilters.duration) {
+        filtered = filtered.filter(exp => {
+          const [min, max] = activeFilters.duration.split('-').map(Number);
+          const expDuration = parseInt(exp.duration);
+          if (max) {
+            return expDuration >= min && expDuration <= max;
+          } else {
+            return expDuration >= min;
+          }
+        });
+      }
+
+      // Location filter
+      if (activeFilters.location) {
+        filtered = filtered.filter(exp => 
+          exp.location.toLowerCase() === activeFilters.location.toLowerCase()
+        );
+      }
+    }
     
-    return sorted;
-  }, [sortOrder, searchTerm, experiences, isLoading]);
+    // Apply sorting
+    if (sortOrder === 'price-low') {
+      filtered.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === 'price-high') {
+      filtered.sort((a, b) => b.price - a.price);
+    }
+    
+    return filtered;
+  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters]);
   
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
@@ -79,9 +131,9 @@ const AllExperiences = () => {
   const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
   
   useEffect(() => {
-    // Reset to page 1 when search or sort changes
+    // Reset to page 1 when search, sort, or filters change
     setCurrentPage(1);
-  }, [searchTerm, sortOrder]);
+  }, [searchTerm, sortOrder, activeFilters]);
   
   const handleSortChange = (order: 'default' | 'price-low' | 'price-high') => {
     setSortOrder(order);
@@ -91,144 +143,50 @@ const AllExperiences = () => {
     setSearchTerm(e.target.value);
   };
   
-  // Keep the existing pagination renderer code
+  const handleFilterApply = (filters: FilterOptions) => {
+    setActiveFilters(filters);
+  };
+  
   const renderPagination = () => {
-    const pages = [];
-    
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => setCurrentPage(i)}
-          className={cn(
-            "w-10 h-10 rounded-md transition-colors",
-            currentPage === i 
-              ? "bg-primary text-white" 
-              : "bg-secondary hover:bg-secondary/80"
-          )}
-        >
-          {i}
-        </button>
-      );
-    }
-    
+    if (totalPages <= 1) return null;
+
     return (
-      <div className="flex items-center justify-center gap-2 mt-12">
-        <button 
+      <div className="flex justify-center mt-8 space-x-2">
+        <Button
+          variant="outline"
           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
-          className="px-3 py-2 rounded-md bg-secondary hover:bg-secondary/80 disabled:opacity-50"
         >
           Previous
-        </button>
-        
-        <div className="flex items-center gap-1">
-          {totalPages <= 7 ? (
-            pages
-          ) : (
-            <>
-              {currentPage > 2 && (
-                <>
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    className="w-10 h-10 rounded-md bg-secondary hover:bg-secondary/80"
-                  >
-                    1
-                  </button>
-                  {currentPage > 3 && <span className="px-1">...</span>}
-                </>
-              )}
-              
-              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                let pageNum;
-                if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                
-                if (pageNum > 0 && pageNum <= totalPages) {
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={cn(
-                        "w-10 h-10 rounded-md transition-colors",
-                        currentPage === pageNum 
-                          ? "bg-primary text-white" 
-                          : "bg-secondary hover:bg-secondary/80"
-                      )}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }
-                return null;
-              })}
-              
-              {currentPage < totalPages - 1 && (
-                <>
-                  {currentPage < totalPages - 2 && <span className="px-1">...</span>}
-                  <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    className="w-10 h-10 rounded-md bg-secondary hover:bg-secondary/80"
-                  >
-                    {totalPages}
-                  </button>
-                </>
-              )}
-            </>
-          )}
+        </Button>
+        <div className="flex items-center space-x-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              onClick={() => setCurrentPage(page)}
+              className="w-10"
+            >
+              {page}
+            </Button>
+          ))}
         </div>
-        
-        <button 
+        <Button
+          variant="outline"
           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
-          className="px-3 py-2 rounded-md bg-secondary hover:bg-secondary/80 disabled:opacity-50"
         >
           Next
-        </button>
+        </Button>
       </div>
     );
   };
   
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow pt-20 md:pt-24">
-        {/* Hero Section */}
-        <div className="relative h-[30vh] md:h-[40vh] w-full">
-          <img 
-            src="https://images.unsplash.com/photo-1506477331477-33d5d8b3dc85?q=80&w=2674&auto=format&fit=crop" 
-            alt="All Experiences"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
-          <div className="absolute top-6 left-6">
-            <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </Link>
-          </div>
-          
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-            <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
-              <img 
-                src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
-                alt="Slash logo" 
-                className="h-8 w-8" 
-              />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-medium mb-2">All Experiences</h1>
-            <p className="max-w-2xl text-white/80">
-              Browse our complete collection of extraordinary experiences
-            </p>
-          </div>
-        </div>
-        
+      <main className="flex-1 bg-background">
         <div 
           ref={ref}
           className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
@@ -302,9 +260,24 @@ const AllExperiences = () => {
                       Price: High to Low
                     </button>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsFilterOpen(true)}
+                    className={cn(
+                      activeFilters && "border-primary text-primary"
+                    )}
+                  >
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
+                    {activeFilters && (
+                      <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                        {Object.values(activeFilters.experienceTypes).filter(Boolean).length +
+                         (activeFilters.categories.length > 0 ? 1 : 0) +
+                         (activeFilters.duration ? 1 : 0) +
+                         (activeFilters.location ? 1 : 0)}
+                      </span>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -323,8 +296,11 @@ const AllExperiences = () => {
                 <div className="text-center py-16">
                   <h3 className="text-xl mb-2">No matching experiences found</h3>
                   <p className="text-muted-foreground mb-6">Try adjusting your search criteria</p>
-                  <Button onClick={() => setSearchTerm('')}>
-                    Clear Search
+                  <Button onClick={() => {
+                    setSearchTerm('');
+                    setActiveFilters(null);
+                  }}>
+                    Clear All Filters
                   </Button>
                 </div>
               )}
@@ -337,6 +313,14 @@ const AllExperiences = () => {
       </main>
       
       <Footer />
+
+      {/* Filter Dialog */}
+      <FilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleFilterApply}
+        initialFilters={activeFilters || undefined}
+      />
     </div>
   );
 };

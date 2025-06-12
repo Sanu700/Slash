@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -82,12 +81,11 @@ const Press = () => {
                 Find the latest news, press releases, media resources, and company information about Slash Experiences.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" variant="secondary" className="font-medium">
-                  Press Kit
-                  <Download className="w-4 h-4 ml-2" />
+                <Button size="lg" variant="secondary" className="font-medium" asChild>
+                  <a href="/press-kit.zip" download>Press Kit <Download className="w-4 h-4 ml-2" /></a>
                 </Button>
-                <Button size="lg" variant="outline" className="text-white border-white hover:text-white hover:bg-white/10">
-                  Media Inquiries
+                <Button size="lg" variant="outline" className="text-white border-white hover:text-white hover:bg-white/10" asChild>
+                  <a href="mailto:press@slashexperiences.com">Media Inquiries</a>
                 </Button>
               </div>
             </div>
@@ -138,7 +136,9 @@ const Press = () => {
             </div>
             
             <div className="mt-8">
-              <Button variant="outline">View All Press Releases</Button>
+              <Button variant="outline" asChild>
+                <a href="#press-releases">View All Press Releases</a>
+              </Button>
             </div>
           </div>
         </section>
@@ -216,9 +216,11 @@ const Press = () => {
                   <p className="text-muted-foreground mb-4">
                     Official logo in various formats (PNG, SVG, EPS) with light and dark variations.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Logos
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href="/logos.zip" download>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Logos
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -238,9 +240,11 @@ const Press = () => {
                   <p className="text-muted-foreground mb-4">
                     High-resolution screenshots and product images for media use.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Images
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href="/images.zip" download>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Images
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -260,9 +264,11 @@ const Press = () => {
                   <p className="text-muted-foreground mb-4">
                     Comprehensive guide for proper brand usage, colors, typography, and tone of voice.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href="/brand-guidelines.pdf" download>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -291,7 +297,9 @@ const Press = () => {
                 </div>
                 
                 <div>
-                  <Button className="bg-white text-primary hover:bg-white/90" size="lg">Contact Press Team</Button>
+                  <Button className="bg-white text-primary hover:bg-white/90" size="lg" asChild>
+                    <a href="mailto:press@slashexperiences.com">Contact Press Team</a>
+                  </Button>
                 </div>
               </div>
             </div>

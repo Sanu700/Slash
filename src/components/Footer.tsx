@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Slash, Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { scrollToTop } from '@/lib/animations';
 
 const Footer = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -63,7 +63,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo and About */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-6">
+            <Link to="/" className="flex items-center space-x-2 mb-6" onClick={scrollToTop}>
               <img 
                 src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
                 alt="Slash logo" 
@@ -97,6 +97,7 @@ const Footer = () => {
                   <li key={link.name}>
                     <Link 
                       to={link.href}
+                      onClick={scrollToTop}
                       className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.name}
@@ -115,9 +116,9 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Slash. All rights reserved.
           </div>
           <div className="flex flex-wrap gap-4">
-            <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>
-            <Link to="/cookie-policy" className="hover:text-foreground transition-colors">Cookie Policy</Link>
+            <Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link to="/cookie-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>
