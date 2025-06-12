@@ -38,6 +38,14 @@ const categoryData = [
   { name: "Wellness", value: 25 },
 ];
 
+const locationData = [
+  { name: "Maharashtra", value: 40 },
+  { name: "Delhi", value: 25 },
+  { name: "Karnataka", value: 18 },
+  { name: "West Bengal", value: 10 },
+  { name: "Tamil Nadu", value: 7 },
+];
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
 const StatCard = ({ title, value, change, trend, icon: Icon }: { 
@@ -136,6 +144,7 @@ export default function Analytics() {
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="location">Location</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -252,6 +261,28 @@ export default function Analytics() {
                       </Pie>
                       <Tooltip />
                     </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="location" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Location Distribution</CardTitle>
+                <CardDescription>Distribution of users/providers by state</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={locationData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis dataKey="name" type="category" width={120} />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#0088FE" />
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
