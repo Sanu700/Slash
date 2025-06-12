@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
-import { config } from '@/config.js';
+import { config } from '@/config';
 
 const SUPABASE_URL = config.supabase.url;
 const SUPABASE_KEY = config.supabase.key;
