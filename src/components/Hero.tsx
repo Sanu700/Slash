@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { NavLink } from '@/components/ui/nav-link';
 import { scrollToTop } from '@/lib/animations';
 import AnimatedCounter from './AnimatedCounter';
+import SuggestedExperiences from './SuggestedExperiences';
 
 const Hero = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({
@@ -75,12 +76,12 @@ const Hero = () => {
       </div>
 
       {/* Carousel indicators */}
-      <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+      <div className="absolute bottom-24 right-10 flex space-x-2 z-10">
         {imageUrls.map((_, index) => <button key={index} className={cn("w-2 h-2 rounded-full transition-all", index === currentImage ? "bg-white w-6" : "bg-white/40")} onClick={() => setCurrentImage(index)} />)}
       </div>
 
       {/* Content */}
-      <div className="container max-w-6xl mx-auto px-6 md:px-10 relative z-10 text-white">
+      <div className="container max-w-6xl mx-auto px-6 md:px-10 relative z-10 text-white mt-20">
         <div className="max-w-3xl">
           <div className={cn("transition-all duration-1000 transform", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
             <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
@@ -99,26 +100,14 @@ const Hero = () => {
               92% of all people prefer an Experience over a Material gift and 63% forget what they recieved a year back.
             </p>
             
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              <NavLink to="/#experiences" onClick={scrollToTop}>
-                <Button size="lg" className="group relative overflow-hidden bg-white text-black hover:bg-white/90 text-base transition-all px-8">
-                  Explore Experiences
-                  <div className="absolute right-4 group-hover:translate-x-1 transition-transform">
-                    <ArrowRight className="h-5 w-5" />
-                  </div>
-                </Button>
-              </NavLink>
-              <NavLink to="/gifting-guide" onClick={scrollToTop}>
-                <Button size="lg" variant="outline" className="border-white text-base transition-all bg-gray-50 text-gray-950">
-                  Gift Inspiration
-                </Button>
-              </NavLink>
+            <div className="flex flex-col items-center justify-center">
+              <SuggestedExperiences />
             </div>
           </div>
         </div>
         
         {/* Stats */}
-        <div className={cn("mt-20 md:mt-28 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
+        <div className={cn("mt-0 md:mt-5 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl transition-all duration-1000 delay-300 ml-20", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
           {[{
             value: "500+",
             label: "Experiences"
@@ -143,7 +132,7 @@ const Hero = () => {
       </div>
       
       {/* Scroll indicator */}
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce">
+      <div className="absolute bottom-10 right-10 flex flex-col items-center animate-bounce">
         <div className="w-0.5 h-8 bg-white/30 mb-2" />
         <span className="text-white/70 text-sm">Scroll to explore</span>
       </div>
