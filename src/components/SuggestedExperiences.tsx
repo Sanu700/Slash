@@ -55,8 +55,8 @@ const SuggestedExperiences = () => {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="bg-white/80 hover:bg-white text-black" />
-                <CarouselNext className="bg-white/80 hover:bg-white text-black" />
+                <CarouselPrevious className="bg-white/80 hover:bg-white text-black -ml-8" />
+                <CarouselNext className="bg-white/80 hover:bg-white text-black -mr-8" />
               </Carousel>
             </div>
           ) : (
