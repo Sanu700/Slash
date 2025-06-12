@@ -19,6 +19,15 @@ import Profile from "./pages/Profile";
 import { requireAuth } from "./lib/auth";
 import Booking from '@/pages/Booking';
 import HostExperience from './pages/HostExperience';
+import AdminLogin from '@/pages/admin/AdminLogin';
+import Dashboard from '@/pages/admin/Dashboard';
+import Users from '@/pages/admin/Users';
+import Categories from '@/pages/admin/Categories';
+import Analytics from '@/pages/admin/Analytics';
+import Settings from '@/pages/admin/Settings';
+import Customers from './pages/admin/users/Customers';
+import Providers from './pages/admin/users/Providers';
+import Experiences from './pages/admin/Experiences';
 
 // Import Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -38,6 +47,14 @@ const queryClient = new QueryClient();
 
 // Apply authentication to the ExperienceManager component with admin required
 const ProtectedExperienceManager = requireAuth(ExperienceManager, true);
+
+// Apply authentication to admin components
+const ProtectedAdminDashboard = requireAuth(Dashboard, true);
+const ProtectedAdminUsers = requireAuth(Users, true);
+const ProtectedAdminCategories = requireAuth(Categories, true);
+const ProtectedAdminAnalytics = requireAuth(Analytics, true);
+const ProtectedAdminSettings = requireAuth(Settings, true);
+const ProtectedProfile = requireAuth(Profile);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -73,6 +90,18 @@ const App = () => (
               <Route path="/gift-rules" element={<GiftRules />} />
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/returns" element={<Returns />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<ProtectedAdminDashboard />} />
+              <Route path="/admin/users" element={<ProtectedAdminUsers />} />
+              <Route path="/admin/categories" element={<ProtectedAdminCategories />} />
+              <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
+              <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
+              <Route path="/admin/users/customers" element={<Customers />} />
+              <Route path="/admin/users/providers" element={<Providers />} />
+              <Route path="/admin/experiences" element={<Experiences />} />
+              <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
