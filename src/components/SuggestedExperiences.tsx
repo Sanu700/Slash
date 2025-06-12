@@ -66,11 +66,6 @@ const SuggestedExperiences = () => {
           )}
         </div>
       </div>
-      <NavLink to="/gifting-guide" onClick={scrollToTop} className="mt-6 ml-80">
-        <Button size="lg" variant="outline" className="border-white text-base transition-all bg-gray-50 text-gray-950">
-          Gift Inspiration
-        </Button>
-      </NavLink>
     </div>
   );
 };
