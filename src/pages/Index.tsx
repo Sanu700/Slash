@@ -6,14 +6,24 @@ import TrendingSection from '@/components/TrendingSection';
 import CustomizeSection from '@/components/CustomizeSection';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
-import { getFeaturedExperiences } from '@/lib/data';
+import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data/types';
 import { cn } from '@/lib/utils';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext
+} from '@/components/ui/carousel';
+import SuggestedExperiences from '@/components/SuggestedExperiences';
 
 const Index = () => {
   const [featuredExperiences, setFeaturedExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
+  const [isAllLoading, setIsAllLoading] = useState(true);
 
   // Load featured experiences from Supabase
   useEffect(() => {
@@ -30,6 +40,23 @@ const Index = () => {
     };
 
     loadFeaturedExperiences();
+  }, []);
+
+  // Load all experiences from Supabase
+  useEffect(() => {
+    const loadAllExperiences = async () => {
+      setIsAllLoading(true);
+      try {
+        const experiences = await getAllExperiences();
+        setAllExperiences(experiences);
+      } catch (error) {
+        console.error('Error loading all experiences:', error);
+      } finally {
+        setIsAllLoading(false);
+      }
+    };
+
+    loadAllExperiences();
   }, []);
 
   // Smooth scroll for anchor links
@@ -58,7 +85,6 @@ const Index = () => {
       <main>
         {/* Hero Section */}
         <Hero />
-        
         {/* Featured Experiences */}
         <section id="experiences" className="py-20 md:py-28">
           <div className="container max-w-6xl mx-auto px-6 md:px-10">
