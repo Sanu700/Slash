@@ -228,7 +228,10 @@ export function HostExperience() {
           </div>
         </div>
 
-        <Button type="submit" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Submitting...' : 'Submit Application'}
         </Button>
       </form>
