@@ -76,7 +76,6 @@ const HostExperience = () => {
     setIsSubmitting(true);
 
     try {
-      // Convert image to base64 if it exists
       let imageBase64 = null;
       if (formData.image) {
         const reader = new FileReader();
@@ -121,7 +120,7 @@ const HostExperience = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 bg-gray-50 dark:bg-gray-900 py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8">
@@ -133,7 +132,6 @@ const HostExperience = () => {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Company Details */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Company Details</h2>
                 <Input
@@ -161,7 +159,6 @@ const HostExperience = () => {
                 />
               </div>
 
-              {/* Experience Details */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Experience Details</h2>
                 <Input
@@ -264,4 +261,4 @@ const HostExperience = () => {
   );
 };
 
-export default HostExperience; 
+export default HostExperience;

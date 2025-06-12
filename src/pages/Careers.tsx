@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -323,8 +322,9 @@ const Careers = () => {
                         <span className="bg-secondary/50 text-foreground px-2 py-0.5 rounded-full">{job.type}</span>
                       </div>
                     </div>
-                    
-                    <Button className="mt-4 md:mt-0" variant="secondary">Apply Now</Button>
+                    <Button className="mt-4 md:mt-0" variant="secondary" asChild>
+                      <a href={`mailto:careers@slashexperiences.com?subject=Application for ${encodeURIComponent(job.title)}`}>Apply Now</a>
+                    </Button>
                   </div>
                   
                   <div className="p-6">
@@ -337,7 +337,9 @@ const Careers = () => {
             {/* No Positions Message */}
             <div className="mt-12 text-center">
               <p className="text-lg mb-6">Don't see a position that matches your skills?</p>
-              <Button variant="outline">Submit Your Resume</Button>
+              <Button variant="outline" asChild>
+                <a href="mailto:careers@slashexperiences.com?subject=General%20Resume%20Submission">Submit Your Resume</a>
+              </Button>
             </div>
           </div>
         </section>

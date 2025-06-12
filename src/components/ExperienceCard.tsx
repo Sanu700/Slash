@@ -8,7 +8,7 @@ import { formatRupees } from '@/lib/formatters';
 import { useCart } from '@/contexts/CartContext';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface ExperienceCardProps {
@@ -52,7 +52,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      toast.error('Please log in to add items to your wishlist');
+      toast.error('Please log in to save to your wishlist');
       return;
     }
     await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, (experiences) => {

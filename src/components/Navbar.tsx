@@ -153,6 +153,17 @@ const Navbar = () => {
         />
 
         <div className="hidden md:flex items-center space-x-4">
+          <Link
+            to="/host-experience"
+            className={cn(
+              "px-4 py-2 rounded-lg transition-colors font-medium",
+              isScrolled || !isDarkPage
+                ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
+            )}
+          >
+            Host an Experience
+          </Link>
           <button 
             onClick={toggleSearch}
             className={cn(
@@ -229,20 +240,46 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              variant={isScrolled || !isDarkPage ? "default" : "secondary"}
-              className={cn(
-                "transition-all font-medium",
-                !isScrolled && isDarkPage && "bg-white text-gray-900 hover:bg-gray-100"
-              )}
-              onClick={handleSignIn}
-            >
-              Sign In
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={isScrolled || !isDarkPage ? "default" : "secondary"}
+                  className={cn(
+                    "transition-all font-medium",
+                    !isScrolled && isDarkPage && "bg-white text-gray-900 hover:bg-gray-100"
+                  )}
+                >
+                  Sign In
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Sign In Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignIn}>
+                  <User className="mr-2 h-4 w-4" />
+                  Sign in with Google
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin/login')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Admin Login
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
         <div className="md:hidden flex items-center space-x-3">
+          <Link
+            to="/host-experience"
+            className={cn(
+              "px-3 py-1.5 rounded-lg transition-colors font-medium text-sm",
+              isScrolled || !isDarkPage
+                ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
+            )}
+          >
+            Host
+          </Link>
           <button 
             onClick={toggleSearch}
             className={cn(
