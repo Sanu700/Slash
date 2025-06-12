@@ -240,16 +240,31 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              variant={isScrolled || !isDarkPage ? "default" : "secondary"}
-              className={cn(
-                "transition-all font-medium",
-                !isScrolled && isDarkPage && "bg-white text-gray-900 hover:bg-gray-100"
-              )}
-              onClick={handleSignIn}
-            >
-              Sign In
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={isScrolled || !isDarkPage ? "default" : "secondary"}
+                  className={cn(
+                    "transition-all font-medium",
+                    !isScrolled && isDarkPage && "bg-white text-gray-900 hover:bg-gray-100"
+                  )}
+                >
+                  Sign In
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Sign In Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignIn}>
+                  <User className="mr-2 h-4 w-4" />
+                  Sign in with Google
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin/login')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Admin Login
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
