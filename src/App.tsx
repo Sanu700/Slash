@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/lib/auth";
+import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import ExperienceView from "./pages/ExperienceView";
 import CategoryExplore from "./pages/CategoryExplore";
@@ -45,71 +46,78 @@ import Returns from "./pages/Returns";
 
 const queryClient = new QueryClient();
 
-// Apply authentication to the ExperienceManager component with admin required
-const ProtectedExperienceManager = requireAuth(ExperienceManager, true);
-
-// Apply authentication to admin components
-const ProtectedAdminDashboard = requireAuth(Dashboard, true);
-const ProtectedAdminUsers = requireAuth(Users, true);
-const ProtectedAdminCategories = requireAuth(Categories, true);
-const ProtectedAdminAnalytics = requireAuth(Analytics, true);
-const ProtectedAdminSettings = requireAuth(Settings, true);
+// Create protected components
+const ProtectedDashboard = requireAuth(Dashboard);
+const ProtectedUsers = requireAuth(Users);
+const ProtectedCustomers = requireAuth(Customers);
+const ProtectedProviders = requireAuth(Providers);
+const ProtectedExperiences = requireAuth(Experiences);
+const ProtectedCategories = requireAuth(Categories);
+const ProtectedAnalytics = requireAuth(Analytics);
+const ProtectedSettings = requireAuth(Settings);
 const ProtectedProfile = requireAuth(Profile);
+const ProtectedHostExperience = requireAuth(HostExperience);
+const ProtectedExperienceManager = requireAuth(ExperienceManager);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/experience/:id" element={<ExperienceView />} />
-              <Route path="/category/:id" element={<CategoryExplore />} />
-              <Route path="/experiences" element={<AllExperiences />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/gifting-guide" element={<GiftingGuide />} />
-              <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
-              <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
-              <Route path="/booking/:experienceId" element={<Booking />} />
-              <Route path="/host-experience" element={<HostExperience />} />
-              
-              {/* Company Pages */}
-              <Route path="/about-us" element={<AboutUs />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/testimonials" element={<Testimonials />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/press" element={<Press />} />
-              
-              {/* Support Pages */}
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/gift-rules" element={<GiftRules />} />
-              <Route path="/shipping" element={<Shipping />} />
-              <Route path="/returns" element={<Returns />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin" element={<ProtectedAdminDashboard />} />
-              <Route path="/admin/users" element={<ProtectedAdminUsers />} />
-              <Route path="/admin/categories" element={<ProtectedAdminCategories />} />
-              <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
-              <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
-              <Route path="/admin/users/customers" element={<Customers />} />
-              <Route path="/admin/users/providers" element={<Providers />} />
-              <Route path="/admin/experiences" element={<Experiences />} />
-              <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <TooltipProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
+                <Route path="/experiences/:id" element={<Layout><ExperienceView /></Layout>} />
+                <Route path="/categories/:id" element={<Layout><CategoryExplore /></Layout>} />
+                <Route path="/cart" element={<Layout><Cart /></Layout>} />
+                <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
+                <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
+                <Route path="/booking/:id" element={<Layout><Booking /></Layout>} />
+                
+                {/* Company Pages */}
+                <Route path="/about" element={<Layout><AboutUs /></Layout>} />
+                <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
+                <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
+                <Route path="/careers" element={<Layout><Careers /></Layout>} />
+                <Route path="/press" element={<Layout><Press /></Layout>} />
+                
+                {/* Support Pages */}
+                <Route path="/contact" element={<Layout><ContactUs /></Layout>} />
+                <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+                <Route path="/gift-rules" element={<Layout><GiftRules /></Layout>} />
+                <Route path="/shipping" element={<Layout><Shipping /></Layout>} />
+                <Route path="/returns" element={<Layout><Returns /></Layout>} />
+                
+                {/* Protected Routes */}
+                <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
+                <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
+                <Route path="/experience-manager" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={<Layout><ProtectedDashboard /></Layout>} />
+                <Route path="/admin/users" element={<Layout><ProtectedUsers /></Layout>} />
+                <Route path="/admin/users/customers" element={<Layout><ProtectedCustomers /></Layout>} />
+                <Route path="/admin/users/providers" element={<Layout><ProtectedProviders /></Layout>} />
+                <Route path="/admin/experiences" element={<Layout><ProtectedExperiences /></Layout>} />
+                <Route path="/admin/categories" element={<Layout><ProtectedCategories /></Layout>} />
+                <Route path="/admin/analytics" element={<Layout><ProtectedAnalytics /></Layout>} />
+                <Route path="/admin/settings" element={<Layout><ProtectedSettings /></Layout>} />
+                
+                {/* 404 Route */}
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+            </BrowserRouter>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
         </CartProvider>
       </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+}
 
 export default App;

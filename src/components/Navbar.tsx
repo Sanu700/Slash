@@ -131,16 +131,16 @@ const Navbar = () => {
   return (
     <nav
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4',
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-4 sm:px-6 md:px-10 py-3 sm:py-4',
         navbarBgClass
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 z-10">
+        <Link to="/" className="flex items-center space-x-2 z-50">
           <img 
             src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
             alt="Slash logo" 
-            className="h-8 w-8" 
+            className="h-7 w-7 sm:h-8 sm:w-8" 
           />
           <span className={cn(logoTextClass, "hidden sm:inline")}>
             Slash
@@ -150,13 +150,13 @@ const Navbar = () => {
         {/* Mobile Menu Button */}
         <button
           onClick={toggleMobileMenu}
-          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 z-50"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
-            <X className={cn("h-6 w-6", iconClass)} />
+            <X className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
           ) : (
-            <Menu className={cn("h-6 w-6", iconClass)} />
+            <Menu className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
           )}
         </button>
 
@@ -165,6 +165,7 @@ const Navbar = () => {
           isScrolled={isScrolled} 
         />
 
+        {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4">
           <Link
             to="/host-experience"
@@ -281,7 +282,8 @@ const Navbar = () => {
           )}
         </div>
 
-        <div className="md:hidden flex items-center space-x-3">
+        {/* Mobile Actions */}
+        <div className="flex md:hidden items-center space-x-2">
           <Link
             to="/host-experience"
             className={cn(
@@ -324,19 +326,6 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <button
-            onClick={toggleMobileMenu}
-            className={cn(
-              "p-2 rounded-full transition-colors",
-              isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
-                : "hover:bg-white/10",
-              iconClass
-            )}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
         </div>
 
         {/* Search Overlay */}
@@ -346,78 +335,57 @@ const Navbar = () => {
             searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
         >
-          <div className="container max-w-2xl mx-auto pt-28 px-4">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Input
-                type="search"
-                placeholder="Search for experiences..."
-                className="pl-10 pr-4 py-6 text-lg rounded-xl"
-                autoFocus={searchOpen}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <button 
-                type="button"
-                onClick={toggleSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </form>
-            
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="mt-4 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden divide-y divide-white/10">
-                {searchResults.map(result => (
-                  <div 
-                    key={result.id}
-                    onClick={() => handleSearchResultClick(result.id)}
-                    className="flex p-4 hover:bg-white/20 cursor-pointer transition-colors"
-                  >
-                    <div className="w-16 h-16 rounded-md overflow-hidden mr-4 flex-shrink-0">
-                      <img 
-                        src={result.imageUrl} 
-                        alt={result.title}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-medium">{result.title}</h4>
-                      <p className="text-white/70 text-sm truncate">{result.location}</p>
-                    </div>
-                  </div>
-                ))}
-                <div className="p-4 text-center">
-                  <button
-                    onClick={() => {
-                      setSearchOpen(false);
-                      navigate(`/experiences?search=${encodeURIComponent(searchQuery)}`);
-                    }}
-                    className="text-primary hover:underline text-sm"
-                  >
-                    See all results
-                  </button>
+          <div className="container max-w-3xl mx-auto px-4 sm:px-6 md:px-10 pt-20">
+            <div className="relative">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  type="search"
+                  placeholder="Search experiences..."
+                  className="w-full pl-12 pr-4 py-3 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-white/30"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={toggleSearch}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </form>
+
+              {searchResults.length > 0 && (
+                <div className="mt-4 bg-white/10 rounded-lg overflow-hidden">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => handleSearchResultClick(result.id)}
+                      className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors"
+                    >
+                      <div className="font-medium">{result.title}</div>
+                      <div className="text-sm text-white/70">{result.location}</div>
+                    </button>
+                  ))}
                 </div>
-              </div>
-            )}
-            
-            {/* Popular Searches */}
-            <div className="mt-6 text-white">
-              <p className="text-sm text-gray-400 mb-3">Popular Searches</p>
-              <div className="flex flex-wrap gap-2">
-                {["Hot Air Balloon", "Dining", "Yacht", "Spa Day", "Adventure"].map((term) => (
-                  <span 
-                    key={term} 
-                    className="px-3 py-1 bg-white/10 rounded-full text-sm hover:bg-white/20 cursor-pointer"
-                    onClick={() => {
-                      setSearchQuery(term);
-                    }}
-                  >
-                    {term}
-                  </span>
-                ))}
+              )}
+
+              <div className="mt-6 text-white">
+                <p className="text-sm text-gray-400 mb-3">Popular Searches</p>
+                <div className="flex flex-wrap gap-2">
+                  {["Hot Air Balloon", "Dining", "Yacht", "Spa Day", "Adventure"].map((term) => (
+                    <span 
+                      key={term} 
+                      className="px-3 py-1 bg-white/10 rounded-full text-sm hover:bg-white/20 cursor-pointer"
+                      onClick={() => {
+                        setSearchQuery(term);
+                      }}
+                    >
+                      {term}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -436,7 +404,7 @@ const Navbar = () => {
                 <img 
                   src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
                   alt="Slash logo" 
-                  className="h-8 w-8" 
+                  className="h-7 w-7 sm:h-8 sm:w-8" 
                 />
                 <span className={logoTextClass}>Slash</span>
               </Link>
@@ -444,51 +412,17 @@ const Navbar = () => {
                 onClick={toggleMobileMenu}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                <X className={cn("h-6 w-6", iconClass)} />
+                <X className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-4">
-                <Link
-                  to="/host-experience"
-                  className={cn(
-                    "block px-4 py-2 rounded-lg transition-colors font-medium",
-                    isScrolled || !isDarkPage
-                      ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
-                      : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
-                  )}
-                >
-                  Host an Experience
-                </Link>
-                
-                {isAuthenticated ? (
-                  <>
-                    <button
-                      onClick={handleProfileClick}
-                      className="w-full flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      <User className="h-5 w-5" />
-                      <span>Profile</span>
-                    </button>
-                    <button
-                      onClick={() => logout()}
-                      className="w-full flex items-center space-x-2 px-4 py-2 rounded-lg text-red-500 hover:bg-red-50"
-                    >
-                      <LogOut className="h-5 w-5" />
-                      <span>Sign out</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={handleSignIn}
-                    className="w-full flex items-center space-x-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90"
-                  >
-                    <User className="h-5 w-5" />
-                    <span>Sign in</span>
-                  </button>
-                )}
-              </div>
+              <NavigationLinks 
+                isDarkPage={isDarkPage} 
+                isScrolled={isScrolled}
+                isMobile={true}
+                closeMobileMenu={toggleMobileMenu}
+              />
             </div>
           </div>
         </div>

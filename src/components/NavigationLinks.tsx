@@ -46,22 +46,13 @@ export function NavigationLinks({
 
   if (isMobile) {
     return (
-      <div className="flex flex-col space-y-4 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
-        {/* Back Button */}
-        <button
-          onClick={() => {
-            closeMobileMenu();
-            scrollToTop();
-          }}
-          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary mb-2"
-        >
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          Back
-        </button>
-
+      <div className="flex flex-col space-y-4">
         <Link 
           to="/experiences" 
-          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
+          className={cn(
+            "px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
+            "font-medium transition-colors"
+          )}
           onClick={() => {
             closeMobileMenu();
             scrollToTop();
@@ -71,48 +62,51 @@ export function NavigationLinks({
         </Link>
         
         {/* Company Dropdown */}
-        <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
+        <div className="space-y-2">
           <button
             onClick={() => toggleDropdown('company')}
-            className="flex justify-between items-center w-full font-medium"
+            className="w-full flex justify-between items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
           >
             Company
             <ChevronLeft className={cn("w-5 h-5 transition-transform", openDropdown === 'company' ? 'rotate-90' : '')} />
           </button>
           {openDropdown === 'company' && (
-            <div className="pl-4 mt-2 flex flex-col space-y-3 text-base">
-              <Link to="/about-us" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">About Us</Link>
-              <Link to="/how-it-works" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">How It Works</Link>
-              <Link to="/testimonials" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Testimonials</Link>
-              <Link to="/careers" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Careers</Link>
-              <Link to="/press" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Press</Link>
+            <div className="pl-4 space-y-2">
+              <Link to="/about-us" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">About Us</Link>
+              <Link to="/how-it-works" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">How It Works</Link>
+              <Link to="/testimonials" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Testimonials</Link>
+              <Link to="/careers" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Careers</Link>
+              <Link to="/press" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Press</Link>
             </div>
           )}
         </div>
         
         {/* Support Dropdown */}
-        <div className={cn(mobileClass, "text-gray-900 dark:text-gray-100")}>
+        <div className="space-y-2">
           <button
             onClick={() => toggleDropdown('support')}
-            className="flex justify-between items-center w-full font-medium"
+            className="w-full flex justify-between items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
           >
             Support
             <ChevronLeft className={cn("w-5 h-5 transition-transform", openDropdown === 'support' ? 'rotate-90' : '')} />
           </button>
           {openDropdown === 'support' && (
-            <div className="pl-4 mt-2 flex flex-col space-y-3 text-base">
-              <Link to="/contact" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Contact Us</Link>
-              <Link to="/faq" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">FAQ</Link>
-              <Link to="/gift-rules" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Gift Rules</Link>
-              <Link to="/shipping" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Shipping</Link>
-              <Link to="/returns" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="hover:text-primary dark:hover:text-primary">Returns</Link>
+            <div className="pl-4 space-y-2">
+              <Link to="/contact" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Contact Us</Link>
+              <Link to="/faq" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">FAQ</Link>
+              <Link to="/gift-rules" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Gift Rules</Link>
+              <Link to="/shipping" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Shipping</Link>
+              <Link to="/returns" onClick={() => { closeMobileMenu(); scrollToTop(); }} className="block px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">Returns</Link>
             </div>
           )}
         </div>
         
         <Link 
           to="/gifting-guide" 
-          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
+          className={cn(
+            "px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
+            "font-medium transition-colors"
+          )}
           onClick={() => {
             closeMobileMenu();
             scrollToTop();
@@ -120,9 +114,13 @@ export function NavigationLinks({
         >
           Gifting Guide
         </Link>
+        
         <Link 
           to="/gift-personalizer" 
-          className={cn(mobileClass, "text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary")}
+          className={cn(
+            "px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
+            "font-medium transition-colors"
+          )}
           onClick={() => {
             closeMobileMenu();
             scrollToTop();
