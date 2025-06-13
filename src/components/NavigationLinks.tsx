@@ -11,12 +11,12 @@ interface NavigationLinksProps {
   closeMobileMenu?: () => void;
 }
 
-export function NavigationLinks({ 
-  isDarkPage, 
-  isScrolled, 
+const NavigationLinks: React.FC<NavigationLinksProps> = ({
+  isDarkPage = false,
+  isScrolled = false,
   isMobile = false,
-  closeMobileMenu = () => {}
-}: NavigationLinksProps) {
+  closeMobileMenu
+}) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const toggleDropdown = (name: string) => {
@@ -24,59 +24,120 @@ export function NavigationLinks({
   };
 
   const linkClass = cn(
-    "transition-colors",
-    isDarkPage 
-      ? "text-white hover:text-white/80" 
-      : isScrolled 
-        ? "text-gray-900 hover:text-gray-700 dark:text-white dark:hover:text-white/80" 
-        : "text-gray-900 hover:text-gray-700 dark:text-white dark:hover:text-white/80"
+    "transition-colors duration-200",
+    isDarkPage && !isScrolled
+      ? "text-white hover:text-white/80"
+      : "text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-white/80"
   );
+
+  const dropdownClass = cn(
+    "absolute top-full left-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800",
+    isMobile ? "relative mt-0 w-full shadow-none border-none" : ""
+  );
+
+  const handleLinkClick = () => {
+    if (closeMobileMenu) {
+      closeMobileMenu();
+    }
+    scrollToTop();
+  };
+
+  const companyLinks = [
+    { name: 'About Us', href: '/about' },
+    { name: 'How It Works', href: '/how-it-works' },
+    { name: 'Testimonials', href: '/testimonials' },
+    { name: 'Careers', href: '/careers' },
+    { name: 'Press', href: '/press' }
+  ];
+
+  const supportLinks = [
+    { name: 'Help Center', href: '/support' },
+    { name: 'Contact Us', href: '/contact' },
+    { name: 'FAQ', href: '/faq' },
+    { name: 'Shipping', href: '/shipping' },
+    { name: 'Returns', href: '/returns' }
+  ];
 
   if (isMobile) {
     return (
       <div className="flex flex-col space-y-4">
-        <Link 
-          to="/experiences" 
-          onClick={() => { closeMobileMenu(); scrollToTop(); }}
-          className={cn(linkClass, "text-lg")}
-        >
+        <Link to="/" className={cn(linkClass, "text-lg font-medium")} onClick={handleLinkClick}>
+          Home
+        </Link>
+        <Link to="/experiences" className={cn(linkClass, "text-lg font-medium")} onClick={handleLinkClick}>
           Experiences
         </Link>
+        <Link to="/gift-personalizer" className={cn(linkClass, "text-lg font-medium")} onClick={handleLinkClick}>
+          Gift Personalizer
+        </Link>
+        <Link to="/gifting-guide" className={cn(linkClass, "text-lg font-medium")} onClick={handleLinkClick}>
+          Gifting Guide
+        </Link>
         
-        <div>
+        {/* Company Dropdown */}
+        <div className="relative">
           <button
             onClick={() => toggleDropdown('company')}
-            className={cn(linkClass, "flex items-center justify-between w-full text-lg")}
+            className={cn(
+              "flex items-center justify-between w-full text-lg font-medium",
+              linkClass
+            )}
           >
             Company
-            <ChevronDown className={cn("h-5 w-5 transition-transform", openDropdown === 'company' && "rotate-180")} />
+            <ChevronDown className={cn(
+              "h-5 w-5 transition-transform",
+              openDropdown === 'company' ? "transform rotate-180" : ""
+            )} />
           </button>
           {openDropdown === 'company' && (
-            <div className="pl-4 space-y-2 mt-2">
-              <Link to="/about" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>About Us</Link>
-              <Link to="/how-it-works" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>How It Works</Link>
-              <Link to="/testimonials" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Testimonials</Link>
-              <Link to="/careers" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Careers</Link>
-              <Link to="/press" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Press</Link>
+            <div className={cn(dropdownClass, "mt-2")}>
+              {companyLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className={cn(
+                    "block px-4 py-2 text-base",
+                    linkClass
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
           )}
         </div>
 
-        <div>
+        {/* Support Dropdown */}
+        <div className="relative">
           <button
             onClick={() => toggleDropdown('support')}
-            className={cn(linkClass, "flex items-center justify-between w-full text-lg")}
+            className={cn(
+              "flex items-center justify-between w-full text-lg font-medium",
+              linkClass
+            )}
           >
             Support
-            <ChevronDown className={cn("h-5 w-5 transition-transform", openDropdown === 'support' && "rotate-180")} />
+            <ChevronDown className={cn(
+              "h-5 w-5 transition-transform",
+              openDropdown === 'support' ? "transform rotate-180" : ""
+            )} />
           </button>
           {openDropdown === 'support' && (
-            <div className="pl-4 space-y-2 mt-2">
-              <Link to="/contact" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Contact Us</Link>
-              <Link to="/faq" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>FAQ</Link>
-              <Link to="/gift-rules" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Gift Rules</Link>
-              <Link to="/shipping" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Shipping</Link>
-              <Link to="/returns" onClick={() => { closeMobileMenu(); scrollToTop(); }} className={cn(linkClass, "block")}>Returns</Link>
+            <div className={cn(dropdownClass, "mt-2")}>
+              {supportLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className={cn(
+                    "block px-4 py-2 text-base",
+                    linkClass
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
           )}
         </div>
@@ -85,38 +146,85 @@ export function NavigationLinks({
   }
 
   return (
-    <div className="flex items-center space-x-4 sm:space-x-8">
-      <Link to="/experiences" onClick={scrollToTop} className={linkClass}>
+    <div className="flex items-center space-x-8">
+      <Link to="/" className={linkClass} onClick={scrollToTop}>
+        Home
+      </Link>
+      <Link to="/experiences" className={linkClass} onClick={scrollToTop}>
         Experiences
       </Link>
-      
+      <Link to="/gift-personalizer" className={linkClass} onClick={scrollToTop}>
+        Gift Personalizer
+      </Link>
+      <Link to="/gifting-guide" className={linkClass} onClick={scrollToTop}>
+        Gifting Guide
+      </Link>
+
+      {/* Company Dropdown */}
       <div className="relative group">
-        <button className={cn(linkClass, "flex items-center space-x-1")}>
+        <button
+          onClick={() => toggleDropdown('company')}
+          className={cn(
+            "flex items-center space-x-1",
+            linkClass
+          )}
+        >
           <span>Company</span>
           <ChevronDown className="h-4 w-4" />
         </button>
-        <div className="absolute top-full left-0 w-48 py-2 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-          <Link to="/about" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">About Us</Link>
-          <Link to="/how-it-works" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">How It Works</Link>
-          <Link to="/testimonials" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Testimonials</Link>
-          <Link to="/careers" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Careers</Link>
-          <Link to="/press" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Press</Link>
+        <div className={cn(
+          dropdownClass,
+          "opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+        )}>
+          {companyLinks.map((link) => (
+            <Link
+              key={link.name}
+              to={link.href}
+              className={cn(
+                "block px-4 py-2 text-sm",
+                linkClass
+              )}
+              onClick={scrollToTop}
+            >
+              {link.name}
+            </Link>
+          ))}
         </div>
       </div>
 
+      {/* Support Dropdown */}
       <div className="relative group">
-        <button className={cn(linkClass, "flex items-center space-x-1")}>
+        <button
+          onClick={() => toggleDropdown('support')}
+          className={cn(
+            "flex items-center space-x-1",
+            linkClass
+          )}
+        >
           <span>Support</span>
           <ChevronDown className="h-4 w-4" />
         </button>
-        <div className="absolute top-full left-0 w-48 py-2 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-          <Link to="/contact" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Contact Us</Link>
-          <Link to="/faq" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">FAQ</Link>
-          <Link to="/gift-rules" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Gift Rules</Link>
-          <Link to="/shipping" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Shipping</Link>
-          <Link to="/returns" onClick={scrollToTop} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">Returns</Link>
+        <div className={cn(
+          dropdownClass,
+          "opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+        )}>
+          {supportLinks.map((link) => (
+            <Link
+              key={link.name}
+              to={link.href}
+              className={cn(
+                "block px-4 py-2 text-sm",
+                linkClass
+              )}
+              onClick={scrollToTop}
+            >
+              {link.name}
+            </Link>
+          ))}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default NavigationLinks;
