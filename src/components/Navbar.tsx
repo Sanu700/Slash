@@ -142,10 +142,23 @@ const Navbar = () => {
             alt="Slash logo" 
             className="h-8 w-8" 
           />
-          <span className={logoTextClass}>
+          <span className={cn(logoTextClass, "hidden sm:inline")}>
             Slash
           </span>
         </Link>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={toggleMobileMenu}
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? (
+            <X className={cn("h-6 w-6", iconClass)} />
+          ) : (
+            <Menu className={cn("h-6 w-6", iconClass)} />
+          )}
+        </button>
 
         <NavigationLinks 
           isDarkPage={isDarkPage} 
@@ -413,45 +426,69 @@ const Navbar = () => {
         {/* Mobile Menu */}
         <div
           className={cn(
-            "fixed inset-0 bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out md:hidden z-40",
+            "fixed inset-0 z-40 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out md:hidden",
             mobileMenuOpen ? "translate-x-0" : "translate-x-full"
           )}
         >
-          <div className="flex flex-col h-full pt-20 px-6">
-            <NavigationLinks 
-              isDarkPage={false}
-              isScrolled={true}
-              isMobile={true}
-              closeMobileMenu={() => setMobileMenuOpen(false)}
-            />
-            
-            <div className="mt-auto mb-10">
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-3 py-4" onClick={handleProfileClick}>
-                  {user?.user_metadata?.avatar_url ? (
-                    <img 
-                      src={user.user_metadata.avatar_url} 
-                      alt="Profile" 
-                      className="h-10 w-10 rounded-full border-2 border-primary"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
-                      <User className="h-5 w-5" />
-                    </div>
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <Link to="/" className="flex items-center space-x-2">
+                <img 
+                  src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
+                  alt="Slash logo" 
+                  className="h-8 w-8" 
+                />
+                <span className={logoTextClass}>Slash</span>
+              </Link>
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <X className={cn("h-6 w-6", iconClass)} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-4">
+                <Link
+                  to="/host-experience"
+                  className={cn(
+                    "block px-4 py-2 rounded-lg transition-colors font-medium",
+                    isScrolled || !isDarkPage
+                      ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                      : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
                   )}
-                  <div>
-                    <p className="font-medium">{user?.user_metadata?.full_name || 'User'}</p>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <Button className="w-full mb-4" onClick={() => {
-                    signInWithGoogle();
-                    setMobileMenuOpen(false);
-                  }}>Sign In</Button>
-                </>
-              )}
+                >
+                  Host an Experience
+                </Link>
+                
+                {isAuthenticated ? (
+                  <>
+                    <button
+                      onClick={handleProfileClick}
+                      className="w-full flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <User className="h-5 w-5" />
+                      <span>Profile</span>
+                    </button>
+                    <button
+                      onClick={() => logout()}
+                      className="w-full flex items-center space-x-2 px-4 py-2 rounded-lg text-red-500 hover:bg-red-50"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      <span>Sign out</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleSignIn}
+                    className="w-full flex items-center space-x-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>Sign in</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
