@@ -111,8 +111,8 @@ const Navbar = () => {
 
   // Determine background and text colors based on page context for better contrast
   const navbarBgClass = isScrolled || !isDarkPage
-    ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-sm"
-    : "bg-black/50 backdrop-blur-md";
+    ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm"
+    : "bg-black/40 backdrop-blur-sm";
     
   const iconClass = cn(
     "transition-colors",
