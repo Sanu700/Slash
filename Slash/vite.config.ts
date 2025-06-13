@@ -11,18 +11,16 @@ export default defineConfig(({ mode }) => {
     SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     SUPABASE_KEY: process.env.VITE_SUPABASE_KEY ? 'exists' : 'missing'
   });
-
+  
   return {
     server: {
       host: "::",
       port: 8080,
-      watch: {
-        usePolling: false,
-      },
     },
     plugins: [
       react(),
-      mode === 'development' && componentTagger(),
+      mode === 'development' &&
+      componentTagger(),
     ].filter(Boolean),
     resolve: {
       alias: {
@@ -30,9 +28,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     envPrefix: 'VITE_',
+    // Explicitly define environment variables
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
-      'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(process.env.VITE_SUPABASE_KEY),
-    },
+      'import.meta.env.VITE_SUPABASE_KEY': JSON.stringify(process.env.VITE_SUPABASE_KEY)
+    }
   };
 });

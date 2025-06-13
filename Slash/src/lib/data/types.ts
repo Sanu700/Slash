@@ -51,26 +51,3 @@ export interface ExtendedProfile {
   address?: string | null;
   bio?: string | null;
 }
-
-export interface Provider {
-  id: string;
-  companyName: string;
-  email: string;
-  contactNo: string;
-  location: string;
-  joinDate: string;
-  status: 'pending' | 'active' | 'inactive' | 'suspended';
-  experiences: number;
-  rating: number;
-  experienceDetails?: {
-    name: string;
-    description: string;
-    image: string | null;
-    price: string;
-    location: string;
-    duration: string;
-    participants: string;
-    date: string;
-    category: string;
-  };
-}
