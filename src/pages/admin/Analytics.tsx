@@ -13,30 +13,78 @@ const timeRanges = [
   { value: "year", label: "Last 12 Months" },
 ];
 
-const revenueData = [
-  { name: "Mon", value: 4000 },
-  { name: "Tue", value: 3000 },
-  { name: "Wed", value: 2000 },
-  { name: "Thu", value: 2780 },
-  { name: "Fri", value: 1890 },
-  { name: "Sat", value: 2390 },
-  { name: "Sun", value: 3490 },
-];
+// Mock data for each time range
+const revenueDataMap = {
+  week: [
+    { name: "Mon", value: 4000 },
+    { name: "Tue", value: 3000 },
+    { name: "Wed", value: 2000 },
+    { name: "Thu", value: 2780 },
+    { name: "Fri", value: 1890 },
+    { name: "Sat", value: 2390 },
+    { name: "Sun", value: 3490 },
+  ],
+  month: Array.from({ length: 30 }, (_, i) => ({ name: `Day ${i + 1}`, value: Math.floor(1500 + Math.random() * 3000) })),
+  year: [
+    { name: "Jan", value: 25000 },
+    { name: "Feb", value: 22000 },
+    { name: "Mar", value: 27000 },
+    { name: "Apr", value: 30000 },
+    { name: "May", value: 32000 },
+    { name: "Jun", value: 31000 },
+    { name: "Jul", value: 33000 },
+    { name: "Aug", value: 34000 },
+    { name: "Sep", value: 36000 },
+    { name: "Oct", value: 37000 },
+    { name: "Nov", value: 39000 },
+    { name: "Dec", value: 41000 },
+  ],
+};
 
-const userGrowthData = [
-  { name: "Jan", value: 400 },
-  { name: "Feb", value: 300 },
-  { name: "Mar", value: 200 },
-  { name: "Apr", value: 278 },
-  { name: "May", value: 189 },
-  { name: "Jun", value: 239 },
-];
+const userGrowthDataMap = {
+  week: [
+    { name: "Mon", value: 40 },
+    { name: "Tue", value: 30 },
+    { name: "Wed", value: 20 },
+    { name: "Thu", value: 28 },
+    { name: "Fri", value: 18 },
+    { name: "Sat", value: 23 },
+    { name: "Sun", value: 34 },
+  ],
+  month: Array.from({ length: 30 }, (_, i) => ({ name: `Day ${i + 1}`, value: Math.floor(10 + Math.random() * 40) })),
+  year: [
+    { name: "Jan", value: 400 },
+    { name: "Feb", value: 300 },
+    { name: "Mar", value: 200 },
+    { name: "Apr", value: 278 },
+    { name: "May", value: 189 },
+    { name: "Jun", value: 239 },
+    { name: "Jul", value: 300 },
+    { name: "Aug", value: 350 },
+    { name: "Sep", value: 370 },
+    { name: "Oct", value: 390 },
+    { name: "Nov", value: 410 },
+    { name: "Dec", value: 430 },
+  ],
+};
 
-const categoryData = [
-  { name: "Adventure", value: 45 },
-  { name: "Dining", value: 30 },
-  { name: "Wellness", value: 25 },
-];
+const categoryDataMap = {
+  week: [
+    { name: "Adventure", value: 12 },
+    { name: "Dining", value: 8 },
+    { name: "Wellness", value: 5 },
+  ],
+  month: [
+    { name: "Adventure", value: 45 },
+    { name: "Dining", value: 30 },
+    { name: "Wellness", value: 25 },
+  ],
+  year: [
+    { name: "Adventure", value: 320 },
+    { name: "Dining", value: 210 },
+    { name: "Wellness", value: 170 },
+  ],
+};
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
@@ -74,6 +122,11 @@ const StatCard = ({ title, value, change, trend, icon: Icon }: {
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState("week");
+
+  // Select data based on timeRange
+  const revenueData = revenueDataMap[timeRange];
+  const userGrowthData = userGrowthDataMap[timeRange];
+  const categoryData = categoryDataMap[timeRange];
 
   return (
     <AdminLayout>
