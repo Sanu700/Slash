@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import NavigationLinks from './NavigationLinks';
 import { cn } from '@/lib/utils';
 import { scrollToTop } from '@/lib/animations';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
