@@ -62,9 +62,9 @@ const ProtectedExperienceManager = requireAuth(ExperienceManager);
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <CartProvider>
             <BrowserRouter>
               <Routes>
                 {/* Public Routes */}
@@ -93,7 +93,6 @@ function App() {
                 
                 {/* Protected Routes */}
                 <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
-                <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
                 <Route path="/experience-manager" element={<Layout><ProtectedExperienceManager /></Layout>} />
                 
                 {/* Admin Routes */}
@@ -113,9 +112,9 @@ function App() {
             </BrowserRouter>
             <Toaster />
             <Sonner />
-          </TooltipProvider>
-        </CartProvider>
-      </AuthProvider>
+          </CartProvider>
+        </AuthProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

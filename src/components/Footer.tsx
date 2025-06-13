@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { scrollToTop } from '@/lib/animations';
-import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 
 const socialLinks = [
-  { name: 'Facebook', href: '#', icon: Facebook },
-  { name: 'Twitter', href: '#', icon: Twitter },
-  { name: 'Instagram', href: '#', icon: Instagram },
-  { name: 'LinkedIn', href: '#', icon: Linkedin }
+  { name: 'Facebook', href: 'https://facebook.com/slashexperiences', icon: Facebook },
+  { name: 'Twitter', href: 'https://twitter.com/slashexperiences', icon: Twitter },
+  { name: 'Instagram', href: 'https://instagram.com/slashexperiences', icon: Instagram },
+  { name: 'LinkedIn', href: '#', icon: Linkedin },
+  { name: 'YouTube', href: 'https://youtube.com/slashexperiences', icon: Youtube }
 ];
 
 const footerLinks = [
@@ -26,9 +27,9 @@ const footerLinks = [
   {
     title: 'Support',
     links: [
+      { name: 'Help Center', href: '/support' },
       { name: 'Contact Us', href: '/contact' },
       { name: 'FAQ', href: '/faq' },
-      { name: 'Gift Rules', href: '/gift-rules' },
       { name: 'Shipping', href: '/shipping' },
       { name: 'Returns', href: '/returns' }
     ]
@@ -72,6 +73,8 @@ const Footer = () => {
                 <a 
                   key={social.name}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary hover:bg-primary hover:text-white transition-colors"
                   aria-label={social.name}
                 >
