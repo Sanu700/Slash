@@ -81,22 +81,22 @@ const Hero = () => {
       </div>
 
       {/* Content */}
-      <div className="container max-w-6xl mx-auto px-4 sm:px-6 md:px-10 relative z-10 text-white mt-16 sm:mt-20">
+      <div className="container max-w-6xl mx-auto px-4 sm:px-6 md:px-10 relative z-10 text-white mt-12 sm:mt-16 md:mt-20">
         <div className="max-w-3xl">
           <div className={cn("transition-all duration-1000 transform", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
-            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-4 sm:mb-6">
+            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-3 sm:mb-4 md:mb-6">
               <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="text-xs sm:text-sm font-medium">Curated Experience Gifts</span>
             </div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight text-shadow">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 leading-tight text-shadow">
               Gifting Something, <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
                 That Matters
               </span>
             </h1>
             
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white mb-6 sm:mb-8 max-w-2xl text-shadow">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white mb-4 sm:mb-6 md:mb-8 max-w-2xl text-shadow">
               92% of all people prefer an Experience over a Material gift and 63% forget what they recieved a year back.
             </p>
             

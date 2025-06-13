@@ -102,9 +102,11 @@ const Index = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : featuredExperiences.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {featuredExperiences.map((experience, index) => (
-                  <div key={experience.id} className="">
+                  <div key={experience.id} className={cn(
+                    index === 0 && "sm:col-span-2 lg:col-span-1"
+                  )}>
                     <ExperienceCard experience={experience} featured={index === 0} />
                   </div>
                 ))}
