@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { scrollToTop } from '@/lib/animations';
-import { ChevronDown } from 'lucide-react';
 
 interface NavigationLinksProps {
-  isDarkPage: boolean;
-  isScrolled: boolean;
+  isDarkPage?: boolean;
+  isScrolled?: boolean;
   isMobile?: boolean;
   closeMobileMenu?: () => void;
 }
@@ -17,23 +17,20 @@ export function NavigationLinks({
   isMobile = false,
   closeMobileMenu = () => {}
 }: NavigationLinksProps) {
-  const navigate = useNavigate();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const toggleDropdown = (name: string) => {
     setOpenDropdown(openDropdown === name ? null : name);
   };
 
-  // Create consistent link styling based on background context
-  // Always ensure good contrast with the background
   const linkClass = cn(
-    "transition-colors font-medium",
-    isScrolled || !isDarkPage 
-      ? "text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary" 
-      : "text-white hover:text-gray-200"
+    "transition-colors",
+    isDarkPage 
+      ? "text-white hover:text-white/80" 
+      : isScrolled 
+        ? "text-gray-900 hover:text-gray-700 dark:text-white dark:hover:text-white/80" 
+        : "text-gray-900 hover:text-gray-700 dark:text-white dark:hover:text-white/80"
   );
-
-  const mobileClass = "py-2 border-b border-gray-100 dark:border-gray-800";
 
   if (isMobile) {
     return (
@@ -88,7 +85,7 @@ export function NavigationLinks({
   }
 
   return (
-    <div className="hidden md:flex items-center space-x-8">
+    <div className="flex items-center space-x-4 sm:space-x-8">
       <Link to="/experiences" onClick={scrollToTop} className={linkClass}>
         Experiences
       </Link>

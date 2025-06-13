@@ -1,65 +1,58 @@
-import { useState } from 'react';
-import { useInView } from '@/lib/animations';
-import { Button } from '@/components/ui/button';
-import { 
-  Separator
-} from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { Slash, Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useInView } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 import { scrollToTop } from '@/lib/animations';
+import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+
+const socialLinks = [
+  { name: 'Facebook', href: '#', icon: Facebook },
+  { name: 'Twitter', href: '#', icon: Twitter },
+  { name: 'Instagram', href: '#', icon: Instagram },
+  { name: 'LinkedIn', href: '#', icon: Linkedin }
+];
+
+const footerLinks = [
+  {
+    title: 'Company',
+    links: [
+      { name: 'About Us', href: '/about' },
+      { name: 'How It Works', href: '/how-it-works' },
+      { name: 'Testimonials', href: '/testimonials' },
+      { name: 'Careers', href: '/careers' },
+      { name: 'Press', href: '/press' }
+    ]
+  },
+  {
+    title: 'Support',
+    links: [
+      { name: 'Contact Us', href: '/contact' },
+      { name: 'FAQ', href: '/faq' },
+      { name: 'Gift Rules', href: '/gift-rules' },
+      { name: 'Shipping', href: '/shipping' },
+      { name: 'Returns', href: '/returns' }
+    ]
+  },
+  {
+    title: 'Legal',
+    links: [
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' },
+      { name: 'Cookie Policy', href: '/cookies' },
+      { name: 'Accessibility', href: '/accessibility' }
+    ]
+  }
+];
 
 const Footer = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  
-  const footerLinks = [
-    {
-      title: "Experiences",
-      links: [
-        { name: "All Experiences", href: "/experiences" },
-        { name: "Adventure", href: "/category/adventure" },
-        { name: "Dining", href: "/category/dining" },
-        { name: "Wellness", href: "/category/wellness" },
-        { name: "Luxury", href: "/category/luxury" },
-        { name: "Learning", href: "/category/learning" }
-      ]
-    },
-    {
-      title: "Company",
-      links: [
-        { name: "About Us", href: "/about-us" },
-        { name: "How It Works", href: "/how-it-works" },
-        { name: "Testimonials", href: "/testimonials" },
-        { name: "Careers", href: "/careers" },
-        { name: "Press", href: "/press" }
-      ]
-    },
-    {
-      title: "Support",
-      links: [
-        { name: "Contact Us", href: "/contact" },
-        { name: "FAQ", href: "/faq" },
-        { name: "Gift Rules", href: "/gift-rules" },
-        { name: "Shipping", href: "/shipping" },
-        { name: "Returns", href: "/returns" }
-      ]
-    }
-  ];
-  
-  const socialLinks = [
-    { name: "Instagram", icon: Instagram, href: "#" },
-    { name: "Facebook", icon: Facebook, href: "#" },
-    { name: "Twitter", icon: Twitter, href: "#" },
-    { name: "LinkedIn", icon: Linkedin, href: "#" },
-    { name: "YouTube", icon: Youtube, href: "#" }
-  ];
 
   return (
     <footer 
       ref={ref} 
       className="pt-16 pb-8 bg-secondary/30"
     >
-      <div className="container max-w-6xl mx-auto px-6 md:px-10">
+      <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo and About */}
           <div className="lg:col-span-2">
@@ -71,7 +64,7 @@ const Footer = () => {
               />
               <span className="font-medium text-xl">Slash</span>
             </Link>
-            <p className="text-muted-foreground mb-6 max-w-md">
+            <p className="text-muted-foreground mb-6 max-w-md text-sm sm:text-base">
               Curated experience gifts that create lasting memories. We believe in the power of experiences over material possessions.
             </p>
             <div className="flex space-x-4">
@@ -89,16 +82,16 @@ const Footer = () => {
           </div>
           
           {/* Footer Links */}
-          {footerLinks.map((column) => (
-            <div key={column.title}>
-              <h4 className="font-medium mb-4">{column.title}</h4>
+          {footerLinks.map((section) => (
+            <div key={section.title}>
+              <h3 className="font-medium text-sm sm:text-base mb-4">{section.title}</h3>
               <ul className="space-y-3">
-                {column.links.map((link) => (
+                {section.links.map((link) => (
                   <li key={link.name}>
                     <Link 
-                      to={link.href}
+                      to={link.href} 
                       onClick={scrollToTop}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground text-sm sm:text-base transition-colors"
                     >
                       {link.name}
                     </Link>
@@ -109,16 +102,35 @@ const Footer = () => {
           ))}
         </div>
         
-        <Separator className="my-8" />
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between text-sm text-muted-foreground">
-          <div className="mb-4 md:mb-0">
-            &copy; {new Date().getFullYear()} Slash. All rights reserved.
-          </div>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
-            <Link to="/cookie-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Cookie Policy</Link>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-border/40">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-muted-foreground text-sm">
+              © {new Date().getFullYear()} Slash Experiences. All rights reserved.
+            </p>
+            <div className="flex items-center space-x-4">
+              <Link 
+                to="/privacy" 
+                onClick={scrollToTop}
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link 
+                to="/terms" 
+                onClick={scrollToTop}
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                Terms
+              </Link>
+              <Link 
+                to="/cookies" 
+                onClick={scrollToTop}
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                Cookies
+              </Link>
+            </div>
           </div>
         </div>
       </div>
