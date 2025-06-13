@@ -147,23 +147,13 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={toggleMobileMenu}
-          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 z-50"
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? (
-            <X className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
-          ) : (
-            <Menu className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
-          )}
-        </button>
-
-        <NavigationLinks 
-          isDarkPage={isDarkPage} 
-          isScrolled={isScrolled} 
-        />
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-8">
+          <NavigationLinks 
+            isDarkPage={isDarkPage} 
+            isScrolled={isScrolled} 
+          />
+        </div>
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4">
@@ -282,50 +272,101 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Actions */}
-        <div className="flex md:hidden items-center space-x-2">
-          <Link
-            to="/host-experience"
-            className={cn(
-              "px-3 py-1.5 rounded-lg transition-colors font-medium text-sm",
-              isScrolled || !isDarkPage
-                ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
-                : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
-            )}
-          >
-            Host
-          </Link>
-          <button 
-            onClick={toggleSearch}
-            className={cn(
-              "p-2 rounded-full transition-colors",
-              isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
-                : "hover:bg-white/10",
-              iconClass
-            )}
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </button>
-          <Link 
-            to="/cart"
-            className={cn(
-              "p-2 rounded-full transition-colors relative",
-              isScrolled || !isDarkPage
-                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
-                : "hover:bg-white/10",
-              iconClass
-            )}
-            aria-label="Shopping cart"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                {itemCount}
-              </span>
-            )}
-          </Link>
+        {/* Mobile Menu Button */}
+        <button
+          onClick={toggleMobileMenu}
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 z-50"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? (
+            <X className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
+          ) : (
+            <Menu className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
+          )}
+        </button>
+
+        {/* Mobile Menu */}
+        <div
+          className={cn(
+            "fixed inset-0 z-40 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out md:hidden",
+            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          )}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <Link to="/" className="flex items-center space-x-2">
+                <img 
+                  src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
+                  alt="Slash logo" 
+                  className="h-7 w-7 sm:h-8 sm:w-8" 
+                />
+                <span className={logoTextClass}>Slash</span>
+              </Link>
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <X className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <NavigationLinks 
+                isDarkPage={isDarkPage} 
+                isScrolled={isScrolled}
+                isMobile={true}
+                closeMobileMenu={toggleMobileMenu}
+              />
+            </div>
+
+            {/* Mobile Actions */}
+            <div className="p-4 border-t">
+              <div className="flex items-center justify-between space-x-4">
+                <Link
+                  to="/host-experience"
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg transition-colors font-medium text-sm",
+                    isScrolled || !isDarkPage
+                      ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                      : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
+                  )}
+                >
+                  Host
+                </Link>
+                <button 
+                  onClick={toggleSearch}
+                  className={cn(
+                    "p-2 rounded-full transition-colors",
+                    isScrolled || !isDarkPage
+                      ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                      : "hover:bg-white/10",
+                    iconClass
+                  )}
+                  aria-label="Search"
+                >
+                  <Search className="h-5 w-5" />
+                </button>
+                <Link 
+                  to="/cart"
+                  className={cn(
+                    "p-2 rounded-full transition-colors relative",
+                    isScrolled || !isDarkPage
+                      ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                      : "hover:bg-white/10",
+                    iconClass
+                  )}
+                  aria-label="Shopping cart"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Overlay */}
@@ -387,42 +428,6 @@ const Navbar = () => {
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        <div
-          className={cn(
-            "fixed inset-0 z-40 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out md:hidden",
-            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          )}
-        >
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b">
-              <Link to="/" className="flex items-center space-x-2">
-                <img 
-                  src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
-                  alt="Slash logo" 
-                  className="h-7 w-7 sm:h-8 sm:w-8" 
-                />
-                <span className={logoTextClass}>Slash</span>
-              </Link>
-              <button
-                onClick={toggleMobileMenu}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <X className={cn("h-5 w-5 sm:h-6 sm:w-6", iconClass)} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4">
-              <NavigationLinks 
-                isDarkPage={isDarkPage} 
-                isScrolled={isScrolled}
-                isMobile={true}
-                closeMobileMenu={toggleMobileMenu}
-              />
             </div>
           </div>
         </div>
