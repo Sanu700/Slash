@@ -6,18 +6,14 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 w-full pt-16 sm:pt-20">
-        <div className="mx-auto w-full max-w-[100rem] px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
+      <main className="flex-1 pt-20">
+        {children}
       </main>
       <Footer />
     </div>
   );
-};
-
-export default Layout; 
+} 
