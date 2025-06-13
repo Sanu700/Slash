@@ -28,6 +28,7 @@ import Settings from '@/pages/admin/Settings';
 import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
+import AdminProfile from './pages/admin/Profile';
 
 // Import Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -55,6 +56,7 @@ const ProtectedAdminCategories = requireAuth(Categories, true);
 const ProtectedAdminAnalytics = requireAuth(Analytics, true);
 const ProtectedAdminSettings = requireAuth(Settings, true);
 const ProtectedProfile = requireAuth(Profile);
+const ProtectedAdminProfile = requireAuth(AdminProfile, true);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -101,7 +103,7 @@ const App = () => (
               <Route path="/admin/users/customers" element={<Customers />} />
               <Route path="/admin/users/providers" element={<Providers />} />
               <Route path="/admin/experiences" element={<Experiences />} />
-              <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
+              <Route path="/admin/profile" element={<ProtectedAdminProfile />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

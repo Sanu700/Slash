@@ -14,25 +14,64 @@ export default function Categories() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [editModal, setEditModal] = useState<{ open: boolean, category: any } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean, category: any } | null>(null);
+  const [categoryList, setCategoryList] = useState(categories);
 
-  const filteredCategories = categories.filter(category => {
-    const matchesSearch = searchQuery === "" || 
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = selectedFilter === "All" || category.name === selectedFilter;
-    
-    return matchesSearch && matchesFilter;
+  const filteredCategories = categoryList.filter(category => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      category.name.toLowerCase().includes(searchTerm) ||
+      category.description.toLowerCase().includes(searchTerm)
+    );
   });
 
-  const handleEdit = (category: Category) => {
-    setSelectedCategory(category);
-    setIsEditing(true);
+  const handleEdit = (category: any) => {
+    setEditModal({ open: true, category: { ...category } });
   };
 
-  const handleDelete = (categoryId: string) => {
-    // Implement delete functionality
-    console.log("Delete category:", categoryId);
+  const handleDelete = (category: any) => {
+    setDeleteModal({ open: true, category });
+  };
+
+  const saveEdit = () => {
+    if (editModal) {
+      setCategoryList(prev => 
+        prev.map(cat => 
+          cat.id === editModal.category.id ? editModal.category : cat
+        )
+      );
+      setEditModal(null);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (deleteModal) {
+      setCategoryList(prev => 
+        prev.filter(cat => cat.id !== deleteModal.category.id)
+      );
+      setDeleteModal(null);
+    }
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategory.name || !newCategory.description) {
+      return;
+    }
+    setCategoryList(prev => [
+      ...prev,
+      {
+        id: (prev.length + 1).toString(),
+        name: newCategory.name,
+        description: newCategory.description,
+        imageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=2688&auto=format&fit=crop',
+        icon: Plus
+      }
+    ]);
+    setShowAddModal(false);
+    setNewCategory({ name: '', description: '' });
   };
 
   return (
@@ -40,23 +79,10 @@ export default function Categories() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Category Management</h1>
-          <Button>
+          <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Category
           </Button>
-        </div>
-
-        {/* Minimal working dropdown for debugging */}
-        <div className="mb-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Test Dropdown</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Option 1</DropdownMenuItem>
-              <DropdownMenuItem>Option 2</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-4">
@@ -137,7 +163,7 @@ export default function Categories() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-red-600"
-                              onClick={() => handleDelete(category.id)}
+                              onClick={() => handleDelete(category)}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
@@ -230,6 +256,45 @@ export default function Categories() {
             </CardContent>
           </Card>
         </div>
+
+        {showAddModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Add New Category</h2>
+              <div className="mb-4 space-y-2">
+                <Input placeholder="Name" value={newCategory.name} onChange={e => setNewCategory({ ...newCategory, name: e.target.value })} />
+                <Input placeholder="Description" value={newCategory.description} onChange={e => setNewCategory({ ...newCategory, description: e.target.value })} />
+              </div>
+              <Button className="w-full" onClick={handleAddCategory} disabled={!newCategory.name || !newCategory.description}>Add</Button>
+              <Button variant="outline" className="w-full mt-2" onClick={() => setShowAddModal(false)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+
+        {editModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Edit Category</h2>
+              <div className="mb-4 space-y-2">
+                <Input placeholder="Name" value={editModal.category.name} onChange={e => setEditModal(m => ({ ...m, category: { ...m.category, name: e.target.value } }))} />
+                <Input placeholder="Description" value={editModal.category.description} onChange={e => setEditModal(m => ({ ...m, category: { ...m.category, description: e.target.value } }))} />
+              </div>
+              <Button className="w-full" onClick={saveEdit}>Save</Button>
+              <Button variant="outline" className="w-full mt-2" onClick={() => setEditModal(null)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+
+        {deleteModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Delete Category</h2>
+              <div className="mb-4">Are you sure you want to delete {deleteModal.category.name}?</div>
+              <Button className="w-full" variant="destructive" onClick={confirmDelete}>Delete</Button>
+              <Button variant="outline" className="w-full mt-2" onClick={() => setDeleteModal(null)}>Cancel</Button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

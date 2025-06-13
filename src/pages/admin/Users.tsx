@@ -6,11 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Search, Mail, Shield, UserX } from "lucide-react";
+import { MoreVertical, Search, Mail, Shield, UserX, Plus } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { toast } from 'sonner';
 
 // Mock user data
-const users = [
+const initialUsers = [
   {
     id: 1,
     name: "John Doe",
@@ -42,6 +43,9 @@ const users = [
 
 export default function Users() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [users, setUsers] = useState(initialUsers);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'user' });
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,13 +68,84 @@ export default function Users() {
     return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
   };
 
+  const handleAddUser = () => {
+    if (!newUser.name || !newUser.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+    setUsers(prev => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        status: 'active',
+        lastLogin: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newUser.name.split(' ')[0]}`
+      }
+    ]);
+    setShowAddModal(false);
+    setNewUser({ name: '', email: '', role: 'user' });
+    toast.success('User added successfully');
+  };
+
+  const handleSendEmail = (user: any) => {
+    toast.success(`Email sent to ${user.email}`);
+  };
+
+  const handleChangeRole = (user: any) => {
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: u.role === 'admin' ? 'user' : 'admin' } : u));
+    toast.success(`Role changed for ${user.name}`);
+  };
+
+  const handleSuspendUser = (user: any) => {
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
+    toast.success(`${user.name} is now ${user.status === 'active' ? 'inactive' : 'active'}`);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">User Management</h1>
-          <Button>Add New User</Button>
+          <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Add New User
+          </Button>
         </div>
+
+        {/* Add User Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Add New User</h2>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Name"
+                  value={newUser.name}
+                  onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                />
+                <Input
+                  placeholder="Email"
+                  value={newUser.email}
+                  onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                />
+                <select
+                  className="w-full border rounded p-2"
+                  value={newUser.role}
+                  onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button onClick={handleAddUser}>Add</Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Card>
           <CardHeader>
@@ -124,15 +199,15 @@ export default function Users() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSendEmail(user)}>
                             <Mail className="h-4 w-4 mr-2" />
                             Send Email
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleChangeRole(user)}>
                             <Shield className="h-4 w-4 mr-2" />
                             Change Role
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleSuspendUser(user)}>
                             <UserX className="h-4 w-4 mr-2" />
                             Suspend User
                           </DropdownMenuItem>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { categories, getAllExperiences } from '@/lib/data';
@@ -14,9 +13,13 @@ export const usePersonalizer = () => {
   
   const [formData, setFormData] = useState<FormData>({
     recipient: '',
+    city: '',
     relationship: '',
+    customRelationship: '',
     occasion: '',
+    customOccasion: '',
     budget: '',
+    budgetRange: [10000, 50000],
     interests: [],
     preferences: {
       adventurous: 3,
@@ -94,7 +97,15 @@ export const usePersonalizer = () => {
 
   const handleNextStep = () => {
     if (currentStep === 'basics') {
-      if (!formData.recipient || !formData.relationship || !formData.occasion || !formData.budget) {
+      const isRelationshipOther = formData.relationship === 'other';
+      const isOccasionOther = formData.occasion === 'other';
+      if (
+        !formData.recipient ||
+        !formData.relationship ||
+        (isRelationshipOther && !formData.customRelationship) ||
+        !formData.occasion ||
+        (isOccasionOther && !formData.customOccasion)
+      ) {
         toast({
           title: "Please complete all fields",
           description: "All fields are required to provide personalized recommendations.",
