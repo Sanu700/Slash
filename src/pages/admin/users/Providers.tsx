@@ -1,80 +1,109 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Search, MoreVertical, Mail, Phone, Calendar, MapPin, Star } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Search, MoreVertical, Mail, Phone, Calendar, MapPin, Star, Eye } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-
-// Mock data - replace with actual data from your backend
-const mockProviders = [
-  {
-    id: "1",
-    name: "Adventure Tours India",
-    email: "contact@adventuretours.com",
-    phone: "+91 98765 43210",
-    location: "Mumbai, Maharashtra",
-    joinDate: "2024-01-15",
-    status: "active",
-    experiences: 8,
-    rating: 4.8
-  },
-  {
-    id: "2",
-    name: "Heritage Walks",
-    email: "info@heritagewalks.com",
-    phone: "+91 98765 43211",
-    location: "Delhi, NCR",
-    joinDate: "2024-02-01",
-    status: "active",
-    experiences: 5,
-    rating: 4.5
-  },
-  // Add more mock data as needed
-];
+import {
+  getProviders, updateProviderStatus, getProviderDetails
+} from '@/lib/services/provider';
+import { Provider } from '@/lib/data/types';
+import { toast } from 'sonner';
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle
+} from '@/components/ui/dialog';
 
 const Providers = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const filteredProviders = mockProviders.filter(provider =>
-    provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  const fetchProviders = async () => {
+    try {
+      const result = await getProviders();
+      if (result.success && result.data) {
+        setProviders(result.data as Provider[]);
+      } else {
+        toast.error('Failed to fetch providers');
+      }
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast.error('An error occurred while fetching providers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (providerId: string, newStatus: Provider['status']) => {
+    try {
+      const result = await updateProviderStatus(providerId, newStatus);
+      if (result.success) {
+        toast.success('Provider status updated successfully');
+        fetchProviders();
+      } else {
+        toast.error('Failed to update provider status');
+      }
+    } catch (error) {
+      console.error('Error updating provider status:', error);
+      toast.error('An error occurred while updating provider status');
+    }
+  };
+
+  const handleViewDetails = async (providerId: string) => {
+    try {
+      const result = await getProviderDetails(providerId);
+      if (result.success && result.data) {
+        setSelectedProvider(result.data as Provider);
+        setShowDetailsDialog(true);
+      } else {
+        toast.error('Failed to fetch provider details');
+      }
+    } catch (error) {
+      console.error('Error fetching provider details:', error);
+      toast.error('An error occurred while fetching provider details');
+    }
+  };
+
+  const filteredProviders = providers.filter(provider =>
+    provider.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     provider.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     provider.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: Provider['status']) => {
     const variants = {
-      active: "default" as const,
-      inactive: "secondary" as const,
-      suspended: "destructive" as const
+      active: "success",
+      inactive: "secondary",
+      suspended: "destructive",
+      pending: "warning"
     };
-    return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
+    return <Badge variant={variants[status]}>{status}</Badge>;
   };
 
-  const mockApplications = [
-    {
-      id: "app1",
-      companyName: "New Adventure Co.",
-      email: "apply@adventureco.com",
-      contactNo: "+91 99999 88888",
-      experienceName: "Jungle Safari",
-      description: "A thrilling jungle safari experience.",
-      price: "2000",
-      location: "Goa",
-      duration: "5 hours",
-      participants: "20",
-      date: "2024-07-01",
-      category: "Adventure"
-    },
-    // ...more applications
-  ];
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -89,9 +118,7 @@ const Providers = () => {
         <Card>
           <CardHeader>
             <CardTitle>Provider Management</CardTitle>
-            <CardDescription>
-              View and manage all experience providers
-            </CardDescription>
+            <CardDescription>View and manage all experience providers</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-6">
@@ -117,13 +144,13 @@ const Providers = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Experiences</TableHead>
                   <TableHead>Rating</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProviders.map((provider) => (
+                {filteredProviders.map(provider => (
                   <TableRow key={provider.id}>
-                    <TableCell className="font-medium">{provider.name}</TableCell>
+                    <TableCell className="font-medium">{provider.companyName}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center text-sm">
@@ -132,7 +159,7 @@ const Providers = () => {
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Phone className="mr-2 h-4 w-4" />
-                          {provider.phone}
+                          {provider.contactNo}
                         </div>
                       </div>
                     </TableCell>
@@ -145,15 +172,15 @@ const Providers = () => {
                     <TableCell>
                       <div className="flex items-center text-sm">
                         <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {provider.joinDate}
+                        {new Date(provider.joinDate).toLocaleDateString()}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(provider.status)}</TableCell>
                     <TableCell>{provider.experiences}</TableCell>
                     <TableCell>
-                      <div className="flex items-center text-sm">
-                        <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                        {provider.rating}
+                      <div className="flex items-center">
+                        <Star className="mr-1 h-4 w-4 text-yellow-400 fill-yellow-400" />
+                        {provider.rating.toFixed(1)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -164,12 +191,18 @@ const Providers = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>View Experiences</DropdownMenuItem>
-                          <DropdownMenuItem>View Reviews</DropdownMenuItem>
-                          <DropdownMenuItem>Send Message</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            Suspend Account
+                          <DropdownMenuItem onClick={() => handleViewDetails(provider.id)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(provider.id, 'active')} disabled={provider.status === 'active'}>
+                            Activate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(provider.id, 'inactive')} disabled={provider.status === 'inactive'}>
+                            Deactivate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(provider.id, 'suspended')} disabled={provider.status === 'suspended'} className="text-red-600">
+                            Suspend
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -181,41 +214,57 @@ const Providers = () => {
           </CardContent>
         </Card>
 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Provider Applications</CardTitle>
-            <CardDescription>Review new provider applications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Company Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Experience</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockApplications.map(app => (
-                  <TableRow key={app.id}>
-                    <TableCell>{app.companyName}</TableCell>
-                    <TableCell>{app.email}</TableCell>
-                    <TableCell>{app.experienceName}</TableCell>
-                    <TableCell>{app.location}</TableCell>
-                    <TableCell>{app.date}</TableCell>
-                    <TableCell>{app.category}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Provider Details</DialogTitle>
+              <DialogDescription>Detailed information about the provider and their experiences</DialogDescription>
+            </DialogHeader>
+
+            {selectedProvider && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-medium">Company Information</h3>
+                    <div className="mt-2 space-y-2">
+                      <p><span className="text-muted-foreground">Name:</span> {selectedProvider.companyName}</p>
+                      <p><span className="text-muted-foreground">Email:</span> {selectedProvider.email}</p>
+                      <p><span className="text-muted-foreground">Phone:</span> {selectedProvider.contactNo}</p>
+                      <p><span className="text-muted-foreground">Location:</span> {selectedProvider.location}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Performance Metrics</h3>
+                    <div className="mt-2 space-y-2">
+                      <p><span className="text-muted-foreground">Total Experiences:</span> {selectedProvider.experiences}</p>
+                      <p><span className="text-muted-foreground">Average Rating:</span> {selectedProvider.rating.toFixed(1)}</p>
+                      <p><span className="text-muted-foreground">Status:</span> {selectedProvider.status}</p>
+                      <p><span className="text-muted-foreground">Member Since:</span> {new Date(selectedProvider.joinDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedProvider.experienceDetails && (
+                  <div>
+                    <h3 className="font-medium mb-2">Latest Experience Submission</h3>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <h4 className="font-medium">{selectedProvider.experienceDetails.name}</h4>
+                      <p className="text-sm text-muted-foreground mt-1">{selectedProvider.experienceDetails.description}</p>
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        <p><span className="text-muted-foreground">Price:</span> ₹{selectedProvider.experienceDetails.price}</p>
+                        <p><span className="text-muted-foreground">Duration:</span> {selectedProvider.experienceDetails.duration}</p>
+                        <p><span className="text-muted-foreground">Category:</span> {selectedProvider.experienceDetails.category}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
 };
 
-export default Providers; 
+export default Providers;

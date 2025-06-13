@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
+import { submitProviderApplication } from '@/lib/services/provider';
+import { toast } from 'sonner';
 
 const categories = [
   "Adventure",
@@ -29,6 +31,7 @@ const categories = [
 
 const HostExperience = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     email: '',
@@ -68,19 +71,56 @@ const HostExperience = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log('Form submitted:', formData);
-    // For now, just show a success message
-    alert('Thank you for your submission! We will review your application and get back to you soon.');
-    navigate('/');
+    setIsSubmitting(true);
+
+    try {
+      let imageBase64 = null;
+      if (formData.image) {
+        const reader = new FileReader();
+        imageBase64 = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(formData.image);
+        });
+      }
+
+      const result = await submitProviderApplication({
+        companyName: formData.companyName,
+        email: formData.email,
+        contactNo: formData.contactNo,
+        location: formData.location,
+        experienceDetails: {
+          name: formData.experienceName,
+          description: formData.description,
+          image: imageBase64,
+          price: formData.price,
+          location: formData.location,
+          duration: formData.duration,
+          participants: formData.participants,
+          date: formData.date,
+          category: formData.category
+        }
+      });
+
+      if (result.success) {
+        toast.success('Application submitted successfully! We will review your application and get back to you soon.');
+        navigate('/');
+      } else {
+        toast.error('Failed to submit application. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('An error occurred while submitting your application.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 bg-gray-50 dark:bg-gray-900 py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8">
@@ -92,7 +132,6 @@ const HostExperience = () => {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Company Details */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Company Details</h2>
                 <Input
@@ -120,7 +159,6 @@ const HostExperience = () => {
                 />
               </div>
 
-              {/* Experience Details */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Experience Details</h2>
                 <Input
@@ -142,7 +180,7 @@ const HostExperience = () => {
                   <Input
                     type="number"
                     name="price"
-                    placeholder="Price per person ($)"
+                    placeholder="Price per person (₹)"
                     value={formData.price}
                     onChange={handleInputChange}
                     required
@@ -209,8 +247,9 @@ const HostExperience = () => {
               <Button
                 type="submit"
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                disabled={isSubmitting}
               >
-                Submit Application
+                {isSubmitting ? 'Submitting...' : 'Submit Application'}
               </Button>
             </form>
           </div>
@@ -222,4 +261,4 @@ const HostExperience = () => {
   );
 };
 
-export default HostExperience; 
+export default HostExperience;
