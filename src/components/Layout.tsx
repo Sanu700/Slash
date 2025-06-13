@@ -10,7 +10,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-grow w-full overflow-x-hidden pt-16">
+      <main className="flex-grow w-full overflow-x-hidden pt-16 sm:pt-20">
         <div className="mx-auto w-full max-w-[100rem] px-4 sm:px-6 lg:px-8">
           {children}
         </div>
