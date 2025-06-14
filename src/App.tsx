@@ -1,11 +1,16 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { AuthProvider, requireAuth } from "@/lib/auth";
 import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/lib/auth";
+
+import Layout from "@/components/Layout";
+
+// Public Pages
 import Index from "./pages/Index";
 import ExperienceView from "./pages/ExperienceView";
 import CategoryExplore from "./pages/CategoryExplore";
@@ -14,73 +19,114 @@ import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
-import ExperienceManager from "./pages/ExperienceManager";
-import Profile from "./pages/Profile";
-import { requireAuth } from "./lib/auth";
-import Booking from '@/pages/Booking';
-import HostExperience from './pages/HostExperience';
+import Booking from "./pages/Booking";
 
-// Import Company Pages
+// Company Pages
 import AboutUs from "./pages/AboutUs";
 import HowItWorks from "./pages/HowItWorks";
 import Testimonials from "./pages/Testimonials";
 import Careers from "./pages/Careers";
 import Press from "./pages/Press";
 
-// Import Support Pages
+// Support Pages
 import ContactUs from "./pages/ContactUs";
 import FAQ from "./pages/FAQ";
 import GiftRules from "./pages/GiftRules";
 import Shipping from "./pages/Shipping";
 import Returns from "./pages/Returns";
 
+// Auth-Protected Pages
+import ExperienceManager from "./pages/ExperienceManager";
+import HostExperience from "./pages/HostExperience";
+import Profile from "./pages/Profile";
+
+// Admin Pages
+import AdminLogin from './pages/admin/AdminLogin';
+import Dashboard from './pages/admin/Dashboard';
+import Users from './pages/admin/Users';
+import Categories from './pages/admin/Categories';
+import Analytics from './pages/admin/Analytics';
+import Settings from './pages/admin/Settings';
+import Customers from './pages/admin/users/Customers';
+import Providers from './pages/admin/users/Providers';
+import Experiences from './pages/admin/Experiences';
+
+// Protect Routes
+const ProtectedProfile = requireAuth(Profile, false);
+const ProtectedExperienceManager = requireAuth(ExperienceManager, false);
+const ProtectedHostExperience = requireAuth(HostExperience, false);
+const ProtectedAdminDashboard = requireAuth(Dashboard, true);
+const ProtectedAdminUsers = requireAuth(Users, true);
+const ProtectedAdminCategories = requireAuth(Categories, true);
+const ProtectedAdminAnalytics = requireAuth(Analytics, true);
+const ProtectedAdminSettings = requireAuth(Settings, true);
+const ProtectedCustomers = requireAuth(Customers, true);
+const ProtectedProviders = requireAuth(Providers, true);
+const ProtectedExperiences = requireAuth(Experiences, true);
+
 const queryClient = new QueryClient();
 
-// Apply authentication to the ExperienceManager component with admin required
-const ProtectedExperienceManager = requireAuth(ExperienceManager, true);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <CartProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
+                <Route path="/experiences/:id" element={<Layout><ExperienceView /></Layout>} />
+                <Route path="/categories/:id" element={<Layout><CategoryExplore /></Layout>} />
+                <Route path="/cart" element={<Layout><Cart /></Layout>} />
+                <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
+                <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
+                <Route path="/booking/:id" element={<Layout><Booking /></Layout>} />
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Toaster />
-          <Sonner position="top-center" />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/experience/:id" element={<ExperienceView />} />
-              <Route path="/category/:id" element={<CategoryExplore />} />
-              <Route path="/experiences" element={<AllExperiences />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/gifting-guide" element={<GiftingGuide />} />
-              <Route path="/gift-personalizer" element={<GiftPersonalizer />} />
-              <Route path="/manage-experiences" element={<ProtectedExperienceManager />} />
-              <Route path="/booking/:experienceId" element={<Booking />} />
-              <Route path="/host-experience" element={<HostExperience />} />
-              
-              {/* Company Pages */}
-              <Route path="/about-us" element={<AboutUs />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/testimonials" element={<Testimonials />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/press" element={<Press />} />
-              
-              {/* Support Pages */}
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/gift-rules" element={<GiftRules />} />
-              <Route path="/shipping" element={<Shipping />} />
-              <Route path="/returns" element={<Returns />} />
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </CartProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+                {/* Company Pages */}
+                <Route path="/about" element={<Layout><AboutUs /></Layout>} />
+                <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
+                <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
+                <Route path="/careers" element={<Layout><Careers /></Layout>} />
+                <Route path="/press" element={<Layout><Press /></Layout>} />
+
+                {/* Support Pages */}
+                <Route path="/contact" element={<Layout><ContactUs /></Layout>} />
+                <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+                <Route path="/gift-rules" element={<Layout><GiftRules /></Layout>} />
+                <Route path="/shipping" element={<Layout><Shipping /></Layout>} />
+                <Route path="/returns" element={<Layout><Returns /></Layout>} />
+
+                {/* Protected User Routes */}
+                <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
+                <Route path="/experience-manager" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
+
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={<ProtectedAdminDashboard />} />
+                <Route path="/admin/users" element={<ProtectedAdminUsers />} />
+                <Route path="/admin/customers" element={<ProtectedCustomers />} />
+                <Route path="/admin/providers" element={<ProtectedProviders />} />
+                <Route path="/admin/categories" element={<ProtectedAdminCategories />} />
+                <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
+                <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
+                <Route path="/admin/experiences" element={<ProtectedExperiences />} />
+
+                {/* 404 Page */}
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+            </BrowserRouter>
+
+            {/* Notifications */}
+            <Toaster />
+            <Sonner position="top-center" />
+          </CartProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

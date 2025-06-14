@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,17 +17,17 @@ const signInSchema = z.object({
 type SignInFormData = z.infer<typeof signInSchema>;
 
 export function SignInForm() {
-  const { signIn } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
   });
 
   const onSubmit = async (data: SignInFormData) => {
     try {
-      await signIn(data.email, data.password);
+      await signInWithGoogle();
       toast.success('Signed in successfully!');
     } catch (error) {
-      toast.error('Failed to sign in. Please check your credentials.');
+      toast.error('Failed to sign in. Please try again.');
       console.error('Sign in error:', error);
     }
   };
@@ -71,7 +71,7 @@ export function SignInForm() {
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
+            {isSubmitting ? 'Signing in...' : 'Sign In with Google'}
           </Button>
         </form>
       </CardContent>
