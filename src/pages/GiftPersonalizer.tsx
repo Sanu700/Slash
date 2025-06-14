@@ -1,14 +1,12 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Wand2 } from 'lucide-react';
+import { ArrowLeft, Wand2, Globe, Users2, Heart, Building2, BadgeCheck, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import { usePersonalizer } from '@/hooks/usePersonalizer';
 
-// Import component for each form step
 import BasicsForm from '@/components/gift-personalizer/BasicsForm';
 import InterestsForm from '@/components/gift-personalizer/InterestsForm';
 import PreferencesForm from '@/components/gift-personalizer/PreferencesForm';
@@ -16,10 +14,20 @@ import SocialForm from '@/components/gift-personalizer/SocialForm';
 import ResultsSection from '@/components/gift-personalizer/ResultsSection';
 import NavButtons from '@/components/gift-personalizer/NavButtons';
 
+const BenefitCard = ({ icon: Icon, title, description }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm">
+    <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+      <Icon className="w-6 h-6" />
+    </div>
+    <h3 className="text-xl font-medium mb-3">{title}</h3>
+    <p className="text-muted-foreground">{description}</p>
+  </div>
+);
+
 const GiftPersonalizer = () => {
   const formRef = useRef<HTMLDivElement>(null);
   const [contentRef, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  
+
   const {
     currentStep,
     progress,
@@ -33,11 +41,11 @@ const GiftPersonalizer = () => {
     handlePreviousStep,
     setFormData
   } = usePersonalizer();
-  
+
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -68,7 +76,8 @@ const GiftPersonalizer = () => {
             </Button>
           </div>
         </div>
-        
+
+        {/* Form Section */}
         <div 
           ref={formRef}
           className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"
@@ -143,8 +152,6 @@ const GiftPersonalizer = () => {
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };
