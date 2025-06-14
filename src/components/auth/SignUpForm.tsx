@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,14 +19,14 @@ const signUpSchema = z.object({
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export function SignUpForm() {
-  const { signUp } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
   });
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      await signUp(data.email, data.password, data.firstName, data.lastName);
+      await signInWithGoogle();
       toast.success('Account created successfully!');
     } catch (error) {
       toast.error('Failed to create account. Please try again.');
@@ -42,32 +42,6 @@ export function SignUpForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                placeholder="Enter your first name"
-                {...register('firstName')}
-              />
-              {errors.firstName && (
-                <p className="text-sm text-red-500">{errors.firstName.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                placeholder="Enter your last name"
-                {...register('lastName')}
-              />
-              {errors.lastName && (
-                <p className="text-sm text-red-500">{errors.lastName.message}</p>
-              )}
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -94,12 +68,38 @@ export function SignUpForm() {
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input
+              id="firstName"
+              type="text"
+              placeholder="Enter your first name"
+              {...register('firstName')}
+            />
+            {errors.firstName && (
+              <p className="text-sm text-red-500">{errors.firstName.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              type="text"
+              placeholder="Enter your last name"
+              {...register('lastName')}
+            />
+            {errors.lastName && (
+              <p className="text-sm text-red-500">{errors.lastName.message}</p>
+            )}
+          </div>
+
           <Button
             type="submit"
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating account...' : 'Create Account'}
+            {isSubmitting ? 'Creating account...' : 'Sign Up with Google'}
           </Button>
         </form>
       </CardContent>

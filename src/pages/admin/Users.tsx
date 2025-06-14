@@ -6,12 +6,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Search, Mail, Shield, UserX, Plus } from "lucide-react";
+import { MoreVertical, Search, Mail, Shield, UserX, Plus, Users as UsersIcon, UserCog } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Mock user data
-const initialUsers = [
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+  status: 'active' | 'inactive';
+  lastLogin: string;
+  avatar: string;
+};
+
+const initialUsers: User[] = [
   {
     id: 1,
     name: "John Doe",
@@ -42,8 +53,9 @@ const initialUsers = [
 ];
 
 export default function Users() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState<User[]>(initialUsers);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'user' });
 
@@ -79,7 +91,7 @@ export default function Users() {
         id: prev.length + 1,
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role,
+        role: newUser.role as 'user' | 'admin',
         status: 'active',
         lastLogin: new Date().toISOString().slice(0, 16).replace('T', ' '),
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newUser.name.split(' ')[0]}`
@@ -90,18 +102,19 @@ export default function Users() {
     toast.success('User added successfully');
   };
 
-  const handleSendEmail = (user: any) => {
+  const handleSendEmail = (user: User) => {
     toast.success(`Email sent to ${user.email}`);
   };
 
-  const handleChangeRole = (user: any) => {
+  const handleChangeRole = (user: User) => {
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: u.role === 'admin' ? 'user' : 'admin' } : u));
     toast.success(`Role changed for ${user.name}`);
   };
 
-  const handleSuspendUser = (user: any) => {
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
-    toast.success(`${user.name} is now ${user.status === 'active' ? 'inactive' : 'active'}`);
+  const handleSuspendUser = (user: User) => {
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
+    toast.success(`${user.name} is now ${newStatus}`);
   };
 
   return (
@@ -109,9 +122,17 @@ export default function Users() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">User Management</h1>
-          <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Add New User
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/admin/customers')} className="flex items-center gap-2">
+              <UsersIcon className="h-4 w-4" /> Customers
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/admin/providers')} className="flex items-center gap-2">
+              <UserCog className="h-4 w-4" /> Providers
+            </Button>
+            <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" /> Add New User
+            </Button>
+          </div>
         </div>
 
         {/* Add User Modal */}
@@ -223,4 +244,4 @@ export default function Users() {
       </div>
     </AdminLayout>
   );
-} 
+}

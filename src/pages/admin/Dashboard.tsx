@@ -166,7 +166,7 @@ export default function Dashboard() {
               <Button 
                 variant="outline" 
                 className="flex items-center justify-start px-4"
-                onClick={() => navigate('/manage-experiences')}
+                onClick={() => navigate('/admin/experiences')}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Experience
