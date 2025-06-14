@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut, Gift } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -7,7 +7,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { getSavedExperiences } from '@/lib/data';
 import { useAuth } from '@/lib/auth';
-import { NavigationLinks } from '@/components/NavigationLinks';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -17,17 +16,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from '@/components/ui/use-toast';
 
-const Navbar = () => {
+interface NavbarProps {
+  isDarkPageProp?: boolean;
+}
+
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+};
+
+const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+  const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
   const { itemCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout, signInWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -120,12 +134,30 @@ const Navbar = () => {
       : "text-white hover:text-gray-200"
   );
 
-  const logoTextClass = cn(
-    "font-medium text-xl transition-colors", 
-    isScrolled || !isDarkPage 
-      ? "text-gray-800 dark:text-gray-200" 
-      : "text-white"
-  );
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    scrollToTop();
+    setCompanyDropdownOpen(false);
+    setSupportDropdownOpen(false);
+    navigate(path);
+  };
 
   return (
     <nav
@@ -135,7 +167,7 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 z-10">
+        <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
           <img 
             src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
             alt="Slash logo" 
@@ -143,124 +175,191 @@ const Navbar = () => {
           />
           <span className={cn(
             "font-medium text-xl transition-colors",
-            isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white"
+            isScrolled || !isDarkPage
+              ? "text-gray-800 dark:text-gray-200" : "text-white"
           )}>
             Slash
           </span>
         </Link>
 
         <nav aria-label="Main" data-orientation="horizontal" dir="ltr" className="relative z-10 max-w-max flex-1 items-center justify-center hidden md:flex">
-          <div style={{ position: 'relative' }}>
-            <ul data-orientation="horizontal" className="group flex flex-1 list-none items-center justify-center space-x-1" dir="ltr">
-              <li>
-                <Link
-                  to="/experiences"
-                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
-                  data-radix-collection-item=""
-                >
-                  All Experiences
-                </Link>
-              </li>
-              <li>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      id="radix-:r0:-trigger-radix-:r2:"
-                      data-state="closed"
-                      aria-expanded="false"
-                      aria-controls="radix-:r0:-content-radix-:r2:"
-                      className="group group group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
-                      data-radix-collection-item=""
-                    >
-                      Company
-                      <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48">
-                    <DropdownMenuItem onClick={() => navigate('/about')}>
-                      About Us
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/careers')}>
-                      Careers
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/press')}>
-                      Press
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/contact')}>
-                      Contact
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </li>
-              <li>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      id="radix-:r0:-trigger-radix-:r3:"
-                      data-state="closed"
-                      aria-expanded="false"
-                      aria-controls="radix-:r0:-content-radix-:r3:"
-                      className="group group group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
-                      data-radix-collection-item=""
-                    >
-                      Support
-                      <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48">
-                    <DropdownMenuItem onClick={() => navigate('/help')}>
-                      Help Center
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/faqs')}>
-                      FAQs
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/safety')}>
-                      Safety
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/terms')}>
-                      Terms of Service
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/privacy')}>
-                      Privacy Policy
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </li>
-              <li>
-                <Link
-                  to="/gifting-guide"
-                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
-                  data-radix-collection-item=""
-                >
-                  Gifting Guide
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/gift-personalizer"
-                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
-                  data-radix-collection-item=""
-                >
-                  Gift Personalizer
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="absolute left-0 top-full flex justify-center"></div>
+          <ul data-orientation="horizontal" className="group flex flex-1 list-none items-center justify-center space-x-1" dir="ltr">
+            <li>
+              <Link
+                to="/experiences"
+                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
+                data-radix-collection-item=""
+                onClick={scrollToTop}
+              >
+                All Experiences
+              </Link>
+            </li>
+            <li>
+              <DropdownMenu open={companyDropdownOpen} onOpenChange={setCompanyDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50",
+                      isScrolled || !isDarkPageProp
+                        ? "text-gray-900 hover:bg-gray-100/20" 
+                        : "text-white hover:bg-white/10"
+                    )}
+                  >
+                    Company
+                    <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-[400px] p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Link
+                        to="/about"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/about')}
+                      >
+                        <div className="font-medium">About Us</div>
+                        <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/how-it-works"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/how-it-works')}
+                      >
+                        <div className="font-medium">How It Works</div>
+                        <p className="text-sm text-muted-foreground">The process of booking and gifting experiences</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/testimonials"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/testimonials')}
+                      >
+                        <div className="font-medium">Testimonials</div>
+                        <p className="text-sm text-muted-foreground">What our customers say about us</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/careers"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/careers')}
+                      >
+                        <div className="font-medium">Careers</div>
+                        <p className="text-sm text-muted-foreground">Join our growing team</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/press"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/press')}
+                      >
+                        <div className="font-medium">Press</div>
+                        <p className="text-sm text-muted-foreground">Media coverage and press releases</p>
+                      </Link>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+            <li>
+              <DropdownMenu open={supportDropdownOpen} onOpenChange={setSupportDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50",
+                      isScrolled || !isDarkPageProp
+                        ? "text-gray-900 hover:bg-gray-100/20" 
+                        : "text-white hover:bg-white/10"
+                    )}
+                  >
+                    Support
+                    <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-[400px] p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Link
+                        to="/contact"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/contact')}
+                      >
+                        <div className="font-medium">Contact Us</div>
+                        <p className="text-sm text-muted-foreground">Get in touch with our support team</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/faq"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/faq')}
+                      >
+                        <div className="font-medium">FAQ</div>
+                        <p className="text-sm text-muted-foreground">Frequently asked questions</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/gift-rules"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/gift-rules')}
+                      >
+                        <div className="font-medium">Gift Rules</div>
+                        <p className="text-sm text-muted-foreground">Understanding our gifting policies</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/shipping"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/shipping')}
+                      >
+                        <div className="font-medium">Shipping</div>
+                        <p className="text-sm text-muted-foreground">Information about delivery options</p>
+                      </Link>
+                    </div>
+                    <div className="space-y-1">
+                      <Link
+                        to="/returns"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        onClick={() => handleNavigation('/returns')}
+                      >
+                        <div className="font-medium">Returns</div>
+                        <p className="text-sm text-muted-foreground">Our return and refund policy</p>
+                      </Link>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+            <li>
+              <Link
+                to="/gifting-guide"
+                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
+                data-radix-collection-item=""
+                onClick={scrollToTop}
+              >
+                Gifting Guide
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/gift-personalizer"
+                className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 text-gray-900 hover:bg-gray-100/20"
+                data-radix-collection-item=""
+                onClick={scrollToTop}
+              >
+                Gift Personalizer
+              </Link>
+            </li>
+          </ul>
         </nav>
 
         <div className="hidden md:flex items-center space-x-4">
-          <Link
-            to="/host-experience"
-            className={cn(
-              "px-4 py-2 rounded-lg transition-colors font-medium",
-              isScrolled || !isDarkPage
-                ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
-                : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
-            )}
-          >
-            Host an Experience
-          </Link>
           <button 
             onClick={toggleSearch}
             className={cn(
@@ -276,8 +375,15 @@ const Navbar = () => {
           </button>
           <Link 
             to="/cart"
-            className="p-2 rounded-full relative hover:bg-white/10 transition-colors text-white hover:text-gray-200"
+            className={cn(
+              "p-2 rounded-full transition-colors relative",
+              isScrolled || !isDarkPage
+                ? "hover:bg-gray-100 dark:hover:bg-gray-800" 
+                : "hover:bg-white/10",
+              iconClass
+            )}
             aria-label="Shopping cart"
+            onClick={scrollToTop}
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
@@ -286,23 +392,62 @@ const Navbar = () => {
               </span>
             )}
           </Link>
+          <Link
+            to="/host-experience"
+            className={cn(
+              "px-4 py-2 rounded-full font-medium transition-colors",
+              isScrolled || !isDarkPage
+                ? "bg-primary text-white hover:bg-primary/90"
+                : "bg-white text-gray-900 hover:bg-gray-100"
+            )}
+            onClick={scrollToTop}
+          >
+            Host an Experience
+          </Link>
           {isAuthenticated ? (
-            <button 
-              className="focus:outline-none" 
-              type="button" 
-              id="radix-:rc:" 
-              aria-haspopup="menu" 
-              aria-expanded="false" 
-              data-state="closed"
-            >
-              <span className="relative flex shrink-0 overflow-hidden rounded-full h-8 w-8 cursor-pointer border-2 border-primary">
-                <img 
-                  className="aspect-square h-full w-full" 
-                  alt="Profile" 
-                  src={user?.user_metadata?.avatar_url} 
-                />
-              </span>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="focus:outline-none">
+                  {user?.user_metadata?.avatar_url ? (
+                    <Avatar className="h-8 w-8 cursor-pointer border-2 border-primary">
+                      <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
+                      <AvatarFallback className="bg-primary text-white">
+                        {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer">
+                      <User className="h-4 w-4" />
+                    </div>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  {user?.user_metadata?.full_name || 'My Account'}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/cart')}>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Cart ({itemCount})
+                </DropdownMenuItem>
+                {user?.app_metadata?.provider === 'email' ? (
+                  <DropdownMenuItem onClick={() => handleNavigation('/manage-experiences')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Manage Experiences
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button 
               variant={isScrolled || !isDarkPage ? "default" : "secondary"}
@@ -317,7 +462,7 @@ const Navbar = () => {
           )}
         </div>
 
-        <div className="md:hidden flex items-center space-x-3">
+        <div className="flex md:hidden items-center space-x-4">
           <Link
             to="/host-experience"
             className={cn(
@@ -326,6 +471,7 @@ const Navbar = () => {
                 ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
                 : "bg-orange-100/90 text-orange-600 hover:bg-orange-200/90"
             )}
+            onClick={scrollToTop}
           >
             Host
           </Link>
@@ -346,6 +492,7 @@ const Navbar = () => {
             to="/cart"
             className="p-2 rounded-full relative hover:bg-white/10 transition-colors text-white hover:text-gray-200"
             aria-label="Shopping cart"
+            onClick={scrollToTop}
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
@@ -387,7 +534,7 @@ const Navbar = () => {
               <X className="h-5 w-5" />
             </button>
           </form>
-          <div className="mt-6 text-white">
+          <div className="mt-8">
             <p className="text-sm text-gray-400 mb-3">Popular Searches</p>
             <div className="flex flex-wrap gap-2">
               {['Hot Air Balloon', 'Dining', 'Yacht', 'Spa Day', 'Adventure'].map((term) => (
@@ -395,7 +542,7 @@ const Navbar = () => {
                   key={term}
                   onClick={() => {
                     setSearchQuery(term);
-                    navigate(`/experiences?search=${encodeURIComponent(term)}`);
+                    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
                     setSearchOpen(false);
                   }}
                   className="px-3 py-1 bg-white/10 rounded-full text-sm hover:bg-white/20 cursor-pointer"
@@ -424,7 +571,10 @@ const Navbar = () => {
             </button>
             <Link
               to="/experiences"
-              onClick={toggleMobileMenu}
+              onClick={() => {
+                scrollToTop();
+                toggleMobileMenu();
+              }}
               className="py-2 border-b border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary"
             >
               All Experiences
@@ -443,17 +593,33 @@ const Navbar = () => {
             </div>
             <Link
               to="/gifting-guide"
-              onClick={toggleMobileMenu}
+              onClick={() => {
+                scrollToTop();
+                toggleMobileMenu();
+              }}
               className="py-2 border-b border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary"
             >
               Gifting Guide
             </Link>
             <Link
               to="/gift-personalizer"
-              onClick={toggleMobileMenu}
+              onClick={() => {
+                scrollToTop();
+                toggleMobileMenu();
+              }}
               className="py-2 border-b border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary"
             >
               Gift Personalizer
+            </Link>
+            <Link
+              to="/host-experience"
+              onClick={() => {
+                scrollToTop();
+                toggleMobileMenu();
+              }}
+              className="py-2 border-b border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary"
+            >
+              Host an Experience
             </Link>
           </div>
           {isAuthenticated && (

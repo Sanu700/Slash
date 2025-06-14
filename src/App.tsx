@@ -44,24 +44,21 @@ import GiftRules from "./pages/GiftRules";
 import Shipping from "./pages/Shipping";
 import Returns from "./pages/Returns";
 
-const queryClient = new QueryClient();
-
-// Create protected components
-const ProtectedDashboard = requireAuth(Dashboard);
-const ProtectedUsers = requireAuth(Users);
+// Protected route components
+const ProtectedProfile = requireAuth(Profile);
+const ProtectedExperienceManager = requireAuth(ExperienceManager);
+const ProtectedAdminDashboard = requireAuth(Dashboard);
+const ProtectedAdminUsers = requireAuth(Users);
+const ProtectedAdminCategories = requireAuth(Categories);
+const ProtectedAdminAnalytics = requireAuth(Analytics);
+const ProtectedAdminSettings = requireAuth(Settings);
 const ProtectedCustomers = requireAuth(Customers);
 const ProtectedProviders = requireAuth(Providers);
 const ProtectedExperiences = requireAuth(Experiences);
-const ProtectedCategories = requireAuth(Categories);
-const ProtectedAnalytics = requireAuth(Analytics);
-const ProtectedSettings = requireAuth(Settings);
-const ProtectedProfile = requireAuth(Profile);
-const ProtectedHostExperience = requireAuth(HostExperience);
-const ProtectedExperienceManager = requireAuth(ExperienceManager);
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={new QueryClient()}>
       <TooltipProvider>
         <AuthProvider>
           <CartProvider>
@@ -93,18 +90,18 @@ function App() {
                 
                 {/* Protected Routes */}
                 <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
-                <Route path="/experience-manager" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                <Route path="/manage-experiences" element={<Layout><ProtectedExperienceManager /></Layout>} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<Layout><ProtectedDashboard /></Layout>} />
-                <Route path="/admin/users" element={<Layout><ProtectedUsers /></Layout>} />
+                <Route path="/admin" element={<Layout><ProtectedAdminDashboard /></Layout>} />
+                <Route path="/admin/users" element={<Layout><ProtectedAdminUsers /></Layout>} />
                 <Route path="/admin/users/customers" element={<Layout><ProtectedCustomers /></Layout>} />
                 <Route path="/admin/users/providers" element={<Layout><ProtectedProviders /></Layout>} />
                 <Route path="/admin/experiences" element={<Layout><ProtectedExperiences /></Layout>} />
-                <Route path="/admin/categories" element={<Layout><ProtectedCategories /></Layout>} />
-                <Route path="/admin/analytics" element={<Layout><ProtectedAnalytics /></Layout>} />
-                <Route path="/admin/settings" element={<Layout><ProtectedSettings /></Layout>} />
+                <Route path="/admin/categories" element={<Layout><ProtectedAdminCategories /></Layout>} />
+                <Route path="/admin/analytics" element={<Layout><ProtectedAdminAnalytics /></Layout>} />
+                <Route path="/admin/settings" element={<Layout><ProtectedAdminSettings /></Layout>} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
