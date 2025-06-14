@@ -1,30 +1,25 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Experience } from '@/types';
-import ExperienceCard from '@/components/cards/ExperienceCard';
+import { Experience } from '@/lib/data/types';
+import ExperienceCard from '@/components/ExperienceCard';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import useScrollInView from '@/hooks/use-scroll-in-view';
-import { useExperiences } from '@/hooks/use-experiences';
-import FilterSheet from '@/components/FilterSheet';
-import Navbar from '@/components/shared/Navbar';
+import { useInView } from '@/lib/animations';
+import { useExperiencesManager } from '@/lib/data';
+import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
+import Navbar from '@/components/Navbar';
 
 const AllExperiences = () => {
-  const { experiences, isLoading } = useExperiences();
+  const { experiences, isLoading } = useExperiencesManager();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
   const [currentPage, setCurrentPage] = useState(1);
   const experiencesPerPage = 6;
-  const [activeFilters, setActiveFilters] = useState<{
-    category?: string[];
-    location?: string[];
-    priceRange?: [number, number];
-  } | null>(null);
+  const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useScrollInView(ref);
+  const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
 
   useEffect(() => {
     setCurrentPage(1);
@@ -40,11 +35,11 @@ const AllExperiences = () => {
 
   const applyFilters = (data: Experience[]): Experience[] => {
     return data.filter((exp) => {
-      const matchesCategory = activeFilters?.category?.length
-        ? activeFilters.category.includes(exp.category)
+      const matchesCategory = activeFilters?.categories?.length
+        ? activeFilters.categories.includes(exp.category)
         : true;
-      const matchesLocation = activeFilters?.location?.length
-        ? activeFilters.location.includes(exp.location)
+      const matchesLocation = activeFilters?.location && activeFilters.location !== 'any'
+        ? exp.location === activeFilters.location
         : true;
       const matchesPrice = activeFilters?.priceRange
         ? exp.price >= activeFilters.priceRange[0] &&
@@ -101,8 +96,8 @@ const AllExperiences = () => {
   };
 
   const activeFiltersCount =
-    (activeFilters?.category?.length || 0) +
-    (activeFilters?.location?.length || 0) +
+    (activeFilters?.categories?.length || 0) +
+    (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
     (activeFilters?.priceRange ? 1 : 0);
 
   return (
@@ -229,11 +224,11 @@ const AllExperiences = () => {
         </div>
       </main>
 
-      <FilterSheet
+      <FilterDialog
         isOpen={isFilterOpen}
-        setIsOpen={setIsFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
         onApply={setActiveFilters}
-        defaultValues={activeFilters}
+        initialFilters={activeFilters}
       />
     </div>
   );
