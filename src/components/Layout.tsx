@@ -1,19 +1,22 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  isDarkPage?: boolean;
 }
 
-export default function Layout({ children }: LayoutProps) {
+const Layout = ({ children, isDarkPage = false }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 pt-20">
+      <Navbar isDarkPageProp={isDarkPage} />
+      <main className="flex-grow">
         {children}
       </main>
       <Footer />
     </div>
   );
-} 
+};
+
+export default Layout; 
