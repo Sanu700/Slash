@@ -9,7 +9,6 @@ import { useInView } from '@/lib/animations';
 import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Filter } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
@@ -270,8 +269,6 @@ const AllExperiences = () => {
         </div>
       </main>
       
-      <Footer />
-
       <FilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
