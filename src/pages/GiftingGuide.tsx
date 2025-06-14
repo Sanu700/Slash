@@ -38,15 +38,6 @@ const GiftingGuide = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         
-        <div className="absolute top-6 left-6">
-          <button 
-            onClick={() => navigate('/')} 
-            className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-        </div>
-
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
           <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
             <Gift className="h-8 w-8" />
