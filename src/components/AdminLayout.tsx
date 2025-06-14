@@ -6,7 +6,8 @@ import {
   Package, 
   BarChart3, 
   Settings,
-  LogOut
+  LogOut,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Applications', href: '/admin/experience-applications', icon: FileText },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Experiences', href: '/admin/experiences', icon: Package },
     { name: 'Categories', href: '/admin/categories', icon: Package },
@@ -36,7 +38,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           {/* Logo */}
           <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
             <Link to="/admin" className="text-xl font-bold text-primary">
-              Slash Admin
+              Admin Panel
             </Link>
           </div>
 

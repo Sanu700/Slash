@@ -50,6 +50,7 @@ import Settings from '@/pages/admin/Settings';
 import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
+import ExperienceApplications from './pages/admin/ExperienceApplications';
 
 // Protect Routes
 const ProtectedProfile = requireAuth(Profile, false);
@@ -63,6 +64,7 @@ const ProtectedAdminSettings = requireAuth(Settings, true);
 const ProtectedCustomers = requireAuth(Customers, true);
 const ProtectedProviders = requireAuth(Providers, true);
 const ProtectedExperiences = requireAuth(Experiences, true);
+const ProtectedExperienceApplications = requireAuth(ExperienceApplications, true);
 
 function App() {
   return (
@@ -108,6 +110,7 @@ function App() {
                 <Route path="/admin/users/customers" element={<AdminLayout><ProtectedCustomers /></AdminLayout>} />
                 <Route path="/admin/users/providers" element={<AdminLayout><ProtectedProviders /></AdminLayout>} />
                 <Route path="/admin/experiences" element={<AdminLayout><ProtectedExperiences /></AdminLayout>} />
+                <Route path="/admin/experience-applications" element={<AdminLayout><ProtectedExperienceApplications /></AdminLayout>} />
                 <Route path="/admin/categories" element={<AdminLayout><ProtectedAdminCategories /></AdminLayout>} />
                 <Route path="/admin/analytics" element={<AdminLayout><ProtectedAdminAnalytics /></AdminLayout>} />
                 <Route path="/admin/settings" element={<AdminLayout><ProtectedAdminSettings /></AdminLayout>} />

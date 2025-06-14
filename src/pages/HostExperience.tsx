@@ -17,40 +17,73 @@ import { toast } from 'sonner';
 import { LoginModal } from '@/components/LoginModal';
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { supabase } from '@/lib/supabase';
+import type { Database } from '@/types/database';
+
+type ExperienceInsert = Database['public']['Tables']['experiences']['Insert'];
+type ProviderInsert = Database['public']['Tables']['providers']['Insert'];
 
 const categories = [
-  "Adventure",
-  "Dining",
-  "Wellness",
-  "Cultural",
-  "Entertainment",
-  "Sports",
-  "Educational",
-  "Romantic",
-  "Family",
-  "Luxury"
-];
+  { id: 'adventurous', label: 'Adventure' },
+  { id: 'dining', label: 'Dining' },
+  { id: 'wellness', label: 'Wellness' },
+  { id: 'cultural', label: 'Cultural' },
+  { id: 'entertainment', label: 'Entertainment' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'educational', label: 'Educational' },
+  { id: 'romantic', label: 'Romantic' },
+  { id: 'family', label: 'Family' },
+  { id: 'luxury', label: 'Luxury' }
+] as const;
+
+type CategoryId = typeof categories[number]['id'];
+
+interface FormData {
+  companyName: string;
+  email: string;
+  contactNo: string;
+  experienceName: string;
+  description: string;
+  price: string;
+  duration: string;
+  participants: string;
+  location: string;
+  categories: Record<CategoryId, boolean>;
+  images: string[];
+}
 
 const HostExperience = () => {
   const { isAuthenticated, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     companyName: '',
-    email: user?.email || '',
+    email: '',
     contactNo: '',
     experienceName: '',
     description: '',
     price: '',
     duration: '',
+    participants: '',
     location: '',
-    category: '',
-    images: [] as string[],
+    categories: {
+      adventurous: false,
+      dining: false,
+      wellness: false,
+      cultural: false,
+      entertainment: false,
+      sports: false,
+      educational: false,
+      romantic: false,
+      family: false,
+      luxury: false
+    },
+    images: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -59,13 +92,67 @@ const HostExperience = () => {
     }));
   };
 
+  const handleCategoryChange = (categoryId: CategoryId) => {
+    setFormData(prev => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [categoryId]: !prev.categories[categoryId]
+      }
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      await signInWithGoogle();
+    if (!user) {
+      toast.error('Please log in to submit an experience');
       return;
     }
-    // ... rest of submit logic ...
+
+    try {
+      setIsSubmitting(true);
+
+      // Create the experience application directly
+      const { error: experienceError } = await supabase
+        .from('provider_applications')
+        .insert({
+          user_id: user.id,
+          company_name: formData.companyName,
+          email: formData.email,
+          contact_no: formData.contactNo,
+          title: formData.experienceName,
+          description: formData.description,
+          price: parseInt(formData.price),
+          location: formData.location,
+          duration: parseInt(formData.duration),
+          participants: parseInt(formData.participants),
+          date: new Date().toISOString().split('T')[0],
+          image_url: '',
+          category: Object.entries(formData.categories)
+            .filter(([_, value]) => value)
+            .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+            .join(', ') || 'Other',
+          niche_category: null,
+          trending: false,
+          featured: false,
+          romantic: formData.categories.romantic || false,
+          adventurous: formData.categories.adventurous || false,
+          group_activity: false
+        });
+
+      if (experienceError) {
+        console.error('Error creating experience application:', experienceError);
+        throw new Error('Failed to submit application');
+      }
+
+      toast.success('Application submitted successfully');
+      navigate('/provider/dashboard');
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit application');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -190,72 +277,88 @@ const HostExperience = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Price
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                required
-                min="0"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Price per person (₹)
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Duration (hours)
+                </label>
+                <input
+                  type="number"
+                  id="duration"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="participants" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Maximum Participants
+                </label>
+                <input
+                  type="number"
+                  id="participants"
+                  name="participants"
+                  value={formData.participants}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Duration (hours)
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Categories
               </label>
-              <input
-                type="number"
-                id="duration"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                required
-                min="1"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Location
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Category
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              >
-                <option value="">Select a category</option>
-                <option value="adventure">Adventure</option>
-                <option value="cultural">Cultural</option>
-                <option value="food">Food & Drink</option>
-                <option value="wellness">Wellness</option>
-                <option value="nature">Nature</option>
-              </select>
+              <div className="grid grid-cols-2 gap-4">
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={category.id}
+                      checked={formData.categories[category.id] || false}
+                      onChange={() => handleCategoryChange(category.id as CategoryId)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor={category.id}
+                      className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                    >
+                      {category.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <Button
