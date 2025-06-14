@@ -1,7 +1,6 @@
-
+import React from 'react';
 import { useRef } from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, Wand2 } from 'lucide-react';
@@ -150,8 +149,6 @@ const GiftPersonalizer = () => {
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };
