@@ -7,7 +7,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { AuthProvider, requireAuth } from "@/lib/auth";
 import { CartProvider } from "@/contexts/CartContext";
-
 import Layout from "@/components/Layout";
 
 // Public Pages
@@ -50,6 +49,7 @@ import Settings from './pages/admin/Settings';
 import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
+import AdminProfile from './pages/admin/Profile';
 
 // Protect Routes
 const ProtectedProfile = requireAuth(Profile, false);
@@ -63,6 +63,7 @@ const ProtectedAdminSettings = requireAuth(Settings, true);
 const ProtectedCustomers = requireAuth(Customers, true);
 const ProtectedProviders = requireAuth(Providers, true);
 const ProtectedExperiences = requireAuth(Experiences, true);
+const ProtectedAdminProfile = requireAuth(AdminProfile, true);
 
 const queryClient = new QueryClient();
 
@@ -77,15 +78,15 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Layout><Index /></Layout>} />
                 <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
-                <Route path="/experiences/:id" element={<Layout><ExperienceView /></Layout>} />
-                <Route path="/categories/:id" element={<Layout><CategoryExplore /></Layout>} />
+                <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
+                <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
                 <Route path="/cart" element={<Layout><Cart /></Layout>} />
                 <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
                 <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
-                <Route path="/booking/:id" element={<Layout><Booking /></Layout>} />
+                <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
 
                 {/* Company Pages */}
-                <Route path="/about" element={<Layout><AboutUs /></Layout>} />
+                <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
                 <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
                 <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
                 <Route path="/careers" element={<Layout><Careers /></Layout>} />
@@ -100,26 +101,25 @@ function App() {
 
                 {/* Protected User Routes */}
                 <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
-                <Route path="/experience-manager" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                <Route path="/manage-experiences" element={<Layout><ProtectedExperienceManager /></Layout>} />
                 <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin" element={<ProtectedAdminDashboard />} />
                 <Route path="/admin/users" element={<ProtectedAdminUsers />} />
-                <Route path="/admin/customers" element={<ProtectedCustomers />} />
-                <Route path="/admin/providers" element={<ProtectedProviders />} />
                 <Route path="/admin/categories" element={<ProtectedAdminCategories />} />
                 <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
                 <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
+                <Route path="/admin/users/customers" element={<ProtectedCustomers />} />
+                <Route path="/admin/users/providers" element={<ProtectedProviders />} />
                 <Route path="/admin/experiences" element={<ProtectedExperiences />} />
+                <Route path="/admin/profile" element={<ProtectedAdminProfile />} />
 
                 {/* 404 Page */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
             </BrowserRouter>
-
-            {/* Notifications */}
             <Toaster />
             <Sonner position="top-center" />
           </CartProvider>

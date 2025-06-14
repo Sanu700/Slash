@@ -1,44 +1,28 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+'use client';
+
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { Experience } from '@/lib/data/types';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Filter } from 'lucide-react';
-import { getAllExperiences } from '@/lib/data';
-import { Experience } from '@/lib/data/types';
 import { useInView } from '@/lib/animations';
+import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Filter } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const AllExperiences = () => {
-  const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
+  const { experiences, isLoading } = useExperiencesManager();
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
   const [currentPage, setCurrentPage] = useState(1);
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const experiencesPerPage = 6;
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
-  const experiencesPerPage = 12;
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
-  
-  // Load experiences from Supabase
-  useEffect(() => {
-    const loadExperiences = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getAllExperiences();
-        setExperiences(data);
-      } catch (error) {
-        console.error('Error loading experiences:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadExperiences();
-  }, []);
 
   // Handle initial filters from location state
   useEffect(() => {
@@ -53,9 +37,9 @@ const AllExperiences = () => {
     if (location.state?.initialFilters) {
       setActiveFilters(location.state.initialFilters);
     }
-  }, [location.state]);
-  
-  // Memoize filtered and sorted experiences to improve performance
+  }, [location]);
+
+  // Memoize filtered and sorted experiences
   const filteredExperiences = useMemo(() => {
     if (isLoading) return [];
     
@@ -71,18 +55,9 @@ const AllExperiences = () => {
       );
     }
 
-    // Apply active filters only if they exist and are not null
+    // Apply active filters
     if (activeFilters) {
-      // Price range filter
-      if (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) {
-        filtered = filtered.filter(exp => 
-          exp.price >= activeFilters.priceRange[0] && 
-          exp.price <= activeFilters.priceRange[1]
-        );
-      }
-
-      // Categories filter
-      if (activeFilters.categories && activeFilters.categories.length > 0) {
+      if (activeFilters.categories?.length) {
         filtered = filtered.filter(exp => 
           activeFilters.categories.some(category => 
             exp.category.toLowerCase() === category.toLowerCase()
@@ -90,52 +65,16 @@ const AllExperiences = () => {
         );
       }
 
-      // Experience types filter
-      const hasExperienceTypeFilter = Object.values(activeFilters.experienceTypes).some(Boolean);
-      if (hasExperienceTypeFilter) {
-        filtered = filtered.filter(exp => {
-          if (activeFilters.experienceTypes.romantic && !exp.romantic) return false;
-          if (activeFilters.experienceTypes.adventurous && !exp.adventurous) return false;
-          if (activeFilters.experienceTypes.group && !exp.group) return false;
-          if (activeFilters.experienceTypes.trending && !exp.trending) return false;
-          if (activeFilters.experienceTypes.featured && !exp.featured) return false;
-          return true;
-        });
-      }
-
-      // Duration filter
-      if (activeFilters.duration && activeFilters.duration !== 'any') {
-        filtered = filtered.filter(exp => {
-          // Handle "12+" category (Full Day, 2 days, 3 days, etc.)
-          if (activeFilters.duration === '12+') {
-            // Check for any multi-day or Full Day experiences
-            return exp.duration === 'Full Day' || 
-                   exp.duration === '12+' || 
-                   exp.duration.toLowerCase().includes('day');
-          }
-          
-          // Handle other numeric durations
-          const [min, max] = activeFilters.duration.split('-').map(Number);
-          const expDuration = parseInt(exp.duration);
-          
-          // If duration is not a number, exclude it from numeric filters
-          if (isNaN(expDuration)) {
-            return false;
-          }
-          
-          // Only include numeric durations in other categories
-          if (max) {
-            return expDuration >= min && expDuration <= max;
-          } else {
-            return expDuration >= min;
-          }
-        });
-      }
-
-      // Location filter
       if (activeFilters.location && activeFilters.location !== 'any') {
         filtered = filtered.filter(exp => 
           exp.location.toLowerCase() === activeFilters.location.toLowerCase()
+        );
+      }
+
+      if (activeFilters.priceRange) {
+        filtered = filtered.filter(exp => 
+          exp.price >= activeFilters.priceRange[0] && 
+          exp.price <= activeFilters.priceRange[1]
         );
       }
     }
@@ -149,64 +88,21 @@ const AllExperiences = () => {
     
     return filtered;
   }, [sortOrder, searchTerm, experiences, isLoading, activeFilters]);
-  
+
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
   const indexOfFirstExperience = indexOfLastExperience - experiencesPerPage;
   const currentExperiences = filteredExperiences.slice(indexOfFirstExperience, indexOfLastExperience);
   const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
-  
-  useEffect(() => {
-    // Reset to page 1 when search, sort, or filters change
-    setCurrentPage(1);
-  }, [searchTerm, sortOrder, activeFilters]);
-  
+
   const handleSortChange = (order: 'default' | 'price-low' | 'price-high') => {
     setSortOrder(order);
   };
-  
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-  
-  const handleFilterApply = (filters: FilterOptions) => {
-    setActiveFilters(filters);
-  };
-  
-  // Calculate the number of active filters
-  const activeFiltersCount = useMemo(() => {
-    if (!activeFilters) return 0;
-    
-    let count = 0;
-    
-    // Count categories
-    if (activeFilters.categories && activeFilters.categories.length > 0) {
-      count += 1; // Count categories as one filter
-    }
-    
-    // Count experience types as one filter if any are selected
-    if (Object.values(activeFilters.experienceTypes).some(Boolean)) {
-      count += 1;
-    }
-    
-    // Count duration if not default
-    if (activeFilters.duration && activeFilters.duration !== 'any') {
-      count += 1;
-    }
-    
-    // Count location if not default
-    if (activeFilters.location && activeFilters.location !== 'any') {
-      count += 1;
-    }
-    
-    // Count price range if not default
-    if (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) {
-      count += 1;
-    }
-    
-    return count;
-  }, [activeFilters]);
-  
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
@@ -241,7 +137,12 @@ const AllExperiences = () => {
       </div>
     );
   };
-  
+
+  const activeFiltersCount =
+    (activeFilters?.categories?.length || 0) +
+    (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
+    (activeFilters?.priceRange ? 1 : 0);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -275,7 +176,7 @@ const AllExperiences = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Filters and Sorting */}
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div className={cn(
@@ -286,7 +187,7 @@ const AllExperiences = () => {
                     {filteredExperiences.length} Experiences
                   </h2>
                 </div>
-                
+
                 <div className={cn(
                   "flex items-center space-x-4 transition-all duration-700 delay-100",
                   isInView ? "opacity-100" : "opacity-0 translate-y-8"
@@ -338,7 +239,7 @@ const AllExperiences = () => {
                   </Button>
                 </div>
               </div>
-              
+
               {/* Experiences Grid */}
               {currentExperiences.length > 0 ? (
                 <div className={cn(
@@ -361,7 +262,7 @@ const AllExperiences = () => {
                   </Button>
                 </div>
               )}
-              
+
               {/* Pagination */}
               {filteredExperiences.length > experiencesPerPage && renderPagination()}
             </>
@@ -371,12 +272,11 @@ const AllExperiences = () => {
       
       <Footer />
 
-      {/* Filter Dialog */}
       <FilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApply={handleFilterApply}
-        initialFilters={activeFilters || undefined}
+        onApply={setActiveFilters}
+        initialFilters={activeFilters}
       />
     </div>
   );

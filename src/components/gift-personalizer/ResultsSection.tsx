@@ -1,20 +1,23 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import ExperienceCard from '@/components/ExperienceCard';
 import { getAllExperiences } from '@/lib/data';
 import { FormData } from '@/types/personalizerTypes';
 import { Experience } from '@/lib/data';
+import { ArrowLeft } from 'lucide-react';
 
 interface ResultsSectionProps {
   suggestedExperiences: string[];
   formData: FormData;
+  onBack: () => void;
 }
 
-const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps) => {
+const ResultsSection = ({ suggestedExperiences, formData, onBack }: ResultsSectionProps) => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [giftMessage, setGiftMessage] = useState('');
   
   useEffect(() => {
     const loadExperiences = async () => {
@@ -41,12 +44,24 @@ const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps)
   
   return (
     <div className="space-y-6">
-      <div className="text-center mb-10">
-        <h2 className="text-2xl font-medium mb-2">Your Personalized Recommendations</h2>
-        <p className="text-muted-foreground">
-          Based on your answers, we've curated these experiences for {formData.recipient || 'your recipient'}.
-        </p>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-medium">Your Personalized Recommendations</h2>
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Questionnaire
+        </Button>
       </div>
+
+      <Textarea
+        value={giftMessage}
+        onChange={(e) => setGiftMessage(e.target.value)}
+        placeholder="Add a personal message to accompany your gift..."
+        className="min-h-[120px] text-lg"
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {suggestedExperiences.map(id => {
@@ -57,7 +72,7 @@ const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps)
         })}
       </div>
       
-      <div className="mt-10 text-center">
+      <div className="text-center">
         <p className="text-muted-foreground mb-6">
           Not seeing the perfect gift? Browse our complete collection of experiences.
         </p>
@@ -73,4 +88,4 @@ const ResultsSection = ({ suggestedExperiences, formData }: ResultsSectionProps)
   );
 };
 
-export default ResultsSection;
+export default ResultsSection; 

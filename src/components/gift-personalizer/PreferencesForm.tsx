@@ -1,79 +1,55 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { FormData } from '@/types/personalizerTypes';
 
 interface PreferencesFormProps {
   formData: FormData;
-  handleSliderChange: (preference: keyof FormData['preferences'], value: number) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
-const PreferencesForm = ({ formData, handleSliderChange }: PreferencesFormProps) => {
+const PreferencesForm = ({ formData, handleInputChange }: PreferencesFormProps) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-medium mb-2">Personality Profile</h2>
       <p className="text-muted-foreground mb-8">
-        Help us understand {formData.recipient || 'the recipient'}'s personality by adjusting these sliders.
+        Help us understand {formData.recipient || 'the recipient'}'s personality by describing their traits and preferences.
       </p>
       
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <div className="flex justify-between mb-2">
-            <Label>Cautious</Label>
-            <Label>Adventurous</Label>
-          </div>
-          <input 
-            type="range"
-            min="1"
-            max="5"
-            value={formData.preferences.adventurous}
-            onChange={(e) => handleSliderChange('adventurous', parseInt(e.target.value))}
-            className="w-full"
+          <Label htmlFor="personality">Personality Traits</Label>
+          <Textarea
+            id="personality"
+            name="preferences.personality"
+            value={formData.preferences.personality || ''}
+            onChange={handleInputChange}
+            placeholder="Describe their personality traits (e.g., outgoing, creative, analytical, etc.)"
+            className="min-h-[100px]"
           />
         </div>
         
         <div>
-          <div className="flex justify-between mb-2">
-            <Label>Introverted</Label>
-            <Label>Social</Label>
-          </div>
-          <input 
-            type="range"
-            min="1"
-            max="5"
-            value={formData.preferences.social}
-            onChange={(e) => handleSliderChange('social', parseInt(e.target.value))}
-            className="w-full"
+          <Label htmlFor="lifestyle">Lifestyle & Activities</Label>
+          <Textarea
+            id="lifestyle"
+            name="preferences.lifestyle"
+            value={formData.preferences.lifestyle || ''}
+            onChange={handleInputChange}
+            placeholder="Describe their lifestyle and favorite activities (e.g., enjoys outdoor adventures, prefers quiet evenings at home, etc.)"
+            className="min-h-[100px]"
           />
         </div>
         
         <div>
-          <div className="flex justify-between mb-2">
-            <Label>Active</Label>
-            <Label>Relaxed</Label>
-          </div>
-          <input 
-            type="range"
-            min="1"
-            max="5"
-            value={formData.preferences.relaxation}
-            onChange={(e) => handleSliderChange('relaxation', parseInt(e.target.value))}
-            className="w-full"
-          />
-        </div>
-        
-        <div>
-          <div className="flex justify-between mb-2">
-            <Label>Practical</Label>
-            <Label>Curious</Label>
-          </div>
-          <input 
-            type="range"
-            min="1"
-            max="5"
-            value={formData.preferences.learning}
-            onChange={(e) => handleSliderChange('learning', parseInt(e.target.value))}
-            className="w-full"
+          <Label htmlFor="preferences">Specific Preferences</Label>
+          <Textarea
+            id="preferences"
+            name="preferences.specific"
+            value={formData.preferences.specific || ''}
+            onChange={handleInputChange}
+            placeholder="Any specific preferences or dislikes we should know about? (e.g., loves trying new foods, prefers indoor activities, etc.)"
+            className="min-h-[100px]"
           />
         </div>
       </div>
