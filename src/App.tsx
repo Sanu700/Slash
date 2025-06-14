@@ -52,17 +52,17 @@ import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
 
 // Protect Routes
-const ProtectedProfile = requireAuth(Profile);
-const ProtectedExperienceManager = requireAuth(ExperienceManager);
-const ProtectedHostExperience = requireAuth(HostExperience);
-const ProtectedAdminDashboard = requireAuth(Dashboard);
-const ProtectedAdminUsers = requireAuth(Users);
-const ProtectedAdminCategories = requireAuth(Categories);
-const ProtectedAdminAnalytics = requireAuth(Analytics);
-const ProtectedAdminSettings = requireAuth(Settings);
-const ProtectedCustomers = requireAuth(Customers);
-const ProtectedProviders = requireAuth(Providers);
-const ProtectedExperiences = requireAuth(Experiences);
+const ProtectedProfile = requireAuth(Profile, false);
+const ProtectedExperienceManager = requireAuth(ExperienceManager, false);
+const ProtectedHostExperience = requireAuth(HostExperience, false);
+const ProtectedAdminDashboard = requireAuth(Dashboard, true);
+const ProtectedAdminUsers = requireAuth(Users, true);
+const ProtectedAdminCategories = requireAuth(Categories, true);
+const ProtectedAdminAnalytics = requireAuth(Analytics, true);
+const ProtectedAdminSettings = requireAuth(Settings, true);
+const ProtectedCustomers = requireAuth(Customers, true);
+const ProtectedProviders = requireAuth(Providers, true);
+const ProtectedExperiences = requireAuth(Experiences, true);
 
 function App() {
   return (

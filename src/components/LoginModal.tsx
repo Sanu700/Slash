@@ -30,9 +30,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign in to continue</DialogTitle>
+          <DialogTitle>Sign in with Google</DialogTitle>
           <DialogDescription>
-            Please sign in to host an experience on our platform.
+            Please sign in with your Google account to continue.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col space-y-4">

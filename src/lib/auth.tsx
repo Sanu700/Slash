@@ -4,10 +4,6 @@ import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { Navigate } from 'react-router-dom';
 
-// Simple predefined admin credentials for admin access
-const ADMIN_ID = "admin123";
-const ADMIN_PASSWORD = "slash2025";
-
 // Auth context
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -46,13 +42,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.getItem('slash_admin_auth') === 'true';
           
           setIsAdmin(isAdminUser);
-        } else {
-          // Check for admin auth in localStorage (for admin panel)
-          const authStatus = localStorage.getItem('slash_admin_auth');
-          if (authStatus === 'true') {
-            setIsAuthenticated(true);
-            setIsAdmin(true);
-          }
         }
       } catch (error) {
         console.error('Error checking auth:', error);
@@ -86,9 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
   
-  // Admin login function
+  // Admin login function (only used in admin routes)
   const login = async (id: string, password: string): Promise<boolean> => {
-    if (id === ADMIN_ID && password === ADMIN_PASSWORD) {
+    if (id === "admin123" && password === "slash2025") {
       setIsAuthenticated(true);
       setIsAdmin(true);
       localStorage.setItem('slash_admin_auth', 'true');
@@ -103,12 +92,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign in with Google
   const signInWithGoogle = async () => {
     try {
-      const currentUrl = window.location.origin;
-      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: currentUrl,
+          redirectTo: window.location.origin,
         }
       });
       
@@ -168,13 +155,13 @@ export const useAuth = () => {
 // Auth guard component that checks for both authentication and admin status
 export const requireAuth = (Component: React.ComponentType<any>, adminRequired: boolean = false) => {
   const ProtectedComponent = (props: any) => {
-    const { isAuthenticated, isAdmin, login, loading } = useAuth();
+    const { isAuthenticated, isAdmin, loading, signInWithGoogle, login } = useAuth();
     const [id, setId] = useState('');
     const [password, setPassword] = useState('');
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleAdminLogin = async (e: React.FormEvent) => {
       e.preventDefault();
-      login(id, password);
+      await login(id, password);
     };
     
     // Show loading state
@@ -191,61 +178,138 @@ export const requireAuth = (Component: React.ComponentType<any>, adminRequired: 
     
     // Check for admin access if required
     if (adminRequired && !isAdmin) {
-      return <Navigate to="/profile" replace />;
+      return <Navigate to="/admin/login" replace />;
     }
     
-    // If not authenticated, show login screen
+    // If not authenticated, show login options
     if (!isAuthenticated) {
+      // For admin routes, show both Google and admin login
+      if (adminRequired) {
+        return (
+          <div className="flex flex-col min-h-screen">
+            <div className="flex flex-col items-center justify-center flex-grow p-6">
+              <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold">Sign in to continue</h1>
+                  <p className="mt-2 text-gray-600">Choose your sign in method</p>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Google Sign In */}
+                  <button
+                    onClick={() => signInWithGoogle()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    Sign in with Google
+                  </button>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">Or</span>
+                    </div>
+                  </div>
+
+                  {/* Admin Login Form */}
+                  <form onSubmit={handleAdminLogin} className="space-y-4">
+                    <div>
+                      <label htmlFor="id" className="block text-sm font-medium text-gray-700">Admin ID</label>
+                      <input
+                        id="id"
+                        type="text"
+                        value={id}
+                        onChange={(e) => setId(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                      <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      className="w-full px-4 py-2 text-white bg-primary rounded-lg hover:bg-primary/90"
+                    >
+                      Admin Login
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      
+      // For non-admin routes, only show Google sign-in
       return (
         <div className="flex flex-col min-h-screen">
           <div className="flex flex-col items-center justify-center flex-grow p-6">
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
               <div className="text-center">
-                <h1 className="text-2xl font-bold">Admin Login</h1>
-                <p className="mt-2 text-gray-600">Enter your credentials to manage experiences</p>
+                <h1 className="text-2xl font-bold">Sign in to continue</h1>
+                <p className="mt-2 text-gray-600">Please sign in with Google to continue</p>
               </div>
               
-              <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <label htmlFor="id" className="block text-sm font-medium text-gray-700">Admin ID</label>
-                  <input
-                    id="id"
-                    type="text"
-                    value={id}
-                    onChange={(e) => setId(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              <button
+                onClick={() => signInWithGoogle()}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
                   />
-                </div>
-                
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
                   />
-                </div>
-                
-                <div>
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-2 text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                  >
-                    Login
-                  </button>
-                </div>
-              </form>
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+                Sign in with Google
+              </button>
             </div>
           </div>
         </div>
       );
     }
     
-    // If authenticated, render the protected component
     return <Component {...props} />;
   };
   
