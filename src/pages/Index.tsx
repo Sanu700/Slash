@@ -465,11 +465,13 @@ const Index = () => {
         setFeaturedExperiences(transformedExperiences);
 
         // Load categories
-        const { data: cats, error: catError } = await supabase
+        // @ts-ignore
+        const { data, error: catError } = await supabase
           .from('company_pages')
           .select('*')
           .eq('type', 'category')
           .limit(6);
+        const cats: any = data;
 
         if (catError) throw catError;
         
