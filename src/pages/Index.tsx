@@ -102,12 +102,20 @@ const Index = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : featuredExperiences.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredExperiences.map((experience, index) => (
-                  <div key={experience.id} className="">
-                    <ExperienceCard experience={experience} featured={index === 0} />
+              <div className="relative">
+                <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
+                  <CarouselContent>
+                    {featuredExperiences.map((experience) => (
+                      <CarouselItem key={experience.id} className="md:basis-1/3 px-6">
+                        <div className="w-[341.34px] h-[256px]">
+                          <ExperienceCard experience={experience} />
                   </div>
+                      </CarouselItem>
                 ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white -ml-8" />
+                  <CarouselNext className="bg-black hover:bg-black/90 text-white -mr-8" />
+                </Carousel>
               </div>
             ) : (
               <div className="text-center py-12">

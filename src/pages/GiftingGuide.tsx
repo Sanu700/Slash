@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -37,43 +36,28 @@ const GiftingGuide = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow pt-20 md:pt-24">
+      <main className="flex-grow">
         {/* Hero Section */}
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
+        <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
           <img 
-            src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
-            alt="Gifting Guide"
-            className="h-full w-full object-cover"
+            src="https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070"
+            alt="Gift Guide Hero"
+            className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           
-          <div className="absolute top-6 left-6">
-            <button 
-              onClick={() => navigate('/')} 
-              className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </button>
-          </div>
-          
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-            <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
-              <Gift className="h-8 w-8" />
-            </div>
-            <h1 className="text-3xl md:text-5xl font-medium mb-4">Experience vs. Material Gifts</h1>
-            <p className="max-w-2xl text-white/80 text-lg mb-8">
-              Discover why experiences make for more meaningful and memorable gifts
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium mb-6">
+              The Ultimate Gift Guide
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl mb-8">
+              Discover the perfect experience gift for every occasion and create memories that last a lifetime
             </p>
-            <Button 
-              size="lg" 
-              className="bg-white text-black hover:bg-white/90"
-              onClick={() => {
-                const section = document.getElementById('comparison');
-                section?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              Explore the Guide
+            <Link to="/gift-personalizer">
+              <Button size="lg" className="bg-white text-black hover:bg-white/90">
+                Get Started
             </Button>
+            </Link>
           </div>
         </div>
         
@@ -184,7 +168,7 @@ const GiftingGuide = () => {
             </div>
             
             {/* Recommended Experiences */}
-            <div>
+            <div className="w-[1152px] h-[384px] -ml-40">
               <h3 className="text-2xl font-medium mb-6 text-center">Recommended Experiences</h3>
               {isLoading ? (
                 <div className="flex justify-center items-center p-10">
@@ -193,7 +177,9 @@ const GiftingGuide = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {featuredExperiences.map(experience => (
-                    <ExperienceCard key={experience.id} experience={experience} />
+                    <div key={experience.id} className="w-[341.34px] h-[256px]">
+                      <ExperienceCard experience={experience} />
+                    </div>
                   ))}
                 </div>
               )}

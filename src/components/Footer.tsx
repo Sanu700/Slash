@@ -8,6 +8,12 @@ import { cn } from '@/lib/utils';
 import { Slash, Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { scrollToTop } from '@/lib/animations';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Footer = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -47,11 +53,31 @@ const Footer = () => {
   ];
   
   const socialLinks = [
-    { name: "Instagram", icon: Instagram, href: "#" },
-    { name: "Facebook", icon: Facebook, href: "#" },
-    { name: "Twitter", icon: Twitter, href: "#" },
-    { name: "LinkedIn", icon: Linkedin, href: "#" },
-    { name: "YouTube", icon: Youtube, href: "#" }
+    {
+      name: 'Instagram',
+      icon: Instagram,
+      url: '#'
+    },
+    {
+      name: 'Facebook',
+      icon: Facebook,
+      url: '#'
+    },
+    {
+      name: 'Twitter',
+      icon: Twitter,
+      url: 'https://x.com/social_slashexp?t=2hMgiF7n9Z-6px4AIhXhgA&s=09'
+    },
+    {
+      name: 'LinkedIn',
+      icon: Linkedin,
+      url: 'https://www.linkedin.com/company/slash-adbc/'
+    },
+    {
+      name: 'YouTube',
+      icon: Youtube,
+      url: '#'
+    }
   ];
 
   return (
@@ -76,14 +102,23 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social) => (
-                <a 
-                  key={social.name}
-                  href={social.href}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary hover:bg-primary hover:text-white transition-colors"
-                  aria-label={social.name}
-                >
-                  <social.icon className="h-4 w-4" />
-                </a>
+                <TooltipProvider key={social.name}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a 
+                        href={social.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <social.icon className="h-4 w-4" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{social.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ))}
             </div>
           </div>
