@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormData } from '@/types/personalizerTypes';
+import { Slider } from '@/components/ui/slider';
 
 interface BasicsFormProps {
   formData: FormData;
@@ -29,6 +29,16 @@ const BasicsForm = ({ formData, handleInputChange, setFormData }: BasicsFormProp
             placeholder="Who is this gift for?" 
           />
         </div>
+        <div>
+          <Label htmlFor="city">City</Label>
+          <Input
+            id="city"
+            name="city"
+            value={formData.city}
+            onChange={handleInputChange}
+            placeholder="e.g., Mumbai"
+          />
+        </div>
         
         <div>
           <Label htmlFor="relationship">Your Relationship</Label>
@@ -46,6 +56,16 @@ const BasicsForm = ({ formData, handleInputChange, setFormData }: BasicsFormProp
             <option value="colleague">Colleague</option>
             <option value="other">Other</option>
           </select>
+          {formData.relationship === 'other' && (
+            <Input 
+              id="customRelationship" 
+              name="customRelationship"
+              value={formData.customRelationship}
+              onChange={handleInputChange}
+              placeholder="Please specify your relationship" 
+              className="mt-2"
+            />
+          )}
         </div>
         
         <div>
@@ -65,22 +85,29 @@ const BasicsForm = ({ formData, handleInputChange, setFormData }: BasicsFormProp
             <option value="justbecause">Just Because</option>
             <option value="other">Other</option>
           </select>
+          {formData.occasion === 'other' && (
+            <Input 
+              id="customOccasion" 
+              name="customOccasion"
+              value={formData.customOccasion}
+              onChange={handleInputChange}
+              placeholder="Please specify the occasion" 
+              className="mt-2"
+            />
+          )}
         </div>
         
         <div>
-          <Label htmlFor="budget">Budget Range</Label>
-          <select 
-            id="budget" 
-            name="budget"
-            value={formData.budget}
-            onChange={e => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          >
-            <option value="">Select budget</option>
-            <option value="low">₹10,000 - ₹20,000</option>
-            <option value="medium">₹20,000 - ₹30,000</option>
-            <option value="high">₹30,000+</option>
-          </select>
+          <Label htmlFor="budgetRange">Budget Range</Label>
+          <Slider
+            min={10000}
+            max={50000}
+            step={1000}
+            value={formData.budgetRange}
+            onValueChange={val => setFormData(prev => ({ ...prev, budgetRange: val as [number, number] }))}
+            className="w-full"
+          />
+          <div className="text-center mt-2">₹{formData.budgetRange[0]} - ₹{formData.budgetRange[1]}</div>
         </div>
       </div>
     </div>
