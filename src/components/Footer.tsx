@@ -1,125 +1,157 @@
-import { useState } from 'react';
-import { useInView } from '@/lib/animations';
-import { Button } from '@/components/ui/button';
-import { 
-  Separator
-} from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { Slash, Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { scrollToTop } from '@/lib/animations';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+const socialLinks = [
+  {
+    name: 'Instagram',
+    icon: Instagram,
+    url: 'https://instagram.com',
+  },
+  {
+    name: 'Facebook',
+    icon: Facebook,
+    url: 'https://facebook.com',
+  },
+  {
+    name: 'Twitter',
+    icon: Twitter,
+    url: 'https://x.com/social_slashexp?t=2hMgiF7n9Z-6px4AIhXhgA&s=09',
+  },
+  {
+    name: 'LinkedIn',
+    icon: Linkedin,
+    url: 'https://www.linkedin.com/company/slash-adbc/',
+  },
+  {
+    name: 'YouTube',
+    icon: Youtube,
+    url: '#',
+  },
+];
 
 const Footer = () => {
-  const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  
-  const footerLinks = [
-    {
-      title: "Experiences",
-      links: [
-        { name: "All Experiences", href: "/experiences" },
-        { name: "Adventure", href: "/category/adventure" },
-        { name: "Dining", href: "/category/dining" },
-        { name: "Wellness", href: "/category/wellness" },
-        { name: "Luxury", href: "/category/luxury" },
-        { name: "Learning", href: "/category/learning" }
-      ]
-    },
-    {
-      title: "Company",
-      links: [
-        { name: "About Us", href: "/about-us" },
-        { name: "How It Works", href: "/how-it-works" },
-        { name: "Testimonials", href: "/testimonials" },
-        { name: "Careers", href: "/careers" },
-        { name: "Press", href: "/press" }
-      ]
-    },
-    {
-      title: "Support",
-      links: [
-        { name: "Contact Us", href: "/contact" },
-        { name: "FAQ", href: "/faq" },
-        { name: "Gift Rules", href: "/gift-rules" },
-        { name: "Shipping", href: "/shipping" },
-        { name: "Returns", href: "/returns" }
-      ]
-    }
-  ];
-  
-  const socialLinks = [
-    { name: "Instagram", icon: Instagram, href: "#" },
-    { name: "Facebook", icon: Facebook, href: "#" },
-    { name: "Twitter", icon: Twitter, href: "#" },
-    { name: "LinkedIn", icon: Linkedin, href: "#" },
-    { name: "YouTube", icon: Youtube, href: "#" }
-  ];
-
   return (
-    <footer 
-      ref={ref} 
-      className="pt-16 pb-8 bg-secondary/30"
-    >
-      <div className="container max-w-6xl mx-auto px-6 md:px-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          {/* Logo and About */}
-          <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-6" onClick={scrollToTop}>
-              <img 
-                src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" 
-                alt="Slash logo" 
-                className="h-8 w-8" 
-              />
-              <span className="font-medium text-xl">Slash</span>
-            </Link>
-            <p className="text-muted-foreground mb-6 max-w-md">
-              Curated experience gifts that create lasting memories. We believe in the power of experiences over material possessions.
-            </p>
+    <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Company */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+              Company
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { name: "About Us", to: "/about" },
+                { name: "How It Works", to: "/how-it-works" },
+                { name: "Testimonials", to: "/testimonials" },
+                { name: "Careers", to: "/careers" },
+                { name: "Press", to: "/press" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.to}
+                    onClick={scrollToTop}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+              Support
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { name: "Contact Us", to: "/contact" },
+                { name: "FAQ", to: "/faq" },
+                { name: "Gift Rules", to: "/gift-rules" },
+                { name: "Shipping", to: "/shipping" },
+                { name: "Returns", to: "/returns" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.to}
+                    onClick={scrollToTop}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Experiences */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+              Experiences
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { name: "All Experiences", to: "/experiences" },
+                { name: "Gifting Guide", to: "/gifting-guide" },
+                { name: "Gift Personalizer", to: "/gift-personalizer" },
+                { name: "Host an Experience", to: "/host-experience" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.to}
+                    onClick={scrollToTop}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Social Icons with Tooltip */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
+              Follow Us
+            </h3>
             <div className="flex space-x-4">
-              {socialLinks.map((social) => (
-                <a 
-                  key={social.name}
-                  href={social.href}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary hover:bg-primary hover:text-white transition-colors"
-                  aria-label={social.name}
-                >
-                  <social.icon className="h-4 w-4" />
-                </a>
+              {socialLinks.map(({ name, icon: Icon, url }) => (
+                <TooltipProvider key={name}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        <Icon className="h-6 w-6" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ))}
             </div>
           </div>
-          
-          {/* Footer Links */}
-          {footerLinks.map((column) => (
-            <div key={column.title}>
-              <h4 className="font-medium mb-4">{column.title}</h4>
-              <ul className="space-y-3">
-                {column.links.map((link) => (
-                  <li key={link.name}>
-                    <Link 
-                      to={link.href}
-                      onClick={scrollToTop}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
-        
-        <Separator className="my-8" />
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between text-sm text-muted-foreground">
-          <div className="mb-4 md:mb-0">
-            &copy; {new Date().getFullYear()} Slash. All rights reserved.
-          </div>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
-            <Link to="/cookie-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Cookie Policy</Link>
-          </div>
+
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+          <p className="text-center text-gray-600 dark:text-gray-400">
+            © {new Date().getFullYear()} Slash Experiences. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

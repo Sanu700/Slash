@@ -30,10 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { requireAuth } from '@/lib/auth';
-import { Route } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'react-hot-toast';
 import { Dialog } from '@/components/ui/dialog';
 
 interface AdminLayoutProps {
@@ -72,32 +70,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     navigate('/');
   };
 
-  const handleLogin = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
-      });
-      
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      
-      if (data?.user) {
-        // Check if user is admin
-        if (data.user.app_metadata?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          toast.error('Access denied. Admin privileges required.');
-          await supabase.auth.signOut();
-        }
-      }
-    } catch (error) {
-      toast.error('An error occurred during login');
-    }
-  };
-
   const notificationList = [
     { title: 'New user registered', time: '2 minutes ago', message: 'John Doe has joined the platform.', link: '/admin/users/customers' },
     { title: 'Booking received', time: '10 minutes ago', message: 'Sarah Smith booked "Sunset Cruise".', link: '/admin/experiences' },
@@ -107,7 +79,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -122,7 +93,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         "lg:translate-x-0"
       )}>
         <div className="flex flex-col h-full">
-          {/* Logo and Toggle */}
           <div className="h-16 flex items-center border-b px-4">
             {isSidebarOpen ? (
               <Link to="/admin" className="text-xl font-bold text-primary flex-1">
@@ -134,7 +104,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 hover:bg-gray-100 rounded-md transition-colors flex-shrink-0 mx-auto"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {isSidebarOpen ? (
                 <ChevronLeft className="h-5 w-5" />
@@ -164,14 +133,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     )}
                     title={!isSidebarOpen ? item.label : undefined}
                   >
-                    <Icon className={cn(
-                      "h-5 w-5",
-                      !isSidebarOpen ? "mr-0" : "mr-3"
-                    )} />
+                    <Icon className={cn("h-5 w-5", !isSidebarOpen ? "mr-0" : "mr-3")} />
                     {isSidebarOpen && <span>{item.label}</span>}
                   </Link>
-                  
-                  {/* Sub-items */}
                   {isSidebarOpen && item.subItems && (
                     <div className="ml-8 mt-1 space-y-1">
                       {item.subItems.map((subItem) => (
@@ -197,14 +161,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </nav>
 
           {/* User Profile */}
-          <div className={cn(
-            "p-4 border-t",
-            !isSidebarOpen && "flex justify-center"
-          )}>
-            <div className={cn(
-              "flex items-center space-x-3",
-              !isSidebarOpen && "flex-col space-y-2"
-            )}>
+          <div className={cn("p-4 border-t", !isSidebarOpen && "flex justify-center")}>
+            <div className={cn("flex items-center space-x-3", !isSidebarOpen && "flex-col space-y-2")}>
               <Avatar>
                 <AvatarImage src={user?.user_metadata?.avatar_url || '/default-admin-avatar.png'} />
                 <AvatarFallback>
@@ -227,10 +185,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className={cn(
-        "transition-all duration-200",
-        isSidebarOpen ? "lg:pl-64" : "lg:pl-16"
-      )}>
+      <div className={cn("transition-all duration-200", isSidebarOpen ? "lg:pl-64" : "lg:pl-16")}>
         {/* Header */}
         <header className="h-16 border-b bg-white w-full">
           <div className="h-full px-4 flex items-center justify-between w-full">
@@ -335,4 +290,4 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 };
 
-export default AdminLayout; 
+export default AdminLayout;
