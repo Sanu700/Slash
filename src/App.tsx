@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
 import Booking from "./pages/Booking";
+import Wishlist from "./pages/Wishlist";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -53,6 +54,7 @@ import AdminProfile from './pages/admin/Profile';
 
 // Protect Routes
 const ProtectedProfile = requireAuth(Profile, false);
+const ProtectedWishlist = requireAuth(Wishlist, false);
 const ProtectedExperienceManager = requireAuth(ExperienceManager, false);
 const ProtectedHostExperience = requireAuth(HostExperience, false);
 const ProtectedAdminDashboard = requireAuth(Dashboard, true);
@@ -101,6 +103,7 @@ function App() {
 
                 {/* Protected User Routes */}
                 <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
+                <Route path="/wishlist" element={<Layout><ProtectedWishlist /></Layout>} />
                 <Route path="/manage-experiences" element={<Layout><ProtectedExperienceManager /></Layout>} />
                 <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
 
