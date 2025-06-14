@@ -35,7 +35,7 @@ const categories = [
 
 const HostExperience = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, signInWithGoogle } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -125,7 +125,7 @@ const HostExperience = () => {
           duration: formData.duration,
           participants: formData.participants,
           date: formData.date,
-          categories: formData.categories
+          category: formData.categories[0] // Using the first category for now
         }
       });
 
@@ -133,11 +133,11 @@ const HostExperience = () => {
         toast.success('Application submitted successfully! We will review your application and get back to you soon.');
         navigate('/');
       } else {
-        toast.error('Failed to submit application. Please try again.');
+        toast.error(result.error?.message || 'Failed to submit application. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
-      toast.error('An error occurred while submitting your application.');
+      toast.error(error.message || 'An error occurred while submitting your application.');
     } finally {
       setIsSubmitting(false);
     }

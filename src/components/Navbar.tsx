@@ -407,58 +407,42 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="focus:outline-none">
-                  {user?.user_metadata?.avatar_url ? (
-                    <Avatar className="h-8 w-8 cursor-pointer border-2 border-primary">
-                      <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
-                      <AvatarFallback className="bg-primary text-white">
-                        {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer">
-                      <User className="h-4 w-4" />
-                    </div>
-                  )}
-                </button>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || ''} />
+                    <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                  {user?.user_metadata?.full_name || 'My Account'}
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.user_metadata?.full_name || 'User'}
+                    </p>
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
+                <DropdownMenuItem onClick={handleProfileClick}>
                   <User className="mr-2 h-4 w-4" />
-                  Profile
+                  <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/cart')}>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Cart ({itemCount})
-                </DropdownMenuItem>
-                {user?.app_metadata?.provider === 'email' ? (
-                  <DropdownMenuItem onClick={() => handleNavigation('/manage-experiences')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Manage Experiences
-                  </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
+                <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              variant={isScrolled || !isDarkPage ? "default" : "secondary"}
-              className={cn(
-                "transition-all font-medium",
-                !isScrolled && isDarkPage && "bg-white text-gray-900 hover:bg-gray-100"
-              )}
-              onClick={handleSignIn}
-            >
-              Sign In
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" onClick={handleSignIn}>
+                Sign in
+              </Button>
+              <Link to="/admin/login">
+                <Button variant="outline">Admin Login</Button>
+              </Link>
+            </div>
           )}
         </div>
 

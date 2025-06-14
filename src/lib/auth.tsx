@@ -168,11 +168,11 @@ export const useAuth = () => {
 // Auth guard component that checks for both authentication and admin status
 export const requireAuth = (Component: React.ComponentType<any>, adminRequired: boolean = false) => {
   const ProtectedComponent = (props: any) => {
-    const { isAuthenticated, isAdmin, login, loading } = useAuth();
+    const { isAuthenticated, isAdmin, login, loading, signInWithGoogle } = useAuth();
     const [id, setId] = useState('');
     const [password, setPassword] = useState('');
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleAdminSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       login(id, password);
     };
@@ -194,55 +194,79 @@ export const requireAuth = (Component: React.ComponentType<any>, adminRequired: 
       return <Navigate to="/profile" replace />;
     }
     
-    // If not authenticated, show login screen
+    // If not authenticated, show appropriate login screen
     if (!isAuthenticated) {
-      return (
-        <div className="flex flex-col min-h-screen">
-          <div className="flex flex-col items-center justify-center flex-grow p-6">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold">Admin Login</h1>
-                <p className="mt-2 text-gray-600">Enter your credentials to manage experiences</p>
+      if (adminRequired) {
+        // Show admin login form
+        return (
+          <div className="flex flex-col min-h-screen">
+            <div className="flex flex-col items-center justify-center flex-grow p-6">
+              <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold">Admin Login</h1>
+                  <p className="mt-2 text-gray-600">Enter your credentials to manage experiences</p>
+                </div>
+                
+                <form className="mt-8 space-y-6" onSubmit={handleAdminSubmit}>
+                  <div>
+                    <label htmlFor="id" className="block text-sm font-medium text-gray-700">Admin ID</label>
+                    <input
+                      id="id"
+                      type="text"
+                      value={id}
+                      onChange={(e) => setId(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  
+                  <div>
+                    <button
+                      type="submit"
+                      className="w-full px-4 py-2 text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                    >
+                      Login
+                    </button>
+                  </div>
+                </form>
               </div>
-              
-              <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <label htmlFor="id" className="block text-sm font-medium text-gray-700">Admin ID</label>
-                  <input
-                    id="id"
-                    type="text"
-                    value={id}
-                    onChange={(e) => setId(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                
-                <div>
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-2 text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                  >
-                    Login
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
-        </div>
-      );
+        );
+      } else {
+        // Show regular user login form
+        return (
+          <div className="flex flex-col min-h-screen">
+            <div className="flex flex-col items-center justify-center flex-grow p-6">
+              <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold">Sign In Required</h1>
+                  <p className="mt-2 text-gray-600">Please sign in to continue</p>
+                </div>
+                
+                <button
+                  onClick={signInWithGoogle}
+                  className="w-full px-4 py-2 text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                >
+                  Sign in with Google
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
     }
     
     // If authenticated, render the protected component

@@ -44,9 +44,9 @@ const AnimatedCounter = ({ value, className }: AnimatedCounterProps) => {
   const displayValue = `${count}${suffix}`;
 
   return (
-    <div ref={ref} className={cn("transition-all duration-700", className)}>
+    <span ref={ref} className={cn("transition-all duration-700", className)}>
       {displayValue}
-    </div>
+    </span>
   );
 };
 
