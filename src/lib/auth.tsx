@@ -35,11 +35,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentSession.user);
           setIsAuthenticated(true);
 
-          const isAdminUser =
-            currentSession.user.email === 'admin@example.com' ||
-            localStorage.getItem('slash_admin_auth') === 'true';
-
+          // Check admin status from user metadata
+          const isAdminUser = currentSession.user.user_metadata?.isAdmin === true;
           setIsAdmin(isAdminUser);
+          
+          // Update local storage to match metadata
+          if (isAdminUser) {
+            localStorage.setItem('slash_admin_auth', 'true');
+          }
+        } else {
+          // Check if we have a stored admin session
+          const storedAdminAuth = localStorage.getItem('slash_admin_auth');
+          if (storedAdminAuth === 'true') {
+            setIsAuthenticated(true);
+            setIsAdmin(true);
+            // Create a temporary session for admin
+            const tempSession = {
+              user: {
+                id: 'admin',
+                email: 'admin@slash.com',
+                user_metadata: { isAdmin: true },
+                app_metadata: {},
+                aud: 'authenticated',
+                created_at: new Date().toISOString()
+              },
+              access_token: 'admin-token',
+              refresh_token: 'admin-refresh-token',
+              expires_in: 3600,
+              token_type: 'bearer'
+            } as Session;
+            setSession(tempSession);
+            setUser(tempSession.user);
+          }
         }
       } catch (error) {
         console.error('Error checking auth:', error);
@@ -50,19 +77,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user || null);
-      setIsAuthenticated(!!newSession);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (newSession) {
+        setSession(newSession);
+        setUser(newSession.user);
+        setIsAuthenticated(true);
 
-      if (newSession?.user) {
-        const isAdminUser =
-          newSession.user.email === 'admin@example.com' ||
-          localStorage.getItem('slash_admin_auth') === 'true';
-
+        // Check admin status from user metadata
+        const isAdminUser = newSession.user.user_metadata?.isAdmin === true;
         setIsAdmin(isAdminUser);
+        
+        // Update local storage to match metadata
+        if (isAdminUser) {
+          localStorage.setItem('slash_admin_auth', 'true');
+        }
       } else {
-        setIsAdmin(false);
+        // Check if we have a stored admin session
+        const storedAdminAuth = localStorage.getItem('slash_admin_auth');
+        if (storedAdminAuth === 'true') {
+          setIsAuthenticated(true);
+          setIsAdmin(true);
+          // Create a temporary session for admin
+          const tempSession = {
+            user: {
+              id: 'admin',
+              email: 'admin@slash.com',
+              user_metadata: { isAdmin: true },
+              app_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString()
+            },
+            access_token: 'admin-token',
+            refresh_token: 'admin-refresh-token',
+            expires_in: 3600,
+            token_type: 'bearer'
+          } as Session;
+          setSession(tempSession);
+          setUser(tempSession.user);
+        } else {
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          setUser(null);
+          setSession(null);
+        }
       }
     });
 
@@ -73,11 +130,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (id: string, password: string): Promise<boolean> => {
     if (id === "admin123" && password === "slash2025") {
-      setIsAuthenticated(true);
-      setIsAdmin(true);
-      localStorage.setItem('slash_admin_auth', 'true');
-      toast.success('Logged in successfully as admin');
-      return true;
+      try {
+        setIsAuthenticated(true);
+        setIsAdmin(true);
+        localStorage.setItem('slash_admin_auth', 'true');
+        
+        // Create a temporary session for admin
+        const tempSession = {
+          user: {
+            id: 'admin',
+            email: 'admin@slash.com',
+            user_metadata: { isAdmin: true },
+            app_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString()
+          },
+          access_token: 'admin-token',
+          refresh_token: 'admin-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer'
+        } as Session;
+        setSession(tempSession);
+        setUser(tempSession.user);
+        
+        toast.success('Logged in successfully as admin');
+        return true;
+      } catch (error) {
+        console.error('Error during admin login:', error);
+        toast.error('Failed to create admin session');
+        return false;
+      }
     } else {
       toast.error('Invalid credentials');
       return false;

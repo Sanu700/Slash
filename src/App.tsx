@@ -8,7 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider, requireAuth } from "@/lib/auth";
 
 import Layout from "@/components/Layout";
-import AdminLayout from "@/components/AdminLayout";
+
 
 // Public Pages
 import Index from "./pages/Index";
@@ -104,14 +104,14 @@ function App() {
 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<AdminLayout><ProtectedAdminDashboard /></AdminLayout>} />
-                <Route path="/admin/users" element={<AdminLayout><ProtectedAdminUsers /></AdminLayout>} />
-                <Route path="/admin/users/customers" element={<AdminLayout><ProtectedCustomers /></AdminLayout>} />
-                <Route path="/admin/users/providers" element={<AdminLayout><ProtectedProviders /></AdminLayout>} />
-                <Route path="/admin/experiences" element={<AdminLayout><ProtectedExperiences /></AdminLayout>} />
-                <Route path="/admin/categories" element={<AdminLayout><ProtectedAdminCategories /></AdminLayout>} />
-                <Route path="/admin/analytics" element={<AdminLayout><ProtectedAdminAnalytics /></AdminLayout>} />
-                <Route path="/admin/settings" element={<AdminLayout><ProtectedAdminSettings /></AdminLayout>} />
+                <Route path="/admin" element={<ProtectedAdminDashboard />} />
+                <Route path="/admin/users" element={<ProtectedAdminUsers />} />
+                <Route path="/admin/customers" element={<ProtectedCustomers />} />
+                <Route path="/admin/providers" element={<ProtectedProviders />} />
+                <Route path="/admin/categories" element={<ProtectedAdminCategories />} />
+                <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
+                <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
+                <Route path="/admin/experiences" element={<ProtectedExperiences />} />
 
                 {/* 404 Route */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
