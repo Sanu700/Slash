@@ -1,159 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { toast } from 'sonner';
-
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-};
+import { Card, CardContent } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 
 const Cart = () => {
+  const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences } = useCart();
   const navigate = useNavigate();
-  const { items: cart, removeFromCart, cachedExperiences, checkout } = useCart();
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Scroll to top when component mounts
-  useEffect(() => {
-    scrollToTop();
-  }, []);
-
-  const handleCheckout = async () => {
-    setIsProcessing(true);
-    try {
-      const success = await checkout();
-      if (success) {
-        toast.success('Booking confirmed successfully!');
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Failed to process booking');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  if (cart.length === 0) {
+  if (items.length === 0) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle>Your Cart is Empty</CardTitle>
-            <CardDescription>Add some experiences to your cart to get started</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => {
-                navigate('/');
-                scrollToTop();
-              }}
-              className="w-full"
-            >
-              Browse Experiences
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Your cart is empty</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-8">Add some experiences to your cart to get started!</p>
+              <Button onClick={() => navigate('/experiences')}>
+                Browse Experiences
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2 space-y-4">
+              {items.map((item) => {
+                const experience = cachedExperiences[item.experienceId];
+                if (!experience) return null;
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="md:col-span-2 space-y-4">
-            {cart.map((item) => {
-              const experience = cachedExperiences[item.experienceId];
-              if (!experience) return null;
-
-              return (
-                <Card key={item.experienceId}>
-                  <CardContent className="p-6">
-                    <div className="flex gap-4">
-                      <img
-                        src={experience.imageUrl}
-                        alt={experience.title}
-                        className="w-24 h-24 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-medium">{experience.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {experience.location}
-                        </p>
-                        <div className="mt-2 space-y-1 text-sm">
-                          <p>Date: {experience.date}</p>
-                          <p>Quantity: {item.quantity}</p>
-                          <p>Price: ${experience.price * item.quantity}</p>
+                return (
+                  <Card key={item.experienceId} className="overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={experience.imageUrl}
+                          alt={experience.title}
+                          className="w-24 h-24 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {experience.title}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                            {experience.location}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.experienceId, Math.max(1, item.quantity - 1))}
+                              >
+                                -
+                              </Button>
+                              <span className="w-8 text-center">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
+                              >
+                                +
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                                ₹{experience.price * item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFromCart(item.experienceId)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFromCart(item.experienceId)}
-                      >
-                        Remove
-                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    Order Summary
+                  </h2>
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Subtotal</span>
+                      <span>₹{totalPrice}</span>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Order Summary */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {cart.map((item) => {
-                    const experience = cachedExperiences[item.experienceId];
-                    if (!experience) return null;
-
-                    return (
-                      <div key={item.experienceId} className="flex justify-between text-sm">
-                        <span>{experience.title}</span>
-                        <span>${experience.price * item.quantity}</span>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Taxes</span>
+                      <span>₹{Math.round(totalPrice * 0.18)}</span>
+                    </div>
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                        <span>Total</span>
+                        <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="border-t pt-4">
-                  <div className="flex justify-between font-medium">
-                    <span>Total</span>
-                    <span>
-                      $
-                      {cart.reduce(
-                        (total, item) => {
-                          const experience = cachedExperiences[item.experienceId];
-                          return total + (experience?.price || 0) * item.quantity;
-                        },
-                        0
-                      )}
-                    </span>
+                    </div>
+                    <Button className="w-full mt-6" onClick={() => navigate('/checkout')}>
+                      Proceed to Checkout
+                    </Button>
                   </div>
-                </div>
-
-                <Button
-                  className="w-full"
-                  onClick={handleCheckout}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Processing...' : 'Confirm Bookings'}
-                </Button>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
