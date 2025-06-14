@@ -8,9 +8,10 @@ interface NavButtonsProps {
   handlePreviousStep: () => void;
   handleNextStep: () => void;
   isGenerating: boolean;
+  disabled?: boolean;
 }
 
-const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerating }: NavButtonsProps) => {
+const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerating, disabled }: NavButtonsProps) => {
   const { navigateTo } = useNavigation();
   
   // If we're on the first step and user clicks back, navigate to home
@@ -35,7 +36,7 @@ const NavButtons = ({ currentStep, handlePreviousStep, handleNextStep, isGenerat
       <Button
         type="button"
         onClick={handleNextStep}
-        disabled={isGenerating}
+        disabled={isGenerating || disabled}
       >
         {currentStep === 'social' ? (
           isGenerating ? (

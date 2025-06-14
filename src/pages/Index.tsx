@@ -479,7 +479,7 @@ const Index = () => {
           id: cat.id,
           name: cat.title,
           description: cat.meta_description,
-          imageUrl: cat.content?.image_url || '',
+          imageUrl: (cat.content as { image_url?: string })?.image_url || '',
           icon: Gift
         })) || [];
         
@@ -548,31 +548,6 @@ const Index = () => {
             <div className="bg-secondary/30 p-8 rounded-2xl">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
                 <Gift className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <h3 className="text-2xl font-medium mb-4">Material Gifts</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <Clock className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" aria-hidden="true" />
-                  <span>Quick enjoyment but excitement fades over time</span>
-                </li>
-                <li className="flex items-start">
-                  <Image className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" aria-hidden="true" />
-                  <span>Takes up physical space and can contribute to clutter</span>
-                </li>
-                <li className="flex items-start">
-                  <CornerRightDown className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" aria-hidden="true" />
-                  <span>Value and appreciation often decreases with time</span>
-                </li>
-                <li className="flex items-start">
-                  <Heart className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" aria-hidden="true" />
-                  <span>Can be meaningful but often lacks personal touch</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-primary/10 p-8 rounded-2xl">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-6">
-                <CheckCircle className="h-6 w-6 text-white" aria-hidden="true" />
               </div>
               <h3 className="text-2xl font-medium mb-4">Experience Gifts</h3>
               <ul className="space-y-4">

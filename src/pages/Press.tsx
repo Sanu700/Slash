@@ -58,6 +58,32 @@ const mediaReleases = [
   }
 ];
 
+interface BrandCardProps {
+  title: string;
+  description: string;
+  image: React.ReactNode;
+  downloadUrl: string;
+  downloadText: string;
+}
+
+const BrandCard = ({ title, description, image, downloadUrl, downloadText }: BrandCardProps) => (
+  <div className="border border-border rounded-xl overflow-hidden">
+    <div className="bg-gray-100 p-8 flex items-center justify-center h-48">
+      {image}
+    </div>
+    <div className="p-6">
+      <h3 className="text-xl font-medium mb-2">{title}</h3>
+      <p className="text-muted-foreground mb-4">{description}</p>
+      <Button variant="outline" className="w-full" asChild>
+        <a href={downloadUrl} download>
+          <Download className="w-4 h-4 mr-2" />
+          {downloadText}
+        </a>
+      </Button>
+    </div>
+  </div>
+);
+
 const Press = () => {
   const [heroRef, heroInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [pressRef, pressInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -91,106 +117,64 @@ const Press = () => {
             </div>
           </div>
         </div>
-        
-        {/* Press Releases Section */}
-        <section 
-          ref={pressRef}
-          className="py-16 md:py-24"
-        >
+
+        {/* Press Releases */}
+        <section ref={pressRef} className="py-16 md:py-24">
           <div className="container max-w-6xl mx-auto px-6 md:px-10">
-            <h2 className={cn(
-              "text-3xl font-medium mb-12 transition-all duration-700",
-              pressInView ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
+            <h2 className={cn('text-3xl font-medium mb-12 transition-all duration-700', pressInView ? 'opacity-100' : 'opacity-0 translate-y-8')}>
               Press Releases
             </h2>
-            
             <div className="space-y-8">
               {pressReleases.map((release, index) => (
-                <div 
+                <div
                   key={release.id}
                   className={cn(
-                    "border-b border-border pb-8 last:border-0 transition-all duration-700",
-                    pressInView ? "opacity-100" : "opacity-0 translate-y-8",
-                    { "delay-100": index === 0, "delay-200": index === 1, "delay-300": index === 2 }
+                    'border-b border-border pb-8 last:border-0 transition-all duration-700',
+                    pressInView ? 'opacity-100' : 'opacity-0 translate-y-8'
                   )}
                 >
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {release.date}
-                  </div>
-                  <h3 className="text-xl font-medium mb-3">
-                    {release.title}
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    {release.summary}
-                  </p>
-                  <a 
-                    href={release.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-primary hover:text-primary/70"
-                  >
-                    Read Full Release
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                  <div className="text-sm text-muted-foreground mb-2">{release.date}</div>
+                  <h3 className="text-xl font-medium mb-3">{release.title}</h3>
+                  <p className="text-muted-foreground mb-4">{release.summary}</p>
+                  <a href={release.link} className="inline-flex items-center text-primary hover:text-primary/70 font-medium">
+                    Read Full Release <ExternalLink className="w-4 h-4 ml-2" />
                   </a>
                 </div>
               ))}
             </div>
-            
             <div className="mt-8">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowAllPressReleases(!showAllPressReleases)}
-              >
-                {showAllPressReleases ? 'Show Less' : 'View All Press Releases'}
+              <Button variant="outline" asChild>
+                <a href="#press-releases">View All Press Releases</a>
               </Button>
             </div>
           </div>
         </section>
-        
-        {/* Media Coverage Section */}
-        <section 
-          ref={mediaRef}
-          className="py-16 md:py-24 bg-secondary/10"
-        >
+
+        {/* Media Coverage */}
+        <section ref={mediaRef} className="py-16 md:py-24 bg-secondary/10">
           <div className="container max-w-6xl mx-auto px-6 md:px-10">
-            <h2 className={cn(
-              "text-3xl font-medium mb-12 transition-all duration-700",
-              mediaInView ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
+            <h2 className={cn('text-3xl font-medium mb-12 transition-all duration-700', mediaInView ? 'opacity-100' : 'opacity-0 translate-y-8')}>
               Media Coverage
             </h2>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {mediaReleases.map((media, index) => (
-                <a 
+                <a
                   key={media.id}
                   href={media.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className={cn(
-                    "bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group",
-                    "transition-all duration-700",
-                    mediaInView ? "opacity-100" : "opacity-0 translate-y-8",
-                    { "delay-100": index === 0, "delay-200": index === 1, "delay-300": index === 2 }
+                    'bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group',
+                    mediaInView ? 'opacity-100' : 'opacity-0 translate-y-8'
                   )}
                 >
                   <div className="h-32 p-6 flex items-center justify-center bg-gray-100">
-                    <img 
-                      src={media.image}
-                      alt={media.publication} 
-                      className="max-h-full max-w-full object-contain"
-                    />
+                    <img src={media.image} alt={media.publication} className="max-h-full max-w-full object-contain" />
                   </div>
-                  
                   <div className="p-6">
                     <div className="text-sm text-muted-foreground mb-2 flex justify-between">
                       <span>{media.publication}</span>
                       <span>{media.date}</span>
                     </div>
-                    <h3 className="font-medium mb-4 group-hover:text-primary transition-colors">
-                      {media.title}
-                    </h3>
+                    <h3 className="font-medium mb-4 group-hover:text-primary transition-colors">{media.title}</h3>
                     <div className="flex items-center text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
                       Read Article
                       <ExternalLink className="w-4 h-4 ml-2" />
@@ -201,8 +185,8 @@ const Press = () => {
             </div>
           </div>
         </section>
-        
-        {/* Brand Assets Section */}
+
+        {/* Brand Assets */}
         <section className="py-16 md:py-24">
           <div className="container max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-12">
@@ -211,98 +195,51 @@ const Press = () => {
                 Official logos, images, and brand guidelines for media use
               </p>
             </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Logo Pack */}
-              <div className="border border-border rounded-xl overflow-hidden">
-                <div className="bg-gray-100 p-8 flex items-center justify-center h-48">
-                  <div className="text-4xl font-bold">Slash</div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-medium mb-2">Logo Pack</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Official logo in various formats (PNG, SVG, EPS) with light and dark variations.
-                  </p>
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="/logos.zip" download>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Logos
-                    </a>
-                  </Button>
-                </div>
-              </div>
-              
+              <BrandCard
+                title="Logo Pack"
+                description="Official logo in various formats (PNG, SVG, EPS) with light and dark variations."
+                image="/logos.zip"
+                downloadUrl="/logos.zip"
+                downloadText="Download Logos"
+              />
+
               {/* Product Images */}
-              <div className="border border-border rounded-xl overflow-hidden">
-                <div className="bg-gray-100 p-8 flex items-center justify-center h-48">
-                  <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
-                    <div className="aspect-video bg-gray-300 rounded"></div>
-                    <div className="aspect-video bg-gray-400 rounded"></div>
-                    <div className="aspect-video bg-gray-400 rounded"></div>
-                    <div className="aspect-video bg-gray-300 rounded"></div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-medium mb-2">Product Images</h3>
-                  <p className="text-muted-foreground mb-4">
-                    High-resolution screenshots and product images for media use.
-                  </p>
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="/images.zip" download>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Images
-                    </a>
-                  </Button>
-                </div>
-              </div>
-              
+              <BrandCard
+                title="Product Images"
+                description="High-resolution screenshots and product images for media use."
+                image="/images.zip"
+                downloadUrl="/images.zip"
+                downloadText="Download Images"
+              />
+
               {/* Brand Guidelines */}
-              <div className="border border-border rounded-xl overflow-hidden">
-                <div className="bg-gray-100 p-8 flex items-center justify-center h-48">
-                  <div className="w-32 h-40 bg-white shadow-md rounded flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-sm font-medium">Brand</div>
-                      <div className="text-xs text-muted-foreground">Guidelines</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-medium mb-2">Brand Guidelines</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Comprehensive guide for proper brand usage, colors, typography, and tone of voice.
-                  </p>
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="/brand-guidelines.pdf" download>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF
-                    </a>
-                  </Button>
-                </div>
-              </div>
+              <BrandCard
+                title="Brand Guidelines"
+                description="Comprehensive guide for proper brand usage, colors, typography, and tone of voice."
+                image="/brand-guidelines.pdf"
+                downloadUrl="/brand-guidelines.pdf"
+                downloadText="Download PDF"
+              />
             </div>
           </div>
         </section>
-        
-        {/* Contact Section */}
+
+        {/* Contact */}
         <section className="py-16 md:py-24 bg-primary text-white">
           <div className="container max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center max-w-2xl mx-auto">
               <h2 className="text-3xl font-medium mb-4">Media Inquiries</h2>
-              <p className="text-xl mb-8">
-                For press inquiries, interview requests, or additional information, please contact our PR team.
-              </p>
-              
+              <p className="text-xl mb-8">For press inquiries, interview requests, or additional information, please contact our PR team.</p>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8">
                 <div className="mb-6">
                   <h3 className="text-xl font-medium mb-2">Press Contact</h3>
-                  <p className="text-white/80">
-                    For general press inquiries and interview requests:
-                  </p>
+                  <p className="text-white/80">For general press inquiries and interview requests:</p>
                   <a href="mailto:press@slashexperiences.com" className="text-white hover:underline">
                     press@slashexperiences.com
                   </a>
                 </div>
-                
                 <div>
                   <Button className="bg-white text-primary hover:bg-white/90" size="lg" asChild>
                     <a href="mailto:press@slashexperiences.com">Contact Press Team</a>
