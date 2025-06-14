@@ -109,12 +109,20 @@ const ExperienceView = () => {
   };
 
   const handleDecreaseQuantity = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
     if (experience && quantityInCart > 0) {
       updateQuantity(experience.id, quantityInCart - 1);
     }
   };
 
   const handleIncreaseQuantity = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
     if (experience) {
       updateQuantity(experience.id, quantityInCart + 1);
     }
@@ -122,7 +130,7 @@ const ExperienceView = () => {
   
   const toggleWishlist = async () => {
     if (!user) {
-      toast.error('Please log in to save to your wishlist');
+      setShowLoginModal(true);
       return;
     }
     
@@ -299,7 +307,17 @@ const ExperienceView = () => {
                       <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-sm">Select Date</span>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        if (!user) {
+                          setShowLoginModal(true);
+                          return;
+                        }
+                        // TODO: Add choose date logic here
+                      }}
+                    >
                       Choose Date
                     </Button>
                   </div>
@@ -339,7 +357,17 @@ const ExperienceView = () => {
                 </div>
                 
                 <div className="mt-4 text-center">
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      if (!user) {
+                        setShowLoginModal(true);
+                        return;
+                      }
+                      // TODO: Add save for later logic here
+                    }}
+                  >
                     <Bookmark className="h-4 w-4 mr-2" />
                     Save for Later
                   </Button>
