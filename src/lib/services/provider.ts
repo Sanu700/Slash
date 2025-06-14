@@ -4,6 +4,18 @@ import { toast } from 'sonner';
 
 export async function submitProviderApplication(formData: Omit<Provider, 'id' | 'status' | 'experiences' | 'rating' | 'joinDate'>) {
   try {
+    // First, ensure we have a session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      throw new Error('Authentication required');
+    }
+
+    if (!session) {
+      throw new Error('Please sign in to submit an application');
+    }
+
     // Create a new provider record
     const { data: providerData, error: providerError } = await supabase
       .from('providers')
@@ -20,7 +32,10 @@ export async function submitProviderApplication(formData: Omit<Provider, 'id' | 
       .select()
       .single();
 
-    if (providerError) throw providerError;
+    if (providerError) {
+      console.error('Provider creation error:', providerError);
+      throw new Error(providerError.message || 'Failed to create provider record');
+    }
 
     // If there are experience details, create an experience record
     if (formData.experienceDetails) {
@@ -40,13 +55,19 @@ export async function submitProviderApplication(formData: Omit<Provider, 'id' | 
           status: 'pending'
         });
 
-      if (experienceError) throw experienceError;
+      if (experienceError) {
+        console.error('Experience creation error:', experienceError);
+        // If experience creation fails, delete the provider record
+        await supabase.from('providers').delete().eq('id', providerData.id);
+        throw new Error(experienceError.message || 'Failed to create experience record');
+      }
     }
 
+    toast.success('Application submitted successfully!');
     return { success: true, data: providerData };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting provider application:', error);
-    toast.error('Failed to submit application. Please try again.');
+    toast.error(error.message || 'Failed to submit application. Please try again.');
     return { success: false, error };
   }
 }

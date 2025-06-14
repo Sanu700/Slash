@@ -35,7 +35,7 @@ import GiftRules from "./pages/GiftRules";
 import Shipping from "./pages/Shipping";
 import Returns from "./pages/Returns";
 
-// Auth-Protected Pages
+// Auth-Protected User Pages
 import ExperienceManager from "./pages/ExperienceManager";
 import HostExperience from './pages/HostExperience';
 import Profile from "./pages/Profile";
@@ -51,10 +51,11 @@ import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
 
-// Protect Routes
+// Protected Routes Setup
 const ProtectedProfile = requireAuth(Profile, false);
 const ProtectedExperienceManager = requireAuth(ExperienceManager, false);
 const ProtectedHostExperience = requireAuth(HostExperience, false);
+
 const ProtectedAdminDashboard = requireAuth(Dashboard, true);
 const ProtectedAdminUsers = requireAuth(Users, true);
 const ProtectedAdminCategories = requireAuth(Categories, true);

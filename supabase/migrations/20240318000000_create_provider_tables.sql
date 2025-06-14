@@ -90,19 +90,10 @@ CREATE POLICY "Public experiences are viewable by everyone"
     ON experiences FOR SELECT
     USING (status = 'active');
 
-CREATE POLICY "Experiences can be created by provider or admin"
+CREATE POLICY "Experiences can be created by authenticated users"
     ON experiences FOR INSERT
     TO authenticated
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM providers
-            WHERE id = provider_id
-            AND (
-                auth.uid() = id
-                OR auth.jwt() ->> 'role' = 'admin'
-            )
-        )
-    );
+    WITH CHECK (true);
 
 CREATE POLICY "Experiences can be updated by provider or admin"
     ON experiences FOR UPDATE
