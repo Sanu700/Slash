@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/lib/auth";
 import Layout from "@/components/Layout";
+import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
 import ExperienceView from "./pages/ExperienceView";
 import CategoryExplore from "./pages/CategoryExplore";
@@ -91,17 +92,18 @@ function App() {
                 {/* Protected Routes */}
                 <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
                 <Route path="/manage-experiences" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                <Route path="/host-experience" element={<Layout><HostExperience /></Layout>} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<Layout><ProtectedAdminDashboard /></Layout>} />
-                <Route path="/admin/users" element={<Layout><ProtectedAdminUsers /></Layout>} />
-                <Route path="/admin/users/customers" element={<Layout><ProtectedCustomers /></Layout>} />
-                <Route path="/admin/users/providers" element={<Layout><ProtectedProviders /></Layout>} />
-                <Route path="/admin/experiences" element={<Layout><ProtectedExperiences /></Layout>} />
-                <Route path="/admin/categories" element={<Layout><ProtectedAdminCategories /></Layout>} />
-                <Route path="/admin/analytics" element={<Layout><ProtectedAdminAnalytics /></Layout>} />
-                <Route path="/admin/settings" element={<Layout><ProtectedAdminSettings /></Layout>} />
+                <Route path="/admin" element={<AdminLayout><ProtectedAdminDashboard /></AdminLayout>} />
+                <Route path="/admin/users" element={<AdminLayout><ProtectedAdminUsers /></AdminLayout>} />
+                <Route path="/admin/users/customers" element={<AdminLayout><ProtectedCustomers /></AdminLayout>} />
+                <Route path="/admin/users/providers" element={<AdminLayout><ProtectedProviders /></AdminLayout>} />
+                <Route path="/admin/experiences" element={<AdminLayout><ProtectedExperiences /></AdminLayout>} />
+                <Route path="/admin/categories" element={<AdminLayout><ProtectedAdminCategories /></AdminLayout>} />
+                <Route path="/admin/analytics" element={<AdminLayout><ProtectedAdminAnalytics /></AdminLayout>} />
+                <Route path="/admin/settings" element={<AdminLayout><ProtectedAdminSettings /></AdminLayout>} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
