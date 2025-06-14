@@ -79,7 +79,9 @@ export default function Categories() {
 
   return (
     <AdminLayout>
-      {/* You can render the admin layout content specific to category management here */}
+      <div className="p-6">
+        {/* Category management content will go here */}
+      </div>
     </AdminLayout>
   );
 }
