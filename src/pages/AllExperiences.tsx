@@ -1,116 +1,256 @@
-'use client';
-
-import React, { useEffect, useState, useRef } from 'react';
-import { Experience } from '@/types';
-import ExperienceCard from '@/components/cards/ExperienceCard';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ExperienceCard from '@/components/ExperienceCard';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import useScrollInView from '@/hooks/use-scroll-in-view';
-import { useExperiences } from '@/hooks/use-experiences';
-import FilterSheet from '@/components/FilterSheet';
-import Navbar from '@/components/shared/Navbar';
+import { ArrowLeft, Filter } from 'lucide-react';
+import { getAllExperiences } from '@/lib/data';
+import { Experience } from '@/lib/data/types';
+import { useInView } from '@/lib/animations';
+import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
 
 const AllExperiences = () => {
-  const { experiences, isLoading } = useExperiences();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const experiencesPerPage = 6;
-  const [activeFilters, setActiveFilters] = useState<{
-    category?: string[];
-    location?: string[];
-    priceRange?: [number, number];
-  } | null>(null);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useScrollInView(ref);
-
+  const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
+  const experiencesPerPage = 12;
+  const location = useLocation();
+  
+  // Load experiences from Supabase
   useEffect(() => {
+    const loadExperiences = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAllExperiences();
+        setExperiences(data);
+      } catch (error) {
+        console.error('Error loading experiences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadExperiences();
+  }, []);
+
+  // Handle initial filters from location state
+  useEffect(() => {
+    // Get search term from URL query params
+    const query = new URLSearchParams(location.search);
+    const search = query.get('search');
+    if (search) {
+      setSearchTerm(search);
+    }
+
+    // Handle initial filters from location state
+    if (location.state?.initialFilters) {
+      setActiveFilters(location.state.initialFilters);
+    }
+  }, [location.state]);
+  
+  // Memoize filtered and sorted experiences to improve performance
+  const filteredExperiences = useMemo(() => {
+    if (isLoading) return [];
+    
+    let filtered = [...experiences];
+    
+    // Apply search filtering
+    if (searchTerm.trim()) {
+      const lowercasedSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(exp => 
+        exp.title.toLowerCase().includes(lowercasedSearch) ||
+        exp.description.toLowerCase().includes(lowercasedSearch) ||
+        exp.location.toLowerCase().includes(lowercasedSearch)
+      );
+    }
+
+    // Apply active filters only if they exist and are not null
+    if (activeFilters) {
+      // Price range filter
+      if (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) {
+        filtered = filtered.filter(exp => 
+          exp.price >= activeFilters.priceRange[0] && 
+          exp.price <= activeFilters.priceRange[1]
+        );
+      }
+
+      // Categories filter
+      if (activeFilters.categories && activeFilters.categories.length > 0) {
+        filtered = filtered.filter(exp => 
+          activeFilters.categories.some(category => 
+            exp.category.toLowerCase() === category.toLowerCase()
+          )
+        );
+      }
+
+      // Experience types filter
+      const hasExperienceTypeFilter = Object.values(activeFilters.experienceTypes).some(Boolean);
+      if (hasExperienceTypeFilter) {
+        filtered = filtered.filter(exp => {
+          if (activeFilters.experienceTypes.romantic && !exp.romantic) return false;
+          if (activeFilters.experienceTypes.adventurous && !exp.adventurous) return false;
+          if (activeFilters.experienceTypes.group && !exp.group) return false;
+          if (activeFilters.experienceTypes.trending && !exp.trending) return false;
+          if (activeFilters.experienceTypes.featured && !exp.featured) return false;
+          return true;
+        });
+      }
+
+      // Duration filter
+      if (activeFilters.duration && activeFilters.duration !== 'any') {
+        filtered = filtered.filter(exp => {
+          // Handle "12+" category (Full Day, 2 days, 3 days, etc.)
+          if (activeFilters.duration === '12+') {
+            // Check for any multi-day or Full Day experiences
+            return exp.duration === 'Full Day' || 
+                   exp.duration === '12+' || 
+                   exp.duration.toLowerCase().includes('day');
+          }
+          
+          // Handle other numeric durations
+          const [min, max] = activeFilters.duration.split('-').map(Number);
+          const expDuration = parseInt(exp.duration);
+          
+          // If duration is not a number, exclude it from numeric filters
+          if (isNaN(expDuration)) {
+            return false;
+          }
+          
+          // Only include numeric durations in other categories
+          if (max) {
+            return expDuration >= min && expDuration <= max;
+          } else {
+            return expDuration >= min;
+          }
+        });
+      }
+
+      // Location filter
+      if (activeFilters.location && activeFilters.location !== 'any') {
+        filtered = filtered.filter(exp => 
+          exp.location.toLowerCase() === activeFilters.location.toLowerCase()
+        );
+      }
+    }
+    
+    // Apply sorting
+    if (sortOrder === 'price-low') {
+      filtered.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === 'price-high') {
+      filtered.sort((a, b) => b.price - a.price);
+    }
+    
+    return filtered;
+  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters]);
+  
+  // Calculate pagination
+  const indexOfLastExperience = currentPage * experiencesPerPage;
+  const indexOfFirstExperience = indexOfLastExperience - experiencesPerPage;
+  const currentExperiences = filteredExperiences.slice(indexOfFirstExperience, indexOfLastExperience);
+  const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
+  
+  useEffect(() => {
+    // Reset to page 1 when search, sort, or filters change
     setCurrentPage(1);
   }, [searchTerm, sortOrder, activeFilters]);
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
+  
   const handleSortChange = (order: 'default' | 'price-low' | 'price-high') => {
     setSortOrder(order);
   };
-
-  const applyFilters = (data: Experience[]): Experience[] => {
-    return data.filter((exp) => {
-      const matchesCategory = activeFilters?.category?.length
-        ? activeFilters.category.includes(exp.category)
-        : true;
-      const matchesLocation = activeFilters?.location?.length
-        ? activeFilters.location.includes(exp.location)
-        : true;
-      const matchesPrice = activeFilters?.priceRange
-        ? exp.price >= activeFilters.priceRange[0] &&
-          exp.price <= activeFilters.priceRange[1]
-        : true;
-      return matchesCategory && matchesLocation && matchesPrice;
-    });
+  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
-
-  const filteredExperiences = applyFilters(
-    experiences.filter((exp) =>
-      exp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.location.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
-
-  const sortedExperiences = filteredExperiences.sort((a, b) => {
-    if (sortOrder === 'price-low') return a.price - b.price;
-    if (sortOrder === 'price-high') return b.price - a.price;
-    return 0;
-  });
-
-  const indexOfLast = currentPage * experiencesPerPage;
-  const indexOfFirst = indexOfLast - experiencesPerPage;
-  const currentExperiences = sortedExperiences.slice(indexOfFirst, indexOfLast);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  const renderPagination = () => {
-    const pageNumbers = [];
-    for (let i = 1; i <= Math.ceil(filteredExperiences.length / experiencesPerPage); i++) {
-      pageNumbers.push(i);
+  
+  const handleFilterApply = (filters: FilterOptions) => {
+    setActiveFilters(filters);
+  };
+  
+  // Calculate the number of active filters
+  const activeFiltersCount = useMemo(() => {
+    if (!activeFilters) return 0;
+    
+    let count = 0;
+    
+    // Count categories
+    if (activeFilters.categories && activeFilters.categories.length > 0) {
+      count += 1; // Count categories as one filter
     }
+    
+    // Count experience types as one filter if any are selected
+    if (Object.values(activeFilters.experienceTypes).some(Boolean)) {
+      count += 1;
+    }
+    
+    // Count duration if not default
+    if (activeFilters.duration && activeFilters.duration !== 'any') {
+      count += 1;
+    }
+    
+    // Count location if not default
+    if (activeFilters.location && activeFilters.location !== 'any') {
+      count += 1;
+    }
+    
+    // Count price range if not default
+    if (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) {
+      count += 1;
+    }
+    
+    return count;
+  }, [activeFilters]);
+  
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
 
     return (
       <div className="flex justify-center mt-8 space-x-2">
-        {pageNumbers.map(number => (
-          <button
-            key={number}
-            onClick={() => paginate(number)}
-            className={cn(
-              "px-4 py-2 rounded-md border text-sm transition-colors",
-              currentPage === number
-                ? "bg-primary text-white"
-                : "bg-white text-gray-600 hover:bg-gray-100"
-            )}
-          >
-            {number}
-          </button>
-        ))}
+        <Button
+          variant="outline"
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </Button>
+        <div className="flex items-center space-x-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              onClick={() => setCurrentPage(page)}
+              className="w-10"
+            >
+              {page}
+            </Button>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </Button>
       </div>
     );
   };
-
-  const activeFiltersCount =
-    (activeFilters?.category?.length || 0) +
-    (activeFilters?.location?.length || 0) +
-    (activeFilters?.priceRange ? 1 : 0);
-
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-
+      
       <main className="flex-1 bg-background pt-24">
-        <div ref={ref} className="container max-w-6xl mx-auto px-6 md:px-10 py-12">
+        <div 
+          ref={ref}
+          className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
+        >
           {isLoading ? (
             <div className="flex justify-center items-center py-24">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -135,7 +275,7 @@ const AllExperiences = () => {
                   </div>
                 </div>
               </div>
-
+              
               {/* Filters and Sorting */}
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div className={cn(
@@ -146,7 +286,7 @@ const AllExperiences = () => {
                     {filteredExperiences.length} Experiences
                   </h2>
                 </div>
-
+                
                 <div className={cn(
                   "flex items-center space-x-4 transition-all duration-700 delay-100",
                   isInView ? "opacity-100" : "opacity-0 translate-y-8"
@@ -198,11 +338,11 @@ const AllExperiences = () => {
                   </Button>
                 </div>
               </div>
-
+              
               {/* Experiences Grid */}
               {currentExperiences.length > 0 ? (
                 <div className={cn(
-                  "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 stagger-children",
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
                   {currentExperiences.map((experience) => (
@@ -221,19 +361,22 @@ const AllExperiences = () => {
                   </Button>
                 </div>
               )}
-
+              
               {/* Pagination */}
               {filteredExperiences.length > experiencesPerPage && renderPagination()}
             </>
           )}
         </div>
       </main>
+      
+      <Footer />
 
-      <FilterSheet
+      {/* Filter Dialog */}
+      <FilterDialog
         isOpen={isFilterOpen}
-        setIsOpen={setIsFilterOpen}
-        onApply={setActiveFilters}
-        defaultValues={activeFilters}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleFilterApply}
+        initialFilters={activeFilters || undefined}
       />
     </div>
   );
