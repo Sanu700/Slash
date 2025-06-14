@@ -1,124 +1,109 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreVertical, Mail, Phone, Calendar, MapPin, Star, Eye } from 'lucide-react';
+import { Search, MoreVertical, Mail, Phone, Calendar, MapPin, Star, Briefcase } from 'lucide-react';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  getProviders, updateProviderStatus, getProviderDetails
-} from '@/lib/services/provider';
-import { Provider } from '@/lib/data/types';
 import { toast } from 'sonner';
-import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle
-} from '@/components/ui/dialog';
+
+// Mock data - replace with actual data from your backend
+const mockProviders = [
+  {
+    id: "1",
+    name: "Adventure Tours India",
+    email: "contact@adventuretours.com",
+    phone: "+91 98765 43210",
+    location: "Mumbai, Maharashtra",
+    joinDate: "2024-01-15",
+    status: "active",
+    experiences: 8,
+    rating: 4.8
+  },
+  {
+    id: "2",
+    name: "Heritage Walks",
+    email: "info@heritagewalks.com",
+    phone: "+91 98765 43211",
+    location: "Delhi, NCR",
+    joinDate: "2024-02-01",
+    status: "active",
+    experiences: 5,
+    rating: 4.5
+  },
+  // Add more mock data as needed
+];
 
 const Providers = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-
-  useEffect(() => {
-    fetchProviders();
-  }, []);
-
-  const fetchProviders = async () => {
-    try {
-      const result = await getProviders();
-      if (result.success && result.data) {
-        setProviders(result.data as Provider[]);
-      } else {
-        toast.error('Failed to fetch providers');
-      }
-    } catch (error) {
-      console.error('Error fetching providers:', error);
-      toast.error('An error occurred while fetching providers');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStatusUpdate = async (providerId: string, newStatus: Provider['status']) => {
-    try {
-      const result = await updateProviderStatus(providerId, newStatus);
-      if (result.success) {
-        toast.success('Provider status updated successfully');
-        fetchProviders();
-      } else {
-        toast.error('Failed to update provider status');
-      }
-    } catch (error) {
-      console.error('Error updating provider status:', error);
-      toast.error('An error occurred while updating provider status');
-    }
-  };
-
-  const handleViewDetails = async (providerId: string) => {
-    try {
-      const result = await getProviderDetails(providerId);
-      if (result.success && result.data) {
-        setSelectedProvider(result.data as Provider);
-        setShowDetailsDialog(true);
-      } else {
-        toast.error('Failed to fetch provider details');
-      }
-    } catch (error) {
-      console.error('Error fetching provider details:', error);
-      toast.error('An error occurred while fetching provider details');
-    }
-  };
+  const [providers, setProviders] = useState(mockProviders);
+  const [modal, setModal] = useState<{ type: string, provider: any } | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newProvider, setNewProvider] = useState({ name: '', email: '', phone: '', location: '', joinDate: '', status: 'active', experiences: 0, rating: 0 });
 
   const filteredProviders = providers.filter(provider =>
-    provider.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     provider.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     provider.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getStatusBadge = (status: Provider['status']) => {
+  const getStatusBadge = (status: string) => {
     const variants = {
-      active: "success",
-      inactive: "secondary",
-      suspended: "destructive",
-      pending: "warning"
+      active: "default" as const,
+      inactive: "secondary" as const,
+      suspended: "destructive" as const
     };
-    return <Badge variant={variants[status]}>{status}</Badge>;
+    return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
   };
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const handleAction = (type: string, provider: any) => setModal({ type, provider });
+  const closeModal = () => setModal(null);
+
+  const handleSuspend = (id: string) => {
+    setProviders(prev => prev.map(p => p.id === id ? { ...p, status: p.status === 'suspended' ? 'active' : 'suspended' } : p));
+    toast.success('Account status updated!');
+    closeModal();
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Name', 'Email', 'Phone', 'Location', 'Join Date', 'Status', 'Experiences', 'Rating'];
+    const rows = filteredProviders.map(p => [p.name, p.email, p.phone, p.location, p.joinDate, p.status, p.experiences, p.rating]);
+    let csv = headers.join(',') + '\n';
+    csv += rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'providers.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
+        <div className="flex items-center gap-3">
+          <Briefcase className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Experience Providers</h1>
-          <p className="text-muted-foreground">
-            Manage experience providers and their listings
-          </p>
         </div>
+        <p className="text-muted-foreground">
+          Manage your experience provider accounts and view their activity
+        </p>
 
         <Card>
           <CardHeader>
             <CardTitle>Provider Management</CardTitle>
-            <CardDescription>View and manage all experience providers</CardDescription>
+            <CardDescription>
+              View and manage all experience providers
+            </CardDescription>
+            <Button className="ml-auto" onClick={() => setShowAddModal(true)}>Add New Provider</Button>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-6">
@@ -131,7 +116,7 @@ const Providers = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button>Export Data</Button>
+              <Button onClick={exportToCSV}>Export Data</Button>
             </div>
 
             <Table>
@@ -144,13 +129,13 @@ const Providers = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Experiences</TableHead>
                   <TableHead>Rating</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProviders.map(provider => (
+                {filteredProviders.map((provider) => (
                   <TableRow key={provider.id}>
-                    <TableCell className="font-medium">{provider.companyName}</TableCell>
+                    <TableCell className="font-medium">{provider.name}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center text-sm">
@@ -159,7 +144,7 @@ const Providers = () => {
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Phone className="mr-2 h-4 w-4" />
-                          {provider.contactNo}
+                          {provider.phone}
                         </div>
                       </div>
                     </TableCell>
@@ -172,15 +157,15 @@ const Providers = () => {
                     <TableCell>
                       <div className="flex items-center text-sm">
                         <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {new Date(provider.joinDate).toLocaleDateString()}
+                        {provider.joinDate}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(provider.status)}</TableCell>
                     <TableCell>{provider.experiences}</TableCell>
                     <TableCell>
-                      <div className="flex items-center">
-                        <Star className="mr-1 h-4 w-4 text-yellow-400 fill-yellow-400" />
-                        {provider.rating.toFixed(1)}
+                      <div className="flex items-center text-sm">
+                        <Star className="mr-1 h-4 w-4 text-yellow-500" />
+                        {provider.rating}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -191,18 +176,12 @@ const Providers = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewDetails(provider.id)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(provider.id, 'active')} disabled={provider.status === 'active'}>
-                            Activate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(provider.id, 'inactive')} disabled={provider.status === 'inactive'}>
-                            Deactivate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(provider.id, 'suspended')} disabled={provider.status === 'suspended'} className="text-red-600">
-                            Suspend
+                          <DropdownMenuItem onClick={() => handleAction('details', provider)}>View Details</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('experiences', provider)}>View Experiences</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('reviews', provider)}>View Reviews</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('message', provider)}>Send Message</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleAction('suspend', provider)}>
+                            {provider.status === 'suspended' ? 'Activate Account' : 'Suspend Account'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -214,57 +193,106 @@ const Providers = () => {
           </CardContent>
         </Card>
 
-        <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Provider Details</DialogTitle>
-              <DialogDescription>Detailed information about the provider and their experiences</DialogDescription>
-            </DialogHeader>
-
-            {selectedProvider && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-medium">Company Information</h3>
-                    <div className="mt-2 space-y-2">
-                      <p><span className="text-muted-foreground">Name:</span> {selectedProvider.companyName}</p>
-                      <p><span className="text-muted-foreground">Email:</span> {selectedProvider.email}</p>
-                      <p><span className="text-muted-foreground">Phone:</span> {selectedProvider.contactNo}</p>
-                      <p><span className="text-muted-foreground">Location:</span> {selectedProvider.location}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Performance Metrics</h3>
-                    <div className="mt-2 space-y-2">
-                      <p><span className="text-muted-foreground">Total Experiences:</span> {selectedProvider.experiences}</p>
-                      <p><span className="text-muted-foreground">Average Rating:</span> {selectedProvider.rating.toFixed(1)}</p>
-                      <p><span className="text-muted-foreground">Status:</span> {selectedProvider.status}</p>
-                      <p><span className="text-muted-foreground">Member Since:</span> {new Date(selectedProvider.joinDate).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedProvider.experienceDetails && (
-                  <div>
-                    <h3 className="font-medium mb-2">Latest Experience Submission</h3>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <h4 className="font-medium">{selectedProvider.experienceDetails.name}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">{selectedProvider.experienceDetails.description}</p>
-                      <div className="grid grid-cols-3 gap-4 mt-4">
-                        <p><span className="text-muted-foreground">Price:</span> ₹{selectedProvider.experienceDetails.price}</p>
-                        <p><span className="text-muted-foreground">Duration:</span> {selectedProvider.experienceDetails.duration}</p>
-                        <p><span className="text-muted-foreground">Category:</span> {selectedProvider.experienceDetails.category}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+        {/* Modals */}
+        {modal && modal.type === 'details' && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-2">Provider Details</h2>
+              <div className="mb-4">
+                <div><b>Name:</b> {modal.provider.name}</div>
+                <div><b>Email:</b> {modal.provider.email}</div>
+                <div><b>Phone:</b> {modal.provider.phone}</div>
+                <div><b>Location:</b> {modal.provider.location}</div>
+                <div><b>Join Date:</b> {modal.provider.joinDate}</div>
+                <div><b>Status:</b> {modal.provider.status}</div>
+                <div><b>Experiences:</b> {modal.provider.experiences}</div>
+                <div><b>Rating:</b> {modal.provider.rating}</div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+              <Button onClick={closeModal} className="w-full">Close</Button>
+            </div>
+          </div>
+        )}
+        {modal && modal.type === 'experiences' && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-2">Experiences by {modal.provider.name}</h2>
+              <div className="mb-4">
+                <ul className="list-disc pl-5">
+                  <li>Mumbai Street Food Tour</li>
+                  <li>Old Delhi Heritage Walk</li>
+                </ul>
+              </div>
+              <Button onClick={closeModal} className="w-full">Close</Button>
+            </div>
+          </div>
+        )}
+        {modal && modal.type === 'reviews' && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-2">Reviews for {modal.provider.name}</h2>
+              <div className="mb-4">
+                <ul className="list-disc pl-5">
+                  <li><b>John Doe:</b> 5★ - Excellent guide!</li>
+                  <li><b>Jane Smith:</b> 4★ - Very informative.</li>
+                </ul>
+              </div>
+              <Button onClick={closeModal} className="w-full">Close</Button>
+            </div>
+          </div>
+        )}
+        {modal && modal.type === 'message' && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-2">Send Message to {modal.provider.name}</h2>
+              <div className="mb-4">
+                <textarea className="w-full border rounded p-2" rows={3} placeholder="Type your message..." />
+              </div>
+              <Button onClick={() => { toast.success('Message sent!'); closeModal(); }} className="w-full">Send</Button>
+              <Button variant="outline" onClick={closeModal} className="w-full mt-2">Cancel</Button>
+            </div>
+          </div>
+        )}
+        {modal && modal.type === 'suspend' && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-2">{modal.provider.status === 'suspended' ? 'Activate Account' : 'Suspend Account'}</h2>
+              <div className="mb-4">Are you sure you want to {modal.provider.status === 'suspended' ? 'activate' : 'suspend'} {modal.provider.name}'s account?</div>
+              <Button onClick={() => handleSuspend(modal.provider.id)} className="w-full" variant={modal.provider.status === 'suspended' ? 'default' : 'destructive'}>{modal.provider.status === 'suspended' ? 'Activate' : 'Suspend'}</Button>
+              <Button variant="outline" onClick={closeModal} className="w-full mt-2">Cancel</Button>
+            </div>
+          </div>
+        )}
+        {showAddModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Add New Provider</h2>
+              <div className="mb-4 space-y-2">
+                <Input placeholder="Name" value={newProvider.name} onChange={e => setNewProvider({ ...newProvider, name: e.target.value })} />
+                <Input placeholder="Email" value={newProvider.email} onChange={e => setNewProvider({ ...newProvider, email: e.target.value })} />
+                <Input placeholder="Phone" value={newProvider.phone} onChange={e => setNewProvider({ ...newProvider, phone: e.target.value })} />
+                <Input placeholder="Location" value={newProvider.location} onChange={e => setNewProvider({ ...newProvider, location: e.target.value })} />
+                <Input placeholder="Join Date" type="date" value={newProvider.joinDate} onChange={e => setNewProvider({ ...newProvider, joinDate: e.target.value })} />
+              </div>
+              <Button className="w-full" onClick={() => {
+                if (!newProvider.name || !newProvider.email || !newProvider.phone || !newProvider.location || !newProvider.joinDate) {
+                  toast.error('Please fill all fields');
+                  return;
+                }
+                setProviders(prev => [
+                  ...prev,
+                  { ...newProvider, id: (prev.length + 1).toString(), experiences: 0, rating: 0 }
+                ]);
+                setShowAddModal(false);
+                setNewProvider({ name: '', email: '', phone: '', location: '', joinDate: '', status: 'active', experiences: 0, rating: 0 });
+                toast.success('Provider added!');
+              }} disabled={!newProvider.name || !newProvider.email || !newProvider.phone || !newProvider.location || !newProvider.joinDate}>Add</Button>
+              <Button variant="outline" className="w-full mt-2" onClick={() => setShowAddModal(false)}>Cancel</Button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
 };
 
-export default Providers;
+export default Providers; 

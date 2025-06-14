@@ -51,8 +51,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       label: 'Users', 
       icon: Users,
       subItems: [
-        { path: '/admin/users/customers', label: 'Customers' },
-        { path: '/admin/users/providers', label: 'Experience Providers' }
+        { path: '/admin/customers', label: 'Customers' },
+        { path: '/admin/providers', label: 'Experience Providers' }
       ]
     },
     { path: '/admin/experiences', label: 'Experiences', icon: Gift },

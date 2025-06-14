@@ -34,6 +34,8 @@ const HostExperience = () => {
     price: '',
     duration: '',
     location: '',
+    participants: '',
+    date: '',
     category: '',
     images: [] as string[],
   });
@@ -83,7 +85,10 @@ const HostExperience = () => {
           description: formData.description,
           image: formData.images[0] || '',
           price: formData.price,
+          location: formData.location,
           duration: formData.duration,
+          participants: formData.participants,
+          date: formData.date,
           category: formData.category
         }
       });
@@ -127,34 +132,72 @@ const HostExperience = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Host an Experience</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Input label="Company Name" id="companyName" name="companyName" value={formData.companyName} onChange={handleInputChange} required />
-            <Input label="Email" type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
-            <Input label="Contact Number" type="tel" id="contactNo" name="contactNo" value={formData.contactNo} onChange={handleInputChange} required />
-            <Input label="Experience Name" id="experienceName" name="experienceName" value={formData.experienceName} onChange={handleInputChange} required />
-
-            <Textarea
-              label="Description"
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={4}
-              required
-            />
-
-            <Input label="Price" type="number" id="price" name="price" value={formData.price} onChange={handleInputChange} min="0" required />
-            <Input label="Duration (hours)" type="number" id="duration" name="duration" value={formData.duration} onChange={handleInputChange} min="1" required />
-            <Input label="Location" id="location" name="location" value={formData.location} onChange={handleInputChange} required />
+            <div>
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name</label>
+              <Input id="companyName" name="companyName" value={formData.companyName} onChange={handleInputChange} required />
+            </div>
 
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <Input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="contactNo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Number</label>
+              <Input type="tel" id="contactNo" name="contactNo" value={formData.contactNo} onChange={handleInputChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="experienceName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Experience Name</label>
+              <Input id="experienceName" name="experienceName" value={formData.experienceName} onChange={handleInputChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price</label>
+              <Input type="number" id="price" name="price" value={formData.price} onChange={handleInputChange} min="0" required />
+            </div>
+
+            <div>
+              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (hours)</label>
+              <Input type="number" id="duration" name="duration" value={formData.duration} onChange={handleInputChange} min="1" required />
+            </div>
+
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+              <Input id="location" name="location" value={formData.location} onChange={handleInputChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="participants" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Number of Participants</label>
+              <Input type="number" id="participants" name="participants" value={formData.participants} onChange={handleInputChange} min="1" required />
+            </div>
+
+            <div>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Available Date</label>
+              <Input type="date" id="date" name="date" value={formData.date} onChange={handleInputChange} required />
+            </div>
+
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
               <select
                 id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               >
                 <option value="">Select a category</option>
                 {categories.map((cat) => (
@@ -164,12 +207,18 @@ const HostExperience = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Image</label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="mt-1"
+                className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-md file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-primary file:text-white
+                  hover:file:bg-primary/90
+                  dark:file:bg-primary dark:file:text-white"
               />
             </div>
 
