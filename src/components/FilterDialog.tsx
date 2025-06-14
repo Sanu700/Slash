@@ -219,7 +219,7 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Filter Experiences</DialogTitle>
           <DialogDescription>
