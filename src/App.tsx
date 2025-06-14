@@ -94,6 +94,7 @@ function App() {
                 {/* Protected Routes */}
                 <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
                 <Route path="/experience-manager" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
