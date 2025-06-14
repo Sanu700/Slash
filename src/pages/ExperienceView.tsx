@@ -1,7 +1,6 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { getExperienceById, getSimilarExperiences } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { formatRupees } from '@/lib/formatters';
@@ -13,6 +12,7 @@ import { toast } from 'sonner';
 import useTrackExperienceView from '@/hooks/useTrackExperienceView';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -157,12 +157,8 @@ const ExperienceView = () => {
   
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-        <Footer />
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -172,240 +168,180 @@ const ExperienceView = () => {
   }
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      
-      <main className="flex-grow pt-16 md:pt-24">
-        {/* Hero Image Section */}
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
-          <img 
-            src={experience.imageUrl} 
-            alt={experience.title}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
-          <div className="absolute top-6 left-6">
-            <button 
-              onClick={() => navigate(-1)} 
-              className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </button>
-          </div>
-        </div>
+    <>
+      {/* Hero Image Section */}
+      <div className="relative h-[50vh] md:h-[60vh] w-full">
+        <img 
+          src={experience.imageUrl} 
+          alt={experience.title}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         
-        {/* Main Content Section */}
-        <div className="container max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Left Column: Experience Details */}
-            <div className="lg:col-span-2 space-y-8">
-              <div>
-                <div className="flex justify-between items-start">
-                  <h1 className="text-3xl md:text-4xl font-semibold mb-2">
-                    {experience.title}
-                  </h1>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={toggleWishlist}
-                  >
-                    <Heart 
-                      className={`h-6 w-6 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} 
-                    />
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3 text-muted-foreground mb-6">
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {experience.location}
-                  </div>
-                  <span className="text-xs">•</span>
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {experience.duration}
-                  </div>
-                  <span className="text-xs">•</span>
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 mr-1" />
-                    {experience.participants}
-                  </div>
-                  <span className="text-xs">•</span>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {experience.date}
-                  </div>
-                </div>
+        <div className="absolute top-6 left-6">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </button>
+        </div>
+      </div>
+      
+      {/* Main Content Section */}
+      <div className="container max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Left Column - Experience Details */}
+          <div className="lg:col-span-2">
+            <h1 className="text-3xl md:text-4xl font-medium mb-4">{experience.title}</h1>
+            
+            <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex items-center text-muted-foreground">
+                <MapPin className="h-4 w-4 mr-2" />
+                {experience.location}
               </div>
-              
-              <div>
-                <h2 className="text-xl font-medium mb-4">About this experience</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {experience.description}
-                </p>
+              <div className="flex items-center text-muted-foreground">
+                <Clock className="h-4 w-4 mr-2" />
+                {experience.duration}
               </div>
-              
-              {/* What to expect section */}
-              <div>
-                <h2 className="text-xl font-medium mb-4">What to expect</h2>
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5">
-                      <span className="text-primary text-sm font-medium">1</span>
-                    </div>
-                    <p>Professional guides will handle all logistics and safety briefings.</p>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5">
-                      <span className="text-primary text-sm font-medium">2</span>
-                    </div>
-                    <p>All necessary equipment and transportation included.</p>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5">
-                      <span className="text-primary text-sm font-medium">3</span>
-                    </div>
-                    <p>Digital photo memories captured throughout your experience.</p>
-                  </li>
-                </ul>
+              <div className="flex items-center text-muted-foreground">
+                <Users className="h-4 w-4 mr-2" />
+                {experience.participants}
               </div>
-              
-              {/* Similar experiences section */}
-              {similarExperiences.length > 0 && (
-                <div className="pt-4">
-                  <h2 className="text-xl font-medium mb-6">You might also like</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {similarExperiences.map(exp => (
-                      <ExperienceCard 
-                        key={exp.id} 
-                        experience={exp} 
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
             
-            {/* Right Column: Booking Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-card rounded-lg shadow-sm p-6 sticky top-28">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <span className="text-sm text-muted-foreground">From</span>
-                    <div className="text-3xl font-semibold">
-                      {formatRupees(experience.price)}
-                    </div>
-                    <span className="text-sm text-muted-foreground">per person</span>
-                  </div>
-                  
-                  {experience.trending && (
-                    <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
-                      Trending
-                    </span>
-                  )}
+            <div className="prose prose-lg max-w-none mb-8">
+              <p>{experience.description}</p>
+            </div>
+            
+            {/* Experience Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="flex items-start">
+                <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
-                
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-start">
-                    <Clock className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Duration</p>
-                      <p className="text-sm text-muted-foreground">{experience.duration}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <Users className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Group Size</p>
-                      <p className="text-sm text-muted-foreground">{experience.participants}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <Calendar className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Availability</p>
-                      <p className="text-sm text-muted-foreground">{experience.date}</p>
-                    </div>
-                  </div>
+                <div>
+                  <h3 className="font-medium mb-1">Duration</h3>
+                  <p className="text-muted-foreground text-sm">{experience.duration}</p>
                 </div>
-
-                {quantityInCart > 0 ? (
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">In Your Cart</span>
-                      <span className="text-primary font-medium">{quantityInCart} {quantityInCart === 1 ? 'item' : 'items'}</span>
-                    </div>
-                    <div className="flex items-center border rounded-md">
-                      <Button 
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleDecreaseQuantity}
-                        className="px-2 py-1 h-10"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="flex-1 text-center">{quantityInCart}</span>
-                      <Button 
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleIncreaseQuantity}
-                        className="px-2 py-1 h-10"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Button 
-                      className="w-full mt-3"
-                      onClick={() => navigate('/cart')}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      View Cart
-                    </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    className="w-full mb-3"
-                    onClick={handleAddToCart}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full"
+              </div>
+              <div className="flex items-start">
+                <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium mb-1">Group Size</h3>
+                  <p className="text-muted-foreground text-sm">{experience.participants}</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium mb-1">Date</h3>
+                  <p className="text-muted-foreground text-sm">{experience.date}</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                  <MapPin className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium mb-1">Location</h3>
+                  <p className="text-muted-foreground text-sm">{experience.location}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Similar Experiences */}
+            {similarExperiences.length > 0 && (
+              <div className="mt-12">
+                <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {similarExperiences.map((exp) => (
+                    <ExperienceCard key={exp.id} experience={exp} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Right Column - Booking Card */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-sm text-muted-foreground">Price per person</p>
+                  <p className="text-2xl font-medium">{formatRupees(experience.price)}</p>
+                </div>
+                <button
                   onClick={toggleWishlist}
-                >
-                  {isInWishlist ? (
-                    <>
-                      <Bookmark className="h-4 w-4 mr-2" />
-                      Saved to Wishlist
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="h-4 w-4 mr-2" />
-                      Save to Wishlist
-                    </>
+                  className={cn(
+                    "p-2 rounded-full transition-colors",
+                    isInWishlist ? "text-red-500" : "text-muted-foreground hover:text-red-500"
                   )}
-                </Button>
-                
-                <div className="mt-6 text-center text-xs text-muted-foreground">
-                  <p>Free cancellation up to 48 hours before the experience</p>
+                >
+                  <Heart className="h-6 w-6" fill={isInWishlist ? "currentColor" : "none"} />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span className="text-sm">Select Date</span>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Choose Date
+                  </Button>
                 </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span className="text-sm">Number of People</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleDecreaseQuantity}
+                      className="p-1 rounded-full hover:bg-secondary"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="w-8 text-center">{quantityInCart}</span>
+                    <button
+                      onClick={handleIncreaseQuantity}
+                      className="p-1 rounded-full hover:bg-secondary"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <Button 
+                  className="w-full"
+                  onClick={handleAddToCart}
+                  disabled={quantityInCart === 0}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
+              </div>
+              
+              <div className="mt-4 text-center">
+                <Button variant="outline" className="w-full">
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Save for Later
+                </Button>
               </div>
             </div>
           </div>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+      </div>
+    </>
   );
 };
 

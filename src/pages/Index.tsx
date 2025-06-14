@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
-import Navbar from '@/components/Navbar';
+import React, { useEffect, useState } from 'react';
 import Hero from '@/components/Hero';
 import CategorySection from '@/components/CategorySection';
 import TrendingSection from '@/components/TrendingSection';
 import CustomizeSection from '@/components/CustomizeSection';
 import Newsletter from '@/components/Newsletter';
-import Footer from '@/components/Footer';
-import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, ArrowRight, Star, MapPin, Calendar, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import ExperienceCard from '@/components/ExperienceCard';
+import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
 import { Experience } from '@/lib/data/types';
 import { cn } from '@/lib/utils';
 import {
@@ -79,9 +81,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      
+    <>
       <main>
         {/* Hero Section */}
         <Hero />
@@ -131,9 +131,7 @@ const Index = () => {
         {/* Newsletter Section */}
         <Newsletter />
       </main>
-      
-      <Footer />
-    </div>
+    </>
   );
 };
 

@@ -1,58 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
 
-export default function Cart() {
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+};
+
+const Cart = () => {
   const navigate = useNavigate();
-  const { items: cart, removeFromCart, clearCart, cachedExperiences } = useCart();
-  const { user } = useAuth();
+  const { items: cart, removeFromCart, cachedExperiences, checkout } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    scrollToTop();
+  }, []);
+
   const handleCheckout = async () => {
-    if (!user) {
-      toast.error('Please log in to checkout');
-      return;
-    }
-
+    setIsProcessing(true);
     try {
-      setIsProcessing(true);
-      // Process the booking
-      await Promise.all(
-        cart.map(async (item) => {
-          const experience = cachedExperiences[item.experienceId];
-          if (!experience) {
-            throw new Error('Experience not found');
-          }
-
-          // Create booking in database
-          const { error } = await supabase
-            .from('bookings')
-            .insert([
-              {
-                user_id: user.id,
-                booking_date: new Date().toISOString(),
-                total_amount: experience.price * item.quantity,
-                status: 'confirmed',
-                notes: `Quantity: ${item.quantity}`
-              },
-            ]);
-
-          if (error) throw error;
-        })
-      );
-
-      // Clear cart and show success message
-      clearCart();
-      toast.success('Bookings confirmed successfully!');
-      navigate('/');
+      const success = await checkout();
+      if (success) {
+        toast.success('Booking confirmed successfully!');
+        navigate('/');
+      }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Failed to process bookings. Please try again.');
+      toast.error('Failed to process booking');
     } finally {
       setIsProcessing(false);
     }
@@ -68,7 +48,10 @@ export default function Cart() {
           </CardHeader>
           <CardContent>
             <Button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                navigate('/');
+                scrollToTop();
+              }}
               className="w-full"
             >
               Browse Experiences
@@ -126,7 +109,7 @@ export default function Cart() {
           </div>
 
           {/* Order Summary */}
-          <div className="md:col-span-1">
+          <div>
             <Card>
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
@@ -176,4 +159,6 @@ export default function Cart() {
       </div>
     </div>
   );
-}
+};
+
+export default Cart;

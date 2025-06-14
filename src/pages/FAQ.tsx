@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +7,7 @@ import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { getFAQs, FAQItem } from '@/lib/services/contentService';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const FAQ = () => {
   const [heroRef, heroInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -244,8 +243,6 @@ const FAQ = () => {
           </div>
         </section>
       </main>
-      
-      <Footer />
     </div>
   );
 };
