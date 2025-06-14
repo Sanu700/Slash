@@ -234,7 +234,7 @@ const Careers = () => {
                 </ul>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-8">
                 <div className={cn(
                   "rounded-xl overflow-hidden transition-all duration-700 delay-200",
                   cultureInView ? "opacity-100" : "opacity-0 translate-x-8"
@@ -243,16 +243,18 @@ const Careers = () => {
                     src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=600&auto=format&fit=crop"
                     alt="Team collaboration" 
                     className="w-full h-full object-cover"
+                    style={{ width: '248px', height: '165.33px' }}
                   />
                 </div>
                 <div className={cn(
-                  "rounded-xl overflow-hidden mt-8 transition-all duration-700 delay-300",
+                  "rounded-xl overflow-hidden transition-all duration-700 delay-300",
                   cultureInView ? "opacity-100" : "opacity-0 translate-x-8"
                 )}>
                   <img 
                     src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&auto=format&fit=crop"
                     alt="Team planning" 
                     className="w-full h-full object-cover"
+                    style={{ width: '248px', height: '165.33px' }}
                   />
                 </div>
                 <div className={cn(
@@ -263,16 +265,18 @@ const Careers = () => {
                     src="https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=600&auto=format&fit=crop"
                     alt="Team celebration" 
                     className="w-full h-full object-cover"
+                    style={{ width: '248px', height: '165.33px' }}
                   />
                 </div>
                 <div className={cn(
-                  "rounded-xl overflow-hidden mt-8 transition-all duration-700 delay-500",
+                  "rounded-xl overflow-hidden transition-all duration-700 delay-500",
                   cultureInView ? "opacity-100" : "opacity-0 translate-x-8"
                 )}>
                   <img 
                     src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&auto=format&fit=crop"
                     alt="Team working" 
                     className="w-full h-full object-cover"
+                    style={{ width: '248px', height: '165.33px' }}
                   />
                 </div>
               </div>

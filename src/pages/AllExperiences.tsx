@@ -65,18 +65,22 @@ const AllExperiences = () => {
       );
     }
 
-    // Apply active filters
+    // Apply active filters only if they exist and are not null
     if (activeFilters) {
       // Price range filter
-      filtered = filtered.filter(exp => 
-        exp.price >= activeFilters.priceRange[0] && 
-        exp.price <= activeFilters.priceRange[1]
-      );
+      if (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) {
+        filtered = filtered.filter(exp => 
+          exp.price >= activeFilters.priceRange[0] && 
+          exp.price <= activeFilters.priceRange[1]
+        );
+      }
 
       // Categories filter
-      if (activeFilters.categories.length > 0) {
+      if (activeFilters.categories && activeFilters.categories.length > 0) {
         filtered = filtered.filter(exp => 
-          activeFilters.categories.includes(exp.category)
+          activeFilters.categories.some(category => 
+            exp.category.toLowerCase() === category.toLowerCase()
+          )
         );
       }
 
@@ -94,10 +98,26 @@ const AllExperiences = () => {
       }
 
       // Duration filter
-      if (activeFilters.duration) {
+      if (activeFilters.duration && activeFilters.duration !== 'any') {
         filtered = filtered.filter(exp => {
+          // Handle "12+" category (Full Day, 2 days, 3 days, etc.)
+          if (activeFilters.duration === '12+') {
+            // Check for any multi-day or Full Day experiences
+            return exp.duration === 'Full Day' || 
+                   exp.duration === '12+' || 
+                   exp.duration.toLowerCase().includes('day');
+          }
+          
+          // Handle other numeric durations
           const [min, max] = activeFilters.duration.split('-').map(Number);
           const expDuration = parseInt(exp.duration);
+          
+          // If duration is not a number, exclude it from numeric filters
+          if (isNaN(expDuration)) {
+            return false;
+          }
+          
+          // Only include numeric durations in other categories
           if (max) {
             return expDuration >= min && expDuration <= max;
           } else {
@@ -107,7 +127,7 @@ const AllExperiences = () => {
       }
 
       // Location filter
-      if (activeFilters.location) {
+      if (activeFilters.location && activeFilters.location !== 'any') {
         filtered = filtered.filter(exp => 
           exp.location.toLowerCase() === activeFilters.location.toLowerCase()
         );
@@ -146,6 +166,40 @@ const AllExperiences = () => {
   const handleFilterApply = (filters: FilterOptions) => {
     setActiveFilters(filters);
   };
+  
+  // Calculate the number of active filters
+  const activeFiltersCount = useMemo(() => {
+    if (!activeFilters) return 0;
+    
+    let count = 0;
+    
+    // Count categories
+    if (activeFilters.categories && activeFilters.categories.length > 0) {
+      count += 1; // Count categories as one filter
+    }
+    
+    // Count experience types as one filter if any are selected
+    if (Object.values(activeFilters.experienceTypes).some(Boolean)) {
+      count += 1;
+    }
+    
+    // Count duration if not default
+    if (activeFilters.duration && activeFilters.duration !== 'any') {
+      count += 1;
+    }
+    
+    // Count location if not default
+    if (activeFilters.location && activeFilters.location !== 'any') {
+      count += 1;
+    }
+    
+    // Count price range if not default
+    if (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) {
+      count += 1;
+    }
+    
+    return count;
+  }, [activeFilters]);
   
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -186,7 +240,7 @@ const AllExperiences = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-1 bg-background">
+      <main className="flex-1 bg-background pt-24">
         <div 
           ref={ref}
           className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
@@ -199,7 +253,7 @@ const AllExperiences = () => {
             <>
               {/* Search Bar */}
               <div className={cn(
-                "mb-8 transition-all duration-500",
+                "mb-8 mt-8 transition-all duration-500",
                 isInView ? "opacity-100" : "opacity-0 translate-y-8"
               )}>
                 <div className="relative">
@@ -208,7 +262,7 @@ const AllExperiences = () => {
                     placeholder="Search experiences by title, description or location..."
                     value={searchTerm}
                     onChange={handleSearch}
-                    className="w-full px-4 py-3 pl-12 rounded-lg border focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                   />
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -270,12 +324,9 @@ const AllExperiences = () => {
                   >
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
-                    {activeFilters && (
+                    {activeFiltersCount > 0 && (
                       <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                        {Object.values(activeFilters.experienceTypes).filter(Boolean).length +
-                         (activeFilters.categories.length > 0 ? 1 : 0) +
-                         (activeFilters.duration ? 1 : 0) +
-                         (activeFilters.location ? 1 : 0)}
+                        {activeFiltersCount}
                       </span>
                     )}
                   </Button>

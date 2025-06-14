@@ -84,7 +84,7 @@ const Press = () => {
                 <Button size="lg" variant="secondary" className="font-medium" asChild>
                   <a href="/press-kit.zip" download>Press Kit <Download className="w-4 h-4 ml-2" /></a>
                 </Button>
-                <Button size="lg" variant="outline" className="text-white border-white hover:text-white hover:bg-white/10" asChild>
+                <Button size="lg" variant="secondary" className="font-medium" asChild>
                   <a href="mailto:press@slashexperiences.com">Media Inquiries</a>
                 </Button>
               </div>

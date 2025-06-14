@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -42,21 +41,15 @@ const GiftPersonalizer = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
-      <main className="flex-grow pt-20 md:pt-24">
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
+      <main className="flex-grow">
+        {/* Hero Section */}
+        <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
           <img 
             src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
             alt="Gift Personalizer"
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
-          <div className="absolute top-6 left-6">
-            <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </Link>
-          </div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">

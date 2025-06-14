@@ -119,7 +119,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Check if user is authenticated
       if (!user) {
-        toast.error("Please log in to add items to your cart");
+        toast.error("Please log in to add items to your cart", {
+          position: "top-right",
+          duration: 3000,
+          dismissible: true,
+          style: {
+            marginTop: "80px"
+          }
+        });
         return;
       }
 
