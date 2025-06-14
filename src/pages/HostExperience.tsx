@@ -15,6 +15,10 @@ import {
 import { cn } from '@/lib/utils';
 import { submitProviderApplication } from '@/lib/services/provider';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
+import { LoginModal } from '@/components/LoginModal';
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 
 const categories = [
   "Adventure",
@@ -31,7 +35,9 @@ const categories = [
 
 const HostExperience = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     email: '',
@@ -44,7 +50,7 @@ const HostExperience = () => {
     duration: '',
     participants: '',
     date: '',
-    category: ''
+    categories: [] as string[]
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -65,14 +71,34 @@ const HostExperience = () => {
   };
 
   const handleCategoryChange = (value: string) => {
+    if (!formData.categories.includes(value)) {
+      setFormData(prev => ({
+        ...prev,
+        categories: [...prev.categories, value]
+      }));
+    }
+  };
+
+  const removeCategory = (categoryToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      category: value
+      categories: prev.categories.filter(category => category !== categoryToRemove)
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (formData.categories.length === 0) {
+      toast.error('Please select at least one category');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -99,7 +125,7 @@ const HostExperience = () => {
           duration: formData.duration,
           participants: formData.participants,
           date: formData.date,
-          category: formData.category
+          categories: formData.categories
         }
       });
 
@@ -215,21 +241,45 @@ const HostExperience = () => {
                     onChange={handleInputChange}
                     required
                   />
-                  <Select
-                    value={formData.category}
-                    onValueChange={handleCategoryChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map(category => (
-                        <SelectItem key={category} value={category}>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Categories
+                    </label>
+                    <Select onValueChange={handleCategoryChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem 
+                            key={category} 
+                            value={category}
+                            disabled={formData.categories.includes(category)}
+                          >
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.categories.map(category => (
+                        <Badge
+                          key={category}
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
                           {category}
-                        </SelectItem>
+                          <button
+                            type="button"
+                            onClick={() => removeCategory(category)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -257,6 +307,11 @@ const HostExperience = () => {
       </main>
 
       <Footer />
+      
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 };
