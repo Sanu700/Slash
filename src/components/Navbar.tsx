@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut, Calendar, Shield, Heart, Package, CreditCard, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [adminPassword, setAdminPassword] = useState('');
   const [adminCredentials, setAdminCredentials] = useState({ id: '', password: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,6 +86,23 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     
     setSearchResults(results);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+        document.body.style.overflow = '';
+      }
+    };
+
+    if (searchOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchOpen]);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -279,9 +297,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className={iconClass} onClick={toggleSearch}>
+            <button
+              onClick={toggleSearch}
+              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+            >
               <Search className="h-5 w-5" />
-            </Button>
+            </button>
             
             {isAuthenticated && (
               <Link to="/wishlist">
@@ -391,10 +412,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
       </nav>
 
       {/* Search Overlay */}
-      <div className={cn(
-        "fixed inset-0 bg-white/80 backdrop-blur-sm transition-opacity z-50",
-        searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-      )}>
+      <div 
+        ref={searchRef}
+        className={cn(
+          "fixed inset-0 bg-white/80 backdrop-blur-sm transition-opacity z-50",
+          searchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+      >
         <div className="container max-w-2xl mx-auto pt-28 px-4">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Input
