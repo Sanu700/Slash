@@ -1,13 +1,41 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { scrollToTop } from '@/lib/animations';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-};
+const socialLinks = [
+  {
+    name: 'Instagram',
+    icon: Instagram,
+    url: 'https://instagram.com',
+  },
+  {
+    name: 'Facebook',
+    icon: Facebook,
+    url: 'https://facebook.com',
+  },
+  {
+    name: 'Twitter',
+    icon: Twitter,
+    url: 'https://x.com/social_slashexp?t=2hMgiF7n9Z-6px4AIhXhgA&s=09',
+  },
+  {
+    name: 'LinkedIn',
+    icon: Linkedin,
+    url: 'https://www.linkedin.com/company/slash-adbc/',
+  },
+  {
+    name: 'YouTube',
+    icon: Youtube,
+    url: '#',
+  },
+];
 
 const Footer = () => {
   return (
@@ -20,51 +48,23 @@ const Footer = () => {
               Company
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link 
-                  to="/about" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/how-it-works" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/testimonials" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Testimonials
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/careers" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/press" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Press
-                </Link>
-              </li>
+              {[
+                { name: "About Us", to: "/about" },
+                { name: "How It Works", to: "/how-it-works" },
+                { name: "Testimonials", to: "/testimonials" },
+                { name: "Careers", to: "/careers" },
+                { name: "Press", to: "/press" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.to}
+                    onClick={scrollToTop}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -74,51 +74,23 @@ const Footer = () => {
               Support
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link 
-                  to="/contact" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/faq" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/gift-rules" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Gift Rules
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/shipping" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Shipping
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/returns" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Returns
-                </Link>
-              </li>
+              {[
+                { name: "Contact Us", to: "/contact" },
+                { name: "FAQ", to: "/faq" },
+                { name: "Gift Rules", to: "/gift-rules" },
+                { name: "Shipping", to: "/shipping" },
+                { name: "Returns", to: "/returns" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.to}
+                    onClick={scrollToTop}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -128,83 +100,50 @@ const Footer = () => {
               Experiences
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link 
-                  to="/experiences" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  All Experiences
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/gifting-guide" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Gifting Guide
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/gift-personalizer" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Gift Personalizer
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/host-experience" 
-                  onClick={scrollToTop}
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  Host an Experience
-                </Link>
-              </li>
+              {[
+                { name: "All Experiences", to: "/experiences" },
+                { name: "Gifting Guide", to: "/gifting-guide" },
+                { name: "Gift Personalizer", to: "/gift-personalizer" },
+                { name: "Host an Experience", to: "/host-experience" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.to}
+                    onClick={scrollToTop}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Social */}
+          {/* Social Icons with Tooltip */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-4">
               Follow Us
             </h3>
             <div className="flex space-x-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <Facebook className="h-6 w-6" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <Twitter className="h-6 w-6" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <Instagram className="h-6 w-6" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <Linkedin className="h-6 w-6" />
-              </a>
+              {socialLinks.map(({ name, icon: Icon, url }) => (
+                <TooltipProvider key={name}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        <Icon className="h-6 w-6" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
             </div>
           </div>
         </div>

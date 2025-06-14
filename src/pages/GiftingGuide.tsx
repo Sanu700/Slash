@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, Gift, CheckCircle, Clock, Heart, Image, CornerRightDown } from 'lucide-react';
+import { ArrowLeft, Gift, CheckCircle, Clock, Heart, Image, CornerRightDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import ExperienceCard from '@/components/ExperienceCard';
-import { getTrendingExperiences, getFeaturedExperiences } from '@/lib/data';
+import { getTrendingExperiences } from '@/lib/data';
 
 const GiftingGuide = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const navigate = useNavigate();
   const [featuredExperiences, setFeaturedExperiences] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Get featured experiences from Supabase
+
   useEffect(() => {
     const loadFeaturedExperiences = async () => {
       try {
-        // Fetch experiences that are trending or high-priced
         const experiences = await getTrendingExperiences();
         setFeaturedExperiences(experiences.slice(0, 3));
       } catch (error) {
@@ -26,14 +24,13 @@ const GiftingGuide = () => {
         setIsLoading(false);
       }
     };
-    
     loadFeaturedExperiences();
   }, []);
-  
+
   return (
     <main className="pt-20 md:pt-24">
       {/* Hero Section */}
-      <div className="relative h-[50vh] md:h-[60vh] w-full">
+      <div className="relative h-[60vh] w-full">
         <img 
           src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
           alt="Gifting Guide"
@@ -49,7 +46,7 @@ const GiftingGuide = () => {
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
         </div>
-        
+
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
           <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
             <Gift className="h-8 w-8" />
@@ -70,7 +67,7 @@ const GiftingGuide = () => {
           </Button>
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div 
         ref={ref}
@@ -81,15 +78,15 @@ const GiftingGuide = () => {
           "space-y-16 transition-all duration-700",
           isInView ? "opacity-100" : "opacity-0 translate-y-8"
         )}>
-          {/* Intro Section */}
+          {/* Intro */}
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-medium mb-6">Why Gift an Experience?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Research shows that experiences create stronger emotional connections and more lasting happiness than material possessions. Let's explore why.
             </p>
           </div>
-          
-          {/* Comparison Section */}
+
+          {/* Comparison */}
           <div className="grid md:grid-cols-2 gap-8 md:gap-12">
             <div className="bg-secondary/30 p-8 rounded-2xl">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
@@ -115,7 +112,7 @@ const GiftingGuide = () => {
                 </li>
               </ul>
             </div>
-            
+
             <div className="bg-primary/10 p-8 rounded-2xl">
               <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-6">
                 <CheckCircle className="h-6 w-6 text-white" />
@@ -128,11 +125,11 @@ const GiftingGuide = () => {
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                  <span>No physical clutter - only emotional richness</span>
+                  <span>No physical clutter – only emotional richness</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                  <span>Appreciation increases over time as memories are cherished</span>
+                  <span>Appreciation increases as memories are cherished</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
@@ -141,30 +138,27 @@ const GiftingGuide = () => {
               </ul>
             </div>
           </div>
-          
-          {/* Stats Section */}
+
+          {/* Stats */}
           <div className="bg-secondary/20 rounded-2xl p-8 md:p-10">
             <h3 className="text-2xl font-medium mb-6 text-center">The Science Behind Experience Gifts</h3>
-            
             <div className="grid sm:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary mb-2">78%</div>
-                <p className="text-muted-foreground">of people prefer experiences over material items</p>
+                <p className="text-muted-foreground">prefer experiences over material items</p>
               </div>
-              
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary mb-2">3x</div>
-                <p className="text-muted-foreground">longer lasting happiness from experiential purchases</p>
+                <p className="text-muted-foreground">longer-lasting happiness from experiences</p>
               </div>
-              
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary mb-2">85%</div>
-                <p className="text-muted-foreground">stronger memory retention for experiences vs. objects</p>
+                <p className="text-muted-foreground">stronger memory retention for experiences</p>
               </div>
             </div>
           </div>
-          
-          {/* Quote Section */}
+
+          {/* Quote */}
           <div className="relative py-8">
             <div className="absolute inset-0 flex items-center justify-center opacity-10">
               <span className="text-9xl">"</span>
@@ -176,7 +170,7 @@ const GiftingGuide = () => {
               </footer>
             </blockquote>
           </div>
-          
+
           {/* Recommended Experiences */}
           <div>
             <h3 className="text-2xl font-medium mb-6 text-center">Recommended Experiences</h3>
