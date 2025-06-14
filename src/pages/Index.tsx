@@ -435,7 +435,6 @@ const Index = () => {
     const loadData = async () => {
       try {
         // Load featured experiences
-        // @ts-ignore
         const { data: experiences, error: expError } = await supabase
           .from('experiences')
           .select('*')
@@ -466,7 +465,6 @@ const Index = () => {
         setFeaturedExperiences(transformedExperiences);
 
         // Load categories
-        // @ts-ignore
         const { data: cats, error: catError } = await supabase
           .from('company_pages')
           .select('*')
@@ -531,43 +529,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Why Choose Experiences */}
-      <div ref={ref} className="container max-w-4xl mx-auto px-6 md:px-10 py-16 md:py-24">
-        <div className={cn(
-          'space-y-16 transition-all duration-700',
-          isInView ? 'opacity-100' : 'opacity-0 translate-y-8'
-        )}>
-          <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-medium mb-6">Why Choose Experiences?</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Research shows that experiences create stronger emotional connections and more lasting happiness than material possessions.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-            <div className="bg-secondary/30 p-8 rounded-2xl">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                <Gift className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <h3 className="text-2xl font-medium mb-4">Experience Gifts</h3>
-              <ul className="space-y-4">
-                {[
-                  'Creates lasting memories and stories to share',
-                  'No physical clutter – only emotional richness',
-                  'Appreciation increases as memories are cherished',
-                  'Deepens relationships through shared moments',
-                ].map((point, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" aria-hidden="true" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Featured Experiences */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center mb-12">Featured Experiences</h2>
@@ -615,44 +576,40 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="bg-secondary/20 rounded-2xl p-8 md:p-10">
-          <h3 className="text-2xl font-medium mb-6 text-center">The Science Behind Experience Gifts</h3>
-          <div className="grid sm:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">78%</div>
-              <p className="text-muted-foreground">prefer experiences over material items</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">3x</div>
-              <p className="text-muted-foreground">longer-lasting happiness from experiences</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">85%</div>
-              <p className="text-muted-foreground">stronger memory retention for experiences</p>
+      {/* Why Choose Experiences */}
+      <section ref={ref} className="container max-w-4xl mx-auto px-6 md:px-10 py-16 md:py-24">
+        <div className={cn(
+          'space-y-16 transition-all duration-700',
+          isInView ? 'opacity-100' : 'opacity-0 translate-y-8'
+        )}>
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-medium mb-6">Why Choose Experiences?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Research shows that experiences create stronger emotional connections and more lasting happiness than material possessions.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+            <div className="bg-secondary/30 p-8 rounded-2xl">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                <Gift className="h-6 w-6 text-primary" aria-hidden="true" />
+              </div>
+              <h3 className="text-2xl font-medium mb-4">Experience Gifts</h3>
+              <ul className="space-y-4">
+                {[
+                  'Creates lasting memories and stories to share',
+                  'No physical clutter – only emotional richness',
+                  'Appreciation increases as memories are cherished',
+                  'Deepens relationships through shared moments',
+                ].map((point, index) => (
+                  <li key={index} className="flex items-start">
+                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" aria-hidden="true" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-6">Ready to Create Memories?</h2>
-        <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of people who have already discovered the joy of gifting experiences
-        </p>
-        <div className="flex justify-center gap-4">
-          <Link to="/gift-personalizer">
-            <Button size="lg" className="mr-4">
-              Find the Perfect Gift
-            </Button>
-          </Link>
-          <Link to="/experiences">
-            <Button variant="outline" size="lg">
-              Browse All Experiences
-            </Button>
-          </Link>
         </div>
       </section>
     </main>
