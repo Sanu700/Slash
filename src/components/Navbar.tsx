@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut, Calendar, Shield } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut, Calendar, Shield, Heart, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -347,9 +347,21 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/bookings" className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      My Bookings
+                    <Link to="/wishlist" className="flex items-center gap-2">
+                      <Heart className="w-4 h-4" />
+                      Wishlist
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/cart" className="flex items-center gap-2">
+                      <ShoppingCart className="w-4 h-4" />
+                      Cart
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders" className="flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      My Orders
                     </Link>
                   </DropdownMenuItem>
                   {user?.user_metadata?.isAdmin && (
@@ -372,7 +384,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2">
+                  <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50">
                     <User className="w-4 h-4" />
                     <span>Sign In</span>
                   </button>
@@ -404,6 +416,15 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                         </svg>
                         Sign in with Google
                       </button>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-white text-gray-500">Or</span>
+                        </div>
+                      </div>
 
                       <form onSubmit={handleAdminLogin} className="space-y-4">
                         <div>
