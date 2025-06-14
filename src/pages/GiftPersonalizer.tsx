@@ -1,14 +1,12 @@
-import React from 'react';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Wand2 } from 'lucide-react';
+import { ArrowLeft, Wand2, Globe, Users2, Heart, Building2, BadgeCheck, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInView } from '@/lib/animations';
 import { usePersonalizer } from '@/hooks/usePersonalizer';
 
-// Import component for each form step
 import BasicsForm from '@/components/gift-personalizer/BasicsForm';
 import InterestsForm from '@/components/gift-personalizer/InterestsForm';
 import PreferencesForm from '@/components/gift-personalizer/PreferencesForm';
@@ -16,10 +14,20 @@ import SocialForm from '@/components/gift-personalizer/SocialForm';
 import ResultsSection from '@/components/gift-personalizer/ResultsSection';
 import NavButtons from '@/components/gift-personalizer/NavButtons';
 
+const BenefitCard = ({ icon: Icon, title, description }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm">
+    <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+      <Icon className="w-6 h-6" />
+    </div>
+    <h3 className="text-xl font-medium mb-3">{title}</h3>
+    <p className="text-muted-foreground">{description}</p>
+  </div>
+);
+
 const GiftPersonalizer = () => {
   const formRef = useRef<HTMLDivElement>(null);
   const [contentRef, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-  
+
   const {
     currentStep,
     progress,
@@ -33,29 +41,23 @@ const GiftPersonalizer = () => {
     handlePreviousStep,
     setFormData
   } = usePersonalizer();
-  
+
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
-      <main className="flex-grow pt-20 md:pt-24">
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
+      <main className="flex-grow">
+        {/* Hero Section */}
+        <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
           <img 
             src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
             alt="Gift Personalizer"
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
-          <div className="absolute top-6 left-6">
-            <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </Link>
-          </div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
@@ -74,7 +76,8 @@ const GiftPersonalizer = () => {
             </Button>
           </div>
         </div>
-        
+
+        {/* Form Section */}
         <div 
           ref={formRef}
           className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"

@@ -1,14 +1,14 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CartProvider } from "@/contexts/CartContext";
+
 import { AuthProvider, requireAuth } from "@/lib/auth";
+import { CartProvider } from "@/contexts/CartContext";
 
 import Layout from "@/components/Layout";
-
 
 // Public Pages
 import Index from "./pages/Index";
@@ -19,7 +19,7 @@ import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
-import Booking from '@/pages/Booking';
+import Booking from "./pages/Booking";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -37,16 +37,16 @@ import Returns from "./pages/Returns";
 
 // Auth-Protected Pages
 import ExperienceManager from "./pages/ExperienceManager";
-import HostExperience from './pages/HostExperience';
+import HostExperience from "./pages/HostExperience";
 import Profile from "./pages/Profile";
 
 // Admin Pages
-import AdminLogin from '@/pages/admin/AdminLogin';
-import Dashboard from '@/pages/admin/Dashboard';
-import Users from '@/pages/admin/Users';
-import Categories from '@/pages/admin/Categories';
-import Analytics from '@/pages/admin/Analytics';
-import Settings from '@/pages/admin/Settings';
+import AdminLogin from './pages/admin/AdminLogin';
+import Dashboard from './pages/admin/Dashboard';
+import Users from './pages/admin/Users';
+import Categories from './pages/admin/Categories';
+import Analytics from './pages/admin/Analytics';
+import Settings from './pages/admin/Settings';
 import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
@@ -64,9 +64,11 @@ const ProtectedCustomers = requireAuth(Customers, true);
 const ProtectedProviders = requireAuth(Providers, true);
 const ProtectedExperiences = requireAuth(Experiences, true);
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
           <CartProvider>
@@ -112,14 +114,14 @@ function App() {
                 <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
                 <Route path="/admin/experiences" element={<ProtectedExperiences />} />
 
-                {/* 404 Route */}
+                {/* 404 Page */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
             </BrowserRouter>
 
             {/* Notifications */}
             <Toaster />
-            <Sonner />
+            <Sonner position="top-center" />
           </CartProvider>
         </AuthProvider>
       </TooltipProvider>
