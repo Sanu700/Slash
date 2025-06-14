@@ -1,159 +1,180 @@
-
-import { useRef } from 'react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ArrowLeft, Wand2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useInView } from '@/lib/animations';
+import React, { useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { usePersonalizer } from '@/hooks/usePersonalizer';
-
-// Import component for each form step
 import BasicsForm from '@/components/gift-personalizer/BasicsForm';
 import InterestsForm from '@/components/gift-personalizer/InterestsForm';
 import PreferencesForm from '@/components/gift-personalizer/PreferencesForm';
-import SocialForm from '@/components/gift-personalizer/SocialForm';
 import ResultsSection from '@/components/gift-personalizer/ResultsSection';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { ArrowLeft, Wand2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useInView } from '@/lib/animations';
 import NavButtons from '@/components/gift-personalizer/NavButtons';
 
-const GiftPersonalizer = () => {
+type Step = 'basics' | 'interests' | 'preferences' | 'results';
+
+export default function GiftPersonalizer() {
   const formRef = useRef<HTMLDivElement>(null);
+  const [currentStep, setCurrentStep] = useState<Step>('basics');
   const [contentRef, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   
   const {
-    currentStep,
-    progress,
     formData,
-    suggestedExperiences,
-    isGenerating,
     handleInputChange,
     handleInterestToggle,
-    handleSliderChange,
-    handleNextStep,
-    handlePreviousStep,
+    suggestedExperiences,
+    isGenerating,
+    handleNextStep: hookNextStep,
+    handlePreviousStep: hookPrevStep,
     setFormData
   } = usePersonalizer();
-  
-  const scrollToForm = () => {
+
+  const handleNextStep = () => {
+    switch (currentStep) {
+      case 'basics':
+        setCurrentStep('interests');
+        break;
+      case 'interests':
+        setCurrentStep('preferences');
+        break;
+      case 'preferences':
+        setCurrentStep('results');
+        break;
+      default:
+        setCurrentStep('basics');
+    }
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
+  const handlePreviousStep = () => {
+    switch (currentStep) {
+      case 'results':
+        setCurrentStep('preferences');
+        break;
+      case 'preferences':
+        setCurrentStep('interests');
+        break;
+      case 'interests':
+        setCurrentStep('basics');
+        break;
+      default:
+        setCurrentStep('basics');
+    }
+    formRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const getStepProgress = () => {
+    switch (currentStep) {
+      case 'basics':
+        return 25;
+      case 'interests':
+        return 50;
+      case 'preferences':
+        return 75;
+      case 'results':
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
+  // Validation for required fields per step
+  const isStepValid = () => {
+    if (currentStep === 'basics') {
+      const isRelationshipOther = formData.relationship === 'other';
+      const isOccasionOther = formData.occasion === 'other';
+      return (
+        !!formData.recipient &&
+        !!formData.city &&
+        !!formData.relationship &&
+        (!isRelationshipOther || !!formData.customRelationship) &&
+        !!formData.occasion &&
+        (!isOccasionOther || !!formData.customOccasion)
+      );
+    }
+    if (currentStep === 'interests') {
+      return formData.interests.length > 0;
+    }
+    if (currentStep === 'preferences') {
+      return (
+        !!formData.preferences.personality &&
+        !!formData.preferences.lifestyle &&
+        !!formData.preferences.specific
+      );
+    }
+    return true;
+  };
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <Navbar />
-      
-      <main className="flex-grow pt-20 md:pt-24">
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
-          <img 
-            src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
-            alt="Gift Personalizer"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
-          <div className="absolute top-6 left-6">
-            <Link to="/" className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-white" />
-            </Link>
-          </div>
-          
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-            <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
-              <Wand2 className="h-8 w-8" />
-            </div>
-            <h1 className="text-3xl md:text-5xl font-medium mb-4">Gift Personalizer</h1>
-            <p className="max-w-2xl text-white/80 text-lg mb-8">
-              Answer a few questions to find the perfect experience gift for your special someone
-            </p>
-            <Button 
-              onClick={scrollToForm}
-              size="lg" 
-              className="bg-white text-black hover:bg-white/90"
-            >
-              Get Started
-            </Button>
-          </div>
-        </div>
-        
-        <div 
-          ref={formRef}
-          className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"
+      <div className="container mx-auto px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto"
         >
-          <div ref={contentRef} className={cn(
-            "transition-all duration-700",
-            isInView ? "opacity-100" : "opacity-0 translate-y-8"
-          )}>
-            <div className="w-full bg-secondary/30 h-2 rounded-full mb-8">
-              <div 
-                className="bg-primary h-full rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              ></div>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4">Gift Experience Personalizer</h1>
+            <p className="text-muted-foreground">
+              Answer a few questions to get personalized gift experience recommendations
+            </p>
+          </div>
+
+          <div className="bg-card rounded-lg shadow-lg p-6 mb-8">
+            <div className="mb-6">
+              <Progress value={getStepProgress()} className="h-2" />
             </div>
-            
-            {currentStep === 'basics' && (
-              <BasicsForm 
-                formData={formData}
-                handleInputChange={handleInputChange}
-                setFormData={setFormData}
-              />
-            )}
-            
-            {currentStep === 'interests' && (
-              <InterestsForm 
-                formData={formData}
-                handleInterestToggle={handleInterestToggle}
-              />
-            )}
-            
-            {currentStep === 'preferences' && (
-              <PreferencesForm 
-                formData={formData}
-                handleSliderChange={handleSliderChange}
-              />
-            )}
-            
-            {currentStep === 'social' && (
-              <SocialForm
-                formData={formData}
-                handleInputChange={handleInputChange}
-              />
-            )}
-            
-            {currentStep === 'results' && (
-              <ResultsSection
-                suggestedExperiences={suggestedExperiences}
-                formData={formData}
-              />
-            )}
-            
+
+            <div ref={formRef}>
+              {currentStep === 'basics' && (
+                <BasicsForm
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  setFormData={setFormData}
+                />
+              )}
+
+              {currentStep === 'interests' && (
+                <InterestsForm
+                  formData={formData}
+                  handleInterestToggle={handleInterestToggle}
+                />
+              )}
+
+              {currentStep === 'preferences' && (
+                <PreferencesForm
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                />
+              )}
+
+              {currentStep === 'results' && (
+                <ResultsSection
+                  suggestedExperiences={suggestedExperiences}
+                  formData={formData}
+                  onBack={handlePreviousStep}
+                />
+              )}
+            </div>
+
+            {/* Render NavButtons for all steps except results */}
             {currentStep !== 'results' && (
               <NavButtons
                 currentStep={currentStep}
                 handlePreviousStep={handlePreviousStep}
                 handleNextStep={handleNextStep}
                 isGenerating={isGenerating}
+                disabled={!isStepValid()}
               />
             )}
-            
-            {currentStep === 'results' && (
-              <div className="flex justify-center mt-10">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousStep}
-                >
-                  Back to Questionnaire
-                </Button>
-              </div>
-            )}
           </div>
-        </div>
-      </main>
-      
+        </motion.div>
+      </div>
       <Footer />
     </div>
   );
-};
-
-export default GiftPersonalizer;
+}

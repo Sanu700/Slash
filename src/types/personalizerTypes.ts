@@ -11,14 +11,8 @@ export interface FormData {
   budgetRange: [number, number];
   interests: string[];
   preferences: {
-    adventurous: number;
-    social: number;
-    relaxation: number;
-    learning: number;
-  };
-  socialLinks: {
-    instagram: string;
-    facebook: string;
-    amazon: string;
+    personality: string;
+    lifestyle: string;
+    specific: string;
   };
 }
