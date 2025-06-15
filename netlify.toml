@@ -10,6 +10,12 @@
   to = "/index.html"
   status = 200
 
+# netlify.toml
+[dev]
+  # this tells Netlify Dev to look for your Vite app on 8080 instead of 5173
+  targetPort = 8080
+  functions = "netlify/functions"
+
 [[headers]]
   for = "/*"
   [headers.values]
