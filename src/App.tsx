@@ -51,7 +51,6 @@ import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
 import AdminProfile from './pages/admin/Profile';
-import { PaymentDetails } from './components/admin/PaymentDetails';
 
 // Protect Routes
 const ProtectedProfile = requireAuth(Profile, false);
@@ -66,7 +65,6 @@ const ProtectedCustomers = requireAuth(Customers, true);
 const ProtectedProviders = requireAuth(Providers, true);
 const ProtectedExperiences = requireAuth(Experiences, true);
 const ProtectedAdminProfile = requireAuth(AdminProfile, true);
-const ProtectedPaymentDetails = requireAuth(PaymentDetails, true);
 
 const queryClient = new QueryClient();
 
@@ -119,7 +117,6 @@ function App() {
                 <Route path="/admin/users/providers" element={<ProtectedProviders />} />
                 <Route path="/admin/experiences" element={<ProtectedExperiences />} />
                 <Route path="/admin/profile" element={<ProtectedAdminProfile />} />
-                <Route path="/admin/payments" element={<ProtectedPaymentDetails />} />
 
                 {/* 404 Page */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
