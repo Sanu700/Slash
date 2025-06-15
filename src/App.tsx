@@ -20,6 +20,7 @@ import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
 import Booking from "./pages/Booking";
 import Wishlist from "./pages/Wishlist";
+import Checkout from "./pages/Checkout";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -85,6 +86,7 @@ function App() {
                 <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
                 <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
                 <Route path="/cart" element={<Layout><Cart /></Layout>} />
+                <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
                 <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
                 <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
                 <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
