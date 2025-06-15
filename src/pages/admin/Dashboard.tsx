@@ -1,97 +1,207 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Package, TrendingUp, DollarSign, Calendar, ArrowUpRight, ArrowDownRight, Plus, Settings, BarChart3, UserCog, Download } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { supabase } from '@/lib/supabase';
 
-const stats = [
-  {
-    title: "Total Users",
-    value: "1,234",
-    change: "+12.5%",
-    trend: "up",
-    icon: Users
-  },
-  {
-    title: "Total Experiences",
-    value: "567",
-    change: "+8.3%",
-    trend: "up",
-    icon: Package
-  },
-  {
-    title: "Total Revenue",
-    value: "₹98,765",
-    change: "+15.2%",
-    trend: "up",
-    icon: DollarSign
-  },
-  {
-    title: "Active Bookings",
-    value: "89",
-    change: "-2.1%",
-    trend: "down",
-    icon: Calendar
-  }
-];
+interface DashboardStats {
+  totalUsers: number;
+  totalExperiences: number;
+  totalRevenue: number;
+  activeBookings: number;
+  userChange: number;
+  experienceChange: number;
+  revenueChange: number;
+  bookingChange: number;
+}
 
-const recentActivity = [
-  {
-    type: "New User",
-    description: "John Doe created an account",
-    time: "5 minutes ago"
-  },
-  {
-    type: "Booking",
-    description: "Sarah Smith booked 'Sunset Cruise'",
-    time: "15 minutes ago"
-  },
-  {
-    type: "Payment",
-    description: "Received payment of ₹5,000",
-    time: "1 hour ago"
-  },
-  {
-    type: "Review",
-    description: "New 5-star review for 'Mountain Trek'",
-    time: "2 hours ago"
-  }
-];
+interface RecentActivity {
+  type: string;
+  description: string;
+  time: string;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalExperiences: 0,
+    totalRevenue: 0,
+    activeBookings: 0,
+    userChange: 0,
+    experienceChange: 0,
+    revenueChange: 0,
+    bookingChange: 0
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch total experiences
+      const { count: totalExperiences, error: experiencesError } = await supabase
+        .from('experiences')
+        .select('*', { count: 'exact', head: true });
+
+      if (experiencesError) throw experiencesError;
+
+      // Fetch total revenue from completed bookings
+      const { data: revenueData, error: revenueError } = await supabase
+        .from('bookings')
+        .select('total_amount')
+        .eq('status', 'completed');
+
+      if (revenueError) throw revenueError;
+
+      const totalRevenue = revenueData.reduce((sum, booking) => sum + booking.total_amount, 0);
+
+      // Fetch active bookings
+      const { count: activeBookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (bookingsError) throw bookingsError;
+
+      // Calculate changes (comparing with last month)
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+      // Fetch last month's data for comparison
+      const { count: lastMonthExperiences } = await supabase
+        .from('experiences')
+        .select('*', { count: 'exact', head: true })
+        .lt('created_at', lastMonth.toISOString());
+
+      const { data: lastMonthRevenue } = await supabase
+        .from('bookings')
+        .select('total_amount')
+        .eq('status', 'completed')
+        .lt('created_at', lastMonth.toISOString());
+
+      const { count: lastMonthBookings } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .lt('created_at', lastMonth.toISOString());
+
+      // Calculate percentage changes
+      const experienceChange = lastMonthExperiences ? ((totalExperiences - lastMonthExperiences) / lastMonthExperiences) * 100 : 0;
+      const revenueChange = lastMonthRevenue ? ((totalRevenue - lastMonthRevenue.reduce((sum, b) => sum + b.total_amount, 0)) / lastMonthRevenue.reduce((sum, b) => sum + b.total_amount, 0)) * 100 : 0;
+      const bookingChange = lastMonthBookings ? ((activeBookings - lastMonthBookings) / lastMonthBookings) * 100 : 0;
+
+      setStats({
+        totalUsers: 0, // We can't access auth.users directly
+        totalExperiences,
+        totalRevenue,
+        activeBookings,
+        userChange: 0, // We can't access auth.users directly
+        experienceChange,
+        revenueChange,
+        bookingChange
+      });
+
+      // Fetch recent activity
+      const { data: recentBookings, error: recentError } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          booking_items (
+            experience_id,
+            quantity,
+            price_at_booking,
+            experiences (
+              title
+            )
+          )
+        `)
+        .order('booking_date', { ascending: false })
+        .limit(5);
+
+      if (recentError) throw recentError;
+
+      const activities = recentBookings.map(booking => {
+        const firstItem = booking.booking_items?.[0];
+        return {
+          type: 'Booking',
+          description: `Booking #${booking.id} for '${firstItem?.experiences?.title}'`,
+          time: new Date(booking.booking_date).toLocaleString()
+        };
+      });
+
+      setRecentActivity(activities);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGenerateReport = () => {
-    // Create a report object with current stats
     const report = {
       generatedAt: new Date().toISOString(),
-      stats: stats.map(stat => ({
-        title: stat.title,
-        value: stat.value,
-        change: stat.change
-      })),
-      recentActivity: recentActivity
+      stats: {
+        totalUsers: stats.totalUsers,
+        totalExperiences: stats.totalExperiences,
+        totalRevenue: stats.totalRevenue,
+        activeBookings: stats.activeBookings
+      },
+      recentActivity
     };
 
-    // Convert to JSON and create a blob
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);
-    
-    // Create a temporary link and trigger download
     const link = document.createElement('a');
     link.href = url;
     link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
-    
-    // Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
     
     toast.success('Report generated successfully!');
   };
+
+  const statsData = [
+    {
+      title: "Total Users",
+      value: stats.totalUsers.toLocaleString(),
+      change: `${stats.userChange.toFixed(1)}%`,
+      trend: stats.userChange >= 0 ? "up" : "down",
+      icon: Users
+    },
+    {
+      title: "Total Experiences",
+      value: stats.totalExperiences.toLocaleString(),
+      change: `${stats.experienceChange.toFixed(1)}%`,
+      trend: stats.experienceChange >= 0 ? "up" : "down",
+      icon: Package
+    },
+    {
+      title: "Total Revenue",
+      value: `₹${stats.totalRevenue.toLocaleString()}`,
+      change: `${stats.revenueChange.toFixed(1)}%`,
+      trend: stats.revenueChange >= 0 ? "up" : "down",
+      icon: DollarSign
+    },
+    {
+      title: "Active Bookings",
+      value: stats.activeBookings.toLocaleString(),
+      change: `${stats.bookingChange.toFixed(1)}%`,
+      trend: stats.bookingChange >= 0 ? "up" : "down",
+      icon: Calendar
+    }
+  ];
 
   return (
     <AdminLayout>
@@ -109,7 +219,7 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat) => (
+          {statsData.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -199,6 +309,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* System Status */}
         <Card>
           <CardHeader>
             <CardTitle>System Status</CardTitle>
@@ -220,7 +331,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center justify-between">
                 <span>Last Backup</span>
-                <span>2 hours ago</span>
+                <span>{new Date().toLocaleString()}</span>
               </div>
             </div>
           </CardContent>
