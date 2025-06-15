@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Search, Mail, Shield, UserX, Plus, Users as UsersIcon, UserCog } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 // Mock user data
 type User = {
@@ -123,12 +123,16 @@ export default function Users() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">User Management</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/admin/customers')} className="flex items-center gap-2">
-              <UsersIcon className="h-4 w-4" /> Customers
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/admin/providers')} className="flex items-center gap-2">
-              <UserCog className="h-4 w-4" /> Providers
-            </Button>
+            <Link to="/admin/users/customers">
+              <Button variant="outline" className="flex items-center gap-2">
+                <UsersIcon className="h-4 w-4" /> Customers
+              </Button>
+            </Link>
+            <Link to="/admin/users/providers">
+              <Button variant="outline" className="flex items-center gap-2">
+                <UserCog className="h-4 w-4" /> Providers
+              </Button>
+            </Link>
             <Button onClick={() => setShowAddModal(true)} className="flex items-center gap-2">
               <Plus className="h-4 w-4" /> Add New User
             </Button>
