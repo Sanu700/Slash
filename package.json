@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-types": "ts-node scripts/generate-types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -48,7 +49,7 @@
     "crypto": "^1.0.1",
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
-    "embla-carousel-react": "^8.3.0",
+    "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.18.1",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",

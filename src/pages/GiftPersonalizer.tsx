@@ -6,12 +6,11 @@ import InterestsForm from '@/components/gift-personalizer/InterestsForm';
 import PreferencesForm from '@/components/gift-personalizer/PreferencesForm';
 import ResultsSection from '@/components/gift-personalizer/ResultsSection';
 import { Progress } from '@/components/ui/progress';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import NavButtons from '@/components/gift-personalizer/NavButtons';
 import { Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
+import Layout from '@/components/Layout';
 
 type Step = 'basics' | 'interests' | 'preferences' | 'results';
 
@@ -107,9 +106,8 @@ export default function GiftPersonalizer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <Navbar />
-      <main className="flex-grow">
+    <Layout isDarkPage={true}>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
         {/* Hero Section */}
         <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
           <img 
@@ -130,7 +128,7 @@ export default function GiftPersonalizer() {
         </div>
 
         {/* Form Section */}
-        <div 
+        <div
           ref={formRef}
           className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"
         >
@@ -187,8 +185,7 @@ export default function GiftPersonalizer() {
             )}
           </motion.div>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </Layout>
   );
 }

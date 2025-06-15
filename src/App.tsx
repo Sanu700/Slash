@@ -20,6 +20,7 @@ import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
 import Booking from "./pages/Booking";
 import Wishlist from "./pages/Wishlist";
+import Checkout from "./pages/Checkout";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -44,7 +45,6 @@ import Profile from "./pages/Profile";
 import AdminLogin from './pages/admin/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
-import Categories from './pages/admin/Categories';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
 import Customers from './pages/admin/users/Customers';
@@ -59,7 +59,6 @@ const ProtectedExperienceManager = requireAuth(ExperienceManager, false);
 const ProtectedHostExperience = requireAuth(HostExperience, false);
 const ProtectedAdminDashboard = requireAuth(Dashboard, true);
 const ProtectedAdminUsers = requireAuth(Users, true);
-const ProtectedAdminCategories = requireAuth(Categories, true);
 const ProtectedAdminAnalytics = requireAuth(Analytics, true);
 const ProtectedAdminSettings = requireAuth(Settings, true);
 const ProtectedCustomers = requireAuth(Customers, true);
@@ -83,6 +82,7 @@ function App() {
                 <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
                 <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
                 <Route path="/cart" element={<Layout><Cart /></Layout>} />
+                <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
                 <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
                 <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
                 <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
@@ -111,7 +111,6 @@ function App() {
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin" element={<ProtectedAdminDashboard />} />
                 <Route path="/admin/users" element={<ProtectedAdminUsers />} />
-                <Route path="/admin/categories" element={<ProtectedAdminCategories />} />
                 <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
                 <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
                 <Route path="/admin/users/customers" element={<ProtectedCustomers />} />

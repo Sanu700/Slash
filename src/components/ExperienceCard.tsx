@@ -91,7 +91,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
         
         {/* Trending Badge */}
         {experience.trending && (
-          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-black px-2 py-0.5 rounded-full text-xs font-medium">
+          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-xs font-medium">
             Trending
           </div>
         )}
@@ -101,7 +101,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
           onClick={handleToggleWishlist}
           disabled={isProcessing}
           className={cn(
-            "absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all z-10",
+            "absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all z-10",
             isInWishlist 
               ? "bg-white text-red-500" 
               : "bg-black/30 text-white hover:bg-black/50"
@@ -112,49 +112,49 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
         </button>
         
         {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
           <div className={cn(
             "transition-transform duration-300",
             isHovered ? "translate-y-0" : "translate-y-4"
           )}>
-            <h3 className="text-base sm:text-lg font-medium mb-1.5 line-clamp-2">{experience.title}</h3>
+            <h3 className="text-xl font-medium mb-2">{experience.title}</h3>
             
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center text-xs sm:text-sm text-white/80">
-                <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[120px] sm:max-w-[200px]">{experience.location}</span>
+            <div className="flex items-center space-x-4 mb-3">
+              <div className="flex items-center text-sm text-white/80">
+                <MapPin className="h-3.5 w-3.5 mr-1" />
+                <span>{experience.location}</span>
               </div>
-              <div className="text-base sm:text-lg font-medium">{formatRupees(experience.price)}</div>
+              <div className="text-lg font-medium">{formatRupees(experience.price)}</div>
             </div>
             
             <div className={cn(
-              "grid grid-cols-3 gap-1.5 mb-3 opacity-0 transition-opacity duration-300",
+              "grid grid-cols-3 gap-2 mb-4 opacity-0 transition-opacity duration-300",
               isHovered ? "opacity-100" : "opacity-0"
             )}>
-              <div className="flex items-center text-[10px] sm:text-xs text-white/70">
-                <Clock className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.duration}</span>
+              <div className="flex items-center text-xs text-white/70">
+                <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span>{experience.duration}</span>
               </div>
-              <div className="flex items-center text-[10px] sm:text-xs text-white/70">
-                <Users className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.participants}</span>
+              <div className="flex items-center text-xs text-white/70">
+                <Users className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span>{experience.participants}</span>
               </div>
-              <div className="flex items-center text-[10px] sm:text-xs text-white/70">
-                <Calendar className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
+              <div className="flex items-center text-xs text-white/70">
+                <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
                 <span className="truncate">{experience.date}</span>
               </div>
             </div>
             
             <div className={cn(
-              "space-y-1.5 transition-all duration-300 transform",
+              "transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
               <Link to={`/experience/${experience.id}`}>
-                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90 text-xs sm:text-sm">
+                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
                   View Experience
                 </Button>
               </Link>
-              <Button size="sm" variant="outline" className="w-full text-black text-xs sm:text-sm" onClick={handleAddToCart}>
+              <Button size="sm" variant="outline" className="w-full mt-2 text-black" onClick={handleAddToCart}>
                 Add to Cart
               </Button>
             </div>

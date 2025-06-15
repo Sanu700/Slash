@@ -89,6 +89,7 @@ const Press = () => {
   const [pressRef, pressInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [mediaRef, mediaInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [showAllPressReleases, setShowAllPressReleases] = useState(false);
+  const [pressReleasesToShow, setPressReleasesToShow] = useState(pressReleases.slice(0, 3));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -125,7 +126,7 @@ const Press = () => {
               Press Releases
             </h2>
             <div className="space-y-8">
-              {pressReleases.map((release, index) => (
+              {showAllPressReleases ? pressReleases.map((release, index) => (
                 <div
                   key={release.id}
                   className={cn(
@@ -136,15 +137,35 @@ const Press = () => {
                   <div className="text-sm text-muted-foreground mb-2">{release.date}</div>
                   <h3 className="text-xl font-medium mb-3">{release.title}</h3>
                   <p className="text-muted-foreground mb-4">{release.summary}</p>
-                  <a href={release.link} className="inline-flex items-center text-primary hover:text-primary/70 font-medium">
+                  <a href={release.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:text-primary/70 font-medium">
+                    Read Full Release <ExternalLink className="w-4 h-4 ml-2" />
+                  </a>
+                </div>
+              )) : pressReleasesToShow.map((release, index) => (
+                <div
+                  key={release.id}
+                  className={cn(
+                    'border-b border-border pb-8 last:border-0 transition-all duration-700',
+                    pressInView ? 'opacity-100' : 'opacity-0 translate-y-8'
+                  )}
+                >
+                  <div className="text-sm text-muted-foreground mb-2">{release.date}</div>
+                  <h3 className="text-xl font-medium mb-3">{release.title}</h3>
+                  <p className="text-muted-foreground mb-4">{release.summary}</p>
+                  <a href={release.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:text-primary/70 font-medium">
                     Read Full Release <ExternalLink className="w-4 h-4 ml-2" />
                   </a>
                 </div>
               ))}
             </div>
             <div className="mt-8">
-              <Button variant="outline" asChild>
-                <a href="#press-releases">View All Press Releases</a>
+              <Button variant="outline" onClick={() => {
+                setShowAllPressReleases(!showAllPressReleases);
+                if (!showAllPressReleases) {
+                  setPressReleasesToShow(pressReleases.slice(0, 3));
+                }
+              }}>
+                {showAllPressReleases ? 'Show Less' : 'View All Press Releases'}
               </Button>
             </div>
           </div>
@@ -161,6 +182,8 @@ const Press = () => {
                 <a
                   key={media.id}
                   href={media.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={cn(
                     'bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group',
                     mediaInView ? 'opacity-100' : 'opacity-0 translate-y-8'
