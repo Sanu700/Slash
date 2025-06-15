@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import CategorySection from '@/components/CategorySection';
+
 import TrendingSection from '@/components/TrendingSection';
-import CustomizeSection from '@/components/CustomizeSection';
+
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
@@ -125,14 +125,12 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Categories Section */}
-        <CategorySection />
+       
         
         {/* Trending Section */}
         <TrendingSection />
         
-        {/* Customize Section */}
-        <CustomizeSection />
+     
         
         {/* Newsletter Section */}
         <Newsletter />

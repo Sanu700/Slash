@@ -140,26 +140,28 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     navigate('/profile');
   };
 
-  const isDarkPage = 
-    location.pathname === '/' || 
-    location.pathname.includes('/category/') ||
-    location.pathname.includes('/experience/');
+  const isDarkPage = location.pathname === '/';
 
   const isGiftingPage = 
     location.pathname.includes('/gifting-guide') ||
     location.pathname.includes('/gift-personalizer');
 
-  const navbarBgClass = location.pathname === '/'
+  const navbarBgClass = isDarkPage
     ? "bg-black/30 backdrop-blur-md"
     : "bg-white dark:bg-gray-900/90 backdrop-blur-md shadow-sm";
     
+  const textClass = cn(
+    "transition-colors",
+    isDarkPage
+      ? "text-white hover:text-gray-200"
+      : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
+  );
+
   const iconClass = cn(
     "transition-colors",
-    isGiftingPage
-      ? "text-black hover:text-primary" 
-      : isScrolled || !isDarkPage
-        ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
-        : "text-white hover:text-gray-200"
+    isDarkPage
+      ? "text-white hover:text-gray-200" 
+      : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
   );
 
   const handleSignOut = async () => {
@@ -219,18 +221,19 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
-            <span className={cn("font-medium text-xl transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <span className={cn("font-medium text-xl", textClass)}>
               Slash
             </span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
               All Experiences
             </Link>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium transition-colors flex items-center", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+                <button className={cn("text-sm font-medium flex items-center", textClass)}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -262,7 +265,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium transition-colors flex items-center", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+                <button className={cn("text-sm font-medium flex items-center", textClass)}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -292,10 +295,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gifting-guide" className={cn("text-sm font-medium transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/gifting-guide" className={cn("text-sm font-medium", textClass)}>
               Gifting Guide
             </Link>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
           </div>
@@ -303,19 +306,14 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleSearch}
-              className={cn(
-                "p-2 hover:bg-white/10 rounded-full transition-colors",
-                isScrolled || !isDarkPage
-                  ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
-                  : "text-white hover:text-gray-200"
-              )}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
             >
               <Search className="h-5 w-5" />
             </button>
             
             {isAuthenticated && (
               <Link to="/wishlist">
-                <Button variant="ghost" size="icon" className={iconClass}>
+                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
                   <Heart className="h-5 w-5" />
                 </Button>
               </Link>
@@ -323,7 +321,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={iconClass}>
+                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
                   <div className="relative">
                     <ShoppingCart className="h-5 w-5" />
                     {itemCount > 0 && (
@@ -368,7 +366,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className={iconClass}>
+                  <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.user_metadata?.avatar_url} />
                       <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -400,7 +398,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             ) : (
               <DropdownMenu open={showLoginDropdown} onOpenChange={setShowLoginDropdown}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className={iconClass}>
+                  <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
