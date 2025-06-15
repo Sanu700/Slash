@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -37,7 +38,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
-  const { itemCount } = useCart();
+  const { itemCount, items } = useCart();
+  const [wishlistCount, setWishlistCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout, signInWithGoogle, login } = useAuth();
@@ -215,6 +217,30 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     }
   };
 
+  // Update wishlist count
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      if (!user) {
+        setWishlistCount(0);
+        return;
+      }
+
+      try {
+        const { count, error } = await supabase
+          .from('wishlists')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        setWishlistCount(count || 0);
+      } catch (error) {
+        console.error('Error fetching wishlist count:', error);
+      }
+    };
+
+    fetchWishlistCount();
+  }, [user]);
+
   return (
     <>
       <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4', navbarBgClass)}>
@@ -306,22 +332,29 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleSearch}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
+              className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
             >
               <Search className="h-5 w-5" />
             </button>
             
             {isAuthenticated && (
               <Link to="/wishlist">
-                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
-                  <Heart className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className={iconClass}>
+                  <div className="relative">
+                    <Heart className="h-5 w-5" />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </div>
                 </Button>
               </Link>
             )}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
+                <Button variant="ghost" size="icon" className={iconClass}>
                   <div className="relative">
                     <ShoppingCart className="h-5 w-5" />
                     {itemCount > 0 && (
@@ -366,7 +399,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
+                  <Button variant="ghost" size="icon" className={iconClass}>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.user_metadata?.avatar_url} />
                       <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -398,7 +431,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             ) : (
               <DropdownMenu open={showLoginDropdown} onOpenChange={setShowLoginDropdown}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
+                  <Button variant="ghost" size="icon" className={iconClass}>
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
