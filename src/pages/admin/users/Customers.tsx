@@ -1,14 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Mail, Phone, ShoppingBag } from "lucide-react";
+import { Search, Mail, Phone, ShoppingBag, MoreVertical, UserPlus, Edit, Trash2, Eye } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Customer {
   id: string;
@@ -27,6 +44,15 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
+  const [isEditCustomerDialogOpen, setIsEditCustomerDialogOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [newCustomer, setNewCustomer] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,6 +103,99 @@ export default function Customers() {
     }
   };
 
+  const handleAddCustomer = async () => {
+    try {
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: newCustomer.email,
+        password: newCustomer.password,
+        user_metadata: {
+          full_name: newCustomer.full_name,
+          phone: newCustomer.phone,
+          role: 'user'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Customer created successfully",
+      });
+
+      setIsAddCustomerDialogOpen(false);
+      setNewCustomer({
+        email: '',
+        password: '',
+        full_name: '',
+        phone: ''
+      });
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create customer",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditCustomer = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      const { error } = await supabase.auth.admin.updateUserById(
+        selectedCustomer.id,
+        {
+          user_metadata: {
+            full_name: selectedCustomer.raw_user_meta_data.full_name,
+            phone: selectedCustomer.raw_user_meta_data.phone
+          }
+        }
+      );
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Customer updated successfully",
+      });
+
+      setIsEditCustomerDialogOpen(false);
+      setSelectedCustomer(null);
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update customer",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteCustomer = async (id: string) => {
+    try {
+      const { error } = await supabase.auth.admin.deleteUser(id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Customer deleted successfully",
+      });
+
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete customer",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredCustomers = customers.filter(customer => {
     const searchTerm = searchQuery.toLowerCase();
     return (
@@ -91,6 +210,65 @@ export default function Customers() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Customer Management</h1>
+          <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" /> Add Customer
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Customer</DialogTitle>
+                <DialogDescription>
+                  Create a new customer account with the following details.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newCustomer.email}
+                    onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={newCustomer.password}
+                    onChange={(e) => setNewCustomer(prev => ({ ...prev, password: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name</Label>
+                  <Input
+                    id="full_name"
+                    value={newCustomer.full_name}
+                    onChange={(e) => setNewCustomer(prev => ({ ...prev, full_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddCustomerDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddCustomer}>
+                  Create Customer
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card>
@@ -122,6 +300,7 @@ export default function Customers() {
                     <TableHead>Bookings</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Last Sign In</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -168,6 +347,34 @@ export default function Customers() {
                           : 'Never'
                         }
                       </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedCustomer(customer);
+                              setIsEditCustomerDialogOpen(true);
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteCustomer(customer.id)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link to={`/profile/${customer.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Profile
+                              </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -176,6 +383,58 @@ export default function Customers() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={isEditCustomerDialogOpen} onOpenChange={setIsEditCustomerDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Customer</DialogTitle>
+            <DialogDescription>
+              Update the customer's details.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCustomer && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-full_name">Full Name</Label>
+                <Input
+                  id="edit-full_name"
+                  value={selectedCustomer.raw_user_meta_data.full_name || ''}
+                  onChange={(e) => setSelectedCustomer(prev => prev ? {
+                    ...prev,
+                    raw_user_meta_data: {
+                      ...prev.raw_user_meta_data,
+                      full_name: e.target.value
+                    }
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={selectedCustomer.raw_user_meta_data.phone || ''}
+                  onChange={(e) => setSelectedCustomer(prev => prev ? {
+                    ...prev,
+                    raw_user_meta_data: {
+                      ...prev.raw_user_meta_data,
+                      phone: e.target.value
+                    }
+                  } : null)}
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditCustomerDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditCustomer}>
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 } 

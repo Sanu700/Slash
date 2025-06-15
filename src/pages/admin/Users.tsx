@@ -12,6 +12,15 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface User {
   id: string;
@@ -29,6 +38,14 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    role: 'user'
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,6 +127,44 @@ export default function Users() {
     }
   };
 
+  const handleAddUser = async () => {
+    try {
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: newUser.email,
+        password: newUser.password,
+        user_metadata: {
+          full_name: newUser.full_name,
+          phone: newUser.phone,
+          role: newUser.role
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+
+      setIsAddUserDialogOpen(false);
+      setNewUser({
+        email: '',
+        password: '',
+        full_name: '',
+        phone: '',
+        role: 'user'
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const searchTerm = searchQuery.toLowerCase();
     return (
@@ -125,6 +180,78 @@ export default function Users() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">User Management</h1>
           <div className="flex gap-2">
+            <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" /> Add User
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogDescription>
+                    Create a new user account with the following details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="full_name">Full Name</Label>
+                    <Input
+                      id="full_name"
+                      value={newUser.full_name}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, full_name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={newUser.phone}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, phone: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <select
+                      id="role"
+                      className="w-full p-2 border rounded-md"
+                      value={newUser.role}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, role: e.target.value }))}
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                      <option value="provider">Provider</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddUser}>
+                    Create User
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Link to="/admin/users/customers">
               <Button variant="outline" className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4" /> Customers
