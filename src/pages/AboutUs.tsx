@@ -13,9 +13,9 @@ const AboutUs = () => {
       {/* Hero Section */}
       <div 
         ref={heroRef}
-        className="relative bg-gradient-to-r from-purple-900 to-indigo-800 text-white py-20 md:py-28"
+        className="relative bg-gradient-to-r from-purple-900 to-indigo-800 text-white py-16 md:py-28"
       >
-        <div className="container max-w-6xl mx-auto px-6 md:px-10">
+        <div className="container max-w-6xl mx-auto px-4 md:px-10">
           <div className={`transition-all duration-700 delay-100 ${heroInView ? "opacity-100" : "opacity-0 translate-y-8"}`}>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">About Slash Experiences</h1>
             <p className="text-xl max-w-2xl">
@@ -56,11 +56,11 @@ const AboutUs = () => {
       {/* Our Mission Section */}
       <section 
         ref={missionRef}
-        className="py-16 md:py-24 bg-secondary/10"
+        className="py-12 md:py-24 bg-secondary/10"
       >
-        <div className="container max-w-6xl mx-auto px-6 md:px-10">
+        <div className="container max-w-6xl mx-auto px-4 md:px-10">
           <div className={`text-center max-w-3xl mx-auto transition-all duration-700 ${missionInView ? "opacity-100" : "opacity-0 translate-y-8"}`}>
-            <h2 className="text-3xl font-medium mb-6">Our Mission</h2>
+            <h2 className="text-3xl md:text-4xl font-medium mb-6">Our Mission</h2>
             <p className="text-lg text-muted-foreground mb-8">
               We believe in the power of experiences to transform lives, strengthen relationships, and create stories worth telling. Our mission is to make extraordinary experiences accessible to everyone and revolutionize the way people think about gifting.
             </p>
@@ -95,18 +95,8 @@ const AboutUs = () => {
       </section>
       
       {/* Team Section */}
-      <section 
-        ref={teamRef}
-        className="py-16 md:py-24"
-      >
-        <div className="container max-w-6xl mx-auto px-6 md:px-10">
-          <div className={`text-center mb-12 transition-all duration-700 ${teamInView ? "opacity-100" : "opacity-0 translate-y-8"}`}>
-            <h2 className="text-3xl font-medium mb-4">Our Team</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Meet the passionate people behind Slash Experiences who work tirelessly to bring you extraordinary moments.
-            </p>
-          </div>
-          
+      <section ref={teamRef} className="py-12 md:py-24">
+        <div className="container max-w-6xl mx-auto px-4 md:px-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Team Member 1 */}
             <div className="text-center">
