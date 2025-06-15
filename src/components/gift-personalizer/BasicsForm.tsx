@@ -109,15 +109,27 @@ const BasicsForm = ({
 
         {/* <div>
           <Label htmlFor="budgetRange">Budget Range</Label>
+          <div className="h-4" />
           <Slider
-            min={10000}
-            max={50000}
-            step={1000}
+            min={0}
+            max={100000}
+            step={100}
             value={formData.budgetRange}
-            onValueChange={val => setFormData(prev => ({ ...prev, budgetRange: val as [number, number] }))}
+            onValueChange={(val) =>
+              setFormData((prev) => ({
+                ...prev,
+                budgetRange: val as [number, number],
+              }))
+            }
             className="w-full"
           />
-          <div className="text-center mt-2">₹{formData.budgetRange[0]} - ₹{formData.budgetRange[1]}</div>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>₹0</span>
+            <span>₹100,000+</span>
+          </div>
+          <div className="text-center mt-1">
+            ₹{formData.budgetRange[0]} - ₹{formData.budgetRange[1]}
+          </div>
         </div> */}
       </div>
     </div>
