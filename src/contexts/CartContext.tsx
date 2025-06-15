@@ -8,7 +8,7 @@ import { LoginModal } from '@/components/LoginModal';
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (experienceId: string) => Promise<void>;
+  addToCart: (experienceId: string, date?: Date) => Promise<void>;
   removeFromCart: (experienceId: string) => Promise<void>;
   updateQuantity: (experienceId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -29,78 +29,41 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   
-  // Load cart items from Supabase when user is authenticated or from localStorage when not
-  useEffect(() => {
-    const loadCartItems = async () => {
-      if (user?.id) {
-        // Validate user ID is a valid UUID
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(user.id)) {
-          console.warn('Invalid user ID format:', user.id);
-          // Fallback to localStorage
-          try {
-            const savedCart = localStorage.getItem('cart');
-            if (savedCart) {
-              setItems(JSON.parse(savedCart));
-            }
-          } catch (error) {
-            console.error('Error loading cart from localStorage:', error);
-          }
-          return;
-        }
+  const fetchCartItems = async () => {
+    if (!user) return;
 
-        // User is authenticated, fetch cart from Supabase
-        try {
-          const { data, error } = await supabase
-            .from('cart_items')
-            .select('*')
-            .eq('user_id', user.id);
-            
-          if (error) {
-            throw error;
-          }
-          
-          const cartItems: CartItem[] = data.map(item => ({
-            experienceId: item.experience_id,
-            quantity: item.quantity
-          }));
-          
-          setItems(cartItems);
-        } catch (error) {
-          console.error('Error loading cart from Supabase:', error);
-          // Fallback to localStorage if Supabase fails
-          try {
-            const savedCart = localStorage.getItem('cart');
-            if (savedCart) {
-              setItems(JSON.parse(savedCart));
-            }
-          } catch (localError) {
-            console.error('Error loading cart from localStorage:', localError);
-          }
-        }
-      } else {
-        // User is not authenticated, use localStorage
-        try {
-          const savedCart = localStorage.getItem('cart');
-          if (savedCart) {
-            setItems(JSON.parse(savedCart));
-          }
-        } catch (error) {
-          console.error('Error loading cart from localStorage:', error);
-        }
+    try {
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setItems(data.map(item => ({
+        experienceId: item.experience_id,
+        quantity: item.quantity,
+        date: item.date
+      })));
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+      throw error;
+    }
+  };
+
+  // Fetch cart items when user changes
+  useEffect(() => {
+    if (user) {
+      fetchCartItems();
+    } else {
+      // Load from localStorage for guests
+      const cart = localStorage.getItem('cart');
+      if (cart) {
+        setItems(JSON.parse(cart));
       }
-    };
-    
-    loadCartItems();
+    }
   }, [user]);
   
-  // Save cart items to localStorage when not authenticated
-  useEffect(() => {
-    if (!user) {
-      localStorage.setItem('cart', JSON.stringify(items));
-    }
-  }, [items, user]);
-
   // Load and cache experiences for the cart
   useEffect(() => {
     const fetchExperiencesForCart = async () => {
@@ -133,90 +96,98 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
     fetchExperiencesForCart();
   }, [items]);
 
-  const addToCart = async (experienceId: string) => {
-    try {
-      // Check if user is authenticated
-      if (!user?.id) {
-        setShowLoginModal(true);
-        return;
-      }
-
-      // Validate user ID is a valid UUID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(user.id)) {
-        console.warn('Invalid user ID format:', user.id);
-        toast.error('Unable to add item to cart. Please try logging in again.');
-        return;
-      }
-
-      const experience = await getExperienceById(experienceId);
-      if (!experience) {
-        toast.error("Unable to add item to cart");
-        return;
-      }
-      
-      const existingItem = items.find(item => item.experienceId === experienceId);
-      const newQuantity = existingItem ? existingItem.quantity + 1 : 1;
-      
-      // Try to update Supabase first
+  const addToCart = async (experienceId: string, date?: Date) => {
+    if (!user) {
+      // Handle guest cart in localStorage
       try {
-        const { error } = await supabase
-          .from('cart_items')
-          .upsert(
-            { 
-              user_id: user.id,
-              experience_id: experienceId,
-              quantity: newQuantity,
-              updated_at: new Date().toISOString()
-            },
-            { 
-              onConflict: 'user_id,experience_id'
-            }
-          );
-          
-        if (error) {
-          throw error;
-        }
-      } catch (error) {
-        console.error('Error adding item to cart in Supabase:', error);
-        // Fallback to localStorage if Supabase fails
-        const updatedItems = existingItem
-          ? items.map(item => 
-              item.experienceId === experienceId 
-                ? { ...item, quantity: item.quantity + 1 } 
-                : item
-            )
-          : [...items, { experienceId, quantity: 1 }];
+        const cart = localStorage.getItem('cart');
+        const cartItems = cart ? JSON.parse(cart) : [];
+        const existingItem = cartItems.find((item: CartItem) => item.experienceId === experienceId);
         
-        setItems(updatedItems);
-        localStorage.setItem('cart', JSON.stringify(updatedItems));
-        toast.success(`Added ${experience.title} to cart (offline mode)`);
-        return;
-      }
-      
-      // Update local state
-      setItems(prevItems => {
         if (existingItem) {
-          return prevItems.map(item => 
-            item.experienceId === experienceId 
-              ? { ...item, quantity: item.quantity + 1 } 
-              : item
-          );
+          existingItem.quantity += 1;
         } else {
-          return [...prevItems, { experienceId, quantity: 1 }];
+          cartItems.push({ 
+            experienceId, 
+            quantity: 1,
+            date: date?.toISOString()
+          });
         }
-      });
-      
-      // Cache the experience
-      setExperienceCache(prev => ({
-        ...prev,
-        [experienceId]: experience
-      }));
-      
-      toast.success(`Added ${experience.title} to cart`);
+        
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+        setItems(cartItems);
+        return;
+      } catch (error) {
+        console.error('Error adding to guest cart:', error);
+        throw new Error('Failed to add to cart');
+      }
+    }
+
+    try {
+      // First check if the experience exists
+      const { data: experience, error: experienceError } = await supabase
+        .from('experiences')
+        .select('id')
+        .eq('id', experienceId)
+        .single();
+
+      if (experienceError || !experience) {
+        console.error('Experience not found:', experienceError);
+        throw new Error('Experience not found');
+      }
+
+      // Then check for existing cart item
+      const { data: existingItem, error: fetchError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('experience_id', experienceId)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching cart item:', fetchError);
+        throw new Error('Failed to check cart');
+      }
+
+      if (existingItem) {
+        // Update quantity if item exists
+        const { error: updateError } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity: existingItem.quantity + 1,
+            date: date?.toISOString() || existingItem.date,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingItem.id);
+
+        if (updateError) {
+          console.error('Error updating cart item:', updateError);
+          throw new Error('Failed to update cart');
+        }
+      } else {
+        // Insert new item
+        const { error: insertError } = await supabase
+          .from('cart_items')
+          .insert({
+            user_id: user.id,
+            experience_id: experienceId,
+            quantity: 1,
+            date: date?.toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error inserting cart item:', insertError);
+          throw new Error('Failed to add to cart');
+        }
+      }
+
+      // Refresh cart items
+      await fetchCartItems();
     } catch (error) {
       console.error('Error in addToCart:', error);
-      toast.error('Failed to add item to cart');
+      throw error;
     }
   };
 

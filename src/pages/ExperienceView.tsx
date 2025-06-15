@@ -101,29 +101,51 @@ const ExperienceView = () => {
   const isGuest = !user || !user.id || typeof user.id !== 'string' || user.id.length < 10;
   
   const handleAddToCart = async () => {
+    if (!selectedDate) {
+      setShowDatePopover(true);
+      toast.error('Please select a date first');
+      return;
+    }
+
     if (isGuest) {
       // LocalStorage fallback ONLY, do not call CartContext or Supabase
       if (!experience) return;
-      let cart = localStorage.getItem('cart');
-      let cartArr = cart ? JSON.parse(cart) : [];
-      const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
-      if (idx > -1) {
-        cartArr[idx].quantity += 1;
-        setQuantityInCart(cartArr[idx].quantity);
-      } else {
-        cartArr.push({ experienceId: experience.id, quantity: 1 });
-        setQuantityInCart(1);
+      try {
+        let cart = localStorage.getItem('cart');
+        let cartArr = cart ? JSON.parse(cart) : [];
+        const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
+        if (idx > -1) {
+          cartArr[idx].quantity += 1;
+          setQuantityInCart(cartArr[idx].quantity);
+        } else {
+          cartArr.push({ 
+            experienceId: experience.id, 
+            quantity: 1,
+            date: selectedDate.toISOString()
+          });
+          setQuantityInCart(1);
+        }
+        localStorage.setItem('cart', JSON.stringify(cartArr));
+        toast.success('Added to cart');
+        return;
+      } catch (error) {
+        console.error('Error adding to guest cart:', error);
+        toast.error('Failed to add to cart. Please try again.');
+        return;
       }
-      localStorage.setItem('cart', JSON.stringify(cartArr));
-      toast.success('Added to cart');
-      return;
     }
+
     setIsCartLoading(true);
     try {
-      await addToCart(experience.id);
+      await addToCart(experience.id, selectedDate);
       toast.success('Added to cart');
-    } catch (e) {
-      toast.error('Failed to add to cart');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      if (error instanceof Error) {
+        toast.error(error.message || 'Failed to add to cart');
+      } else {
+        toast.error('Failed to add to cart. Please try again.');
+      }
     } finally {
       setIsCartLoading(false);
     }
@@ -419,28 +441,21 @@ const ExperienceView = () => {
                       <PopoverTrigger asChild>
                         <Button 
                           variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            if (!user) {
-                              setShowLoginModal(true);
-                              return;
-                            }
-                            setShowDatePopover(true);
-                          }}
+                          className="w-full justify-start text-left font-normal"
                         >
-                          {selectedDate ? format(selectedDate, 'PPP') : 'Choose Date'}
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent align="end" className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0" align="start">
                         <DatePicker
                           mode="single"
-                          selected={selectedDate as Date}
+                          selected={selectedDate}
                           onSelect={(date) => {
-                            setSelectedDate(date as Date);
+                            setSelectedDate(date);
                             setShowDatePopover(false);
                           }}
                           initialFocus
-                          disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                         />
                       </PopoverContent>
                     </Popover>
@@ -475,10 +490,10 @@ const ExperienceView = () => {
                   <Button 
                     className="w-full"
                     onClick={handleAddToCart}
-                    disabled={isCartLoading}
+                    disabled={isCartLoading || !selectedDate}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    {isCartLoading ? 'Processing...' : 'Add to Cart'}
+                    {isCartLoading ? 'Processing...' : selectedDate ? 'Add to Cart' : 'Select Date to Add to Cart'}
                   </Button>
                 </div>
                 

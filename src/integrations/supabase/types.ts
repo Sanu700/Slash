@@ -128,6 +128,7 @@ export type Database = {
           quantity: number
           updated_at: string
           user_id: string
+          date: string
         }
         Insert: {
           created_at?: string
@@ -136,6 +137,7 @@ export type Database = {
           quantity?: number
           updated_at?: string
           user_id: string
+          date?: string
         }
         Update: {
           created_at?: string
@@ -144,6 +146,7 @@ export type Database = {
           quantity?: number
           updated_at?: string
           user_id?: string
+          date?: string
         }
         Relationships: [
           {

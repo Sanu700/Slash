@@ -3,10 +3,11 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { PaymentNotification } from '@/components/payment/PaymentNotification';
 import { useAuth } from '@/lib/auth';
+import { format } from 'date-fns';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences, clearCart } = useCart();
@@ -198,37 +199,44 @@ const Cart: React.FC = () => {
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{experience.title}</h3>
                             <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{experience.location}</p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => updateQuantity(item.experienceId, Math.max(1, item.quantity - 1))}
-                                >
-                                  -
-                                </Button>
-                                <span className="w-8 text-center">{item.quantity}</span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
-                                >
-                                  +
-                                </Button>
+                            
+                            {/* Date Display */}
+                            {item.date && (
+                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                <Calendar className="h-4 w-4 mr-2" />
+                                <span>{format(new Date(item.date), 'PPP')}</span>
                               </div>
-                              <div className="flex items-center gap-4">
-                                <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                                  ₹{experience.price * item.quantity}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeFromCart(item.experienceId)}
-                                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                            )}
+                            
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.experienceId, Math.max(1, item.quantity - 1))}
+                              >
+                                -
+                              </Button>
+                              <span className="w-8 text-center">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
+                              >
+                                +
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                                ₹{experience.price * item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFromCart(item.experienceId)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </div>

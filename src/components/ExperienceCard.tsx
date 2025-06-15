@@ -60,11 +60,6 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
     });
   };
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await addToCart(experience.id);
-  };
-
   return (
     <div
       ref={cardRef}
@@ -112,7 +107,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
         </button>
         
         {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
           <div className={cn(
             "transition-transform duration-300",
             isHovered ? "translate-y-0" : "translate-y-4"
@@ -146,7 +141,7 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
             </div>
             
             <div className={cn(
-              "transition-all duration-300 transform",
+              "opacity-0 transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
               <Link to={`/experience/${experience.id}`}>
@@ -154,9 +149,6 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
                   View Experience
                 </Button>
               </Link>
-              <Button size="sm" variant="outline" className="w-full mt-2 text-black" onClick={handleAddToCart}>
-                Add to Cart
-              </Button>
             </div>
           </div>
         </div>
