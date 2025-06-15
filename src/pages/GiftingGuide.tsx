@@ -36,7 +36,7 @@ const GiftingGuide = () => {
       <div className="flex flex-col min-h-screen">
         <main className="flex-grow ml-2 mr-0.5">
           {/* Hero Section */}
-          <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
+          <div className="relative h-[300px] md:h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
             <img 
               src="https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=2070"
               alt="Gift Guide Hero"
@@ -60,11 +60,7 @@ const GiftingGuide = () => {
           </div>
           
           {/* Main Content */}
-          <div
-            ref={ref}
-            id="comparison"
-            className="container max-w-4xl mx-auto px-6 md:px-10 py-16 md:py-24"
-          >
+          <section ref={ref} id="comparison" className="container max-w-4xl mx-auto px-4 md:px-10 py-8 md:py-24">
             <div className={cn(
               "space-y-16 transition-all duration-700",
               isInView ? "opacity-100" : "opacity-0 translate-y-8"
@@ -166,36 +162,36 @@ const GiftingGuide = () => {
               </div>
               
               {/* Recommended Experiences */}
-              <div className="w-[1152px] h-[384px] -ml-40">
-                <h3 className="text-2xl font-medium mb-6 text-center transform -translate-x-2.5">Recommended Experiences</h3>
+              <div>
+                <h3 className="text-2xl font-medium mb-6 text-center">Recommended Experiences</h3>
                 {isLoading ? (
                   <div className="flex justify-center items-center p-10">
                     <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 ml-auto mr-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {featuredExperiences.map(experience => (
-                      <div key={experience.id} className="w-[341.34px] h-[256px]">
+                      <div key={experience.id} className="w-full">
                         <ExperienceCard experience={experience} />
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="text-center mt-8">
+                <div className="text-center mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                   <Link to="/gift-personalizer">
-                    <Button size="lg" className="mr-4">
+                    <Button size="lg" className="mr-0 sm:mr-4 w-full sm:w-auto">
                       Find the Perfect Gift
                     </Button>
                   </Link>
                   <Link to="/experiences">
-                    <Button variant="outline" size="lg">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto">
                       Browse All Experiences
                     </Button>
                   </Link>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         </main>
       </div>
     </Layout>
