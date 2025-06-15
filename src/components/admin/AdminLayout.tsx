@@ -17,8 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Briefcase,
-  CreditCard
+  Briefcase
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,7 +61,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     { path: '/admin/experiences', label: 'Experiences', icon: Gift },
     { path: '/admin/categories', label: 'Categories', icon: Tag },
-    { path: '/admin/payments', label: 'Payments', icon: CreditCard },
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
