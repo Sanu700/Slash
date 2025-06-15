@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Briefcase
+  Briefcase,
+  CreditCard // ✅ Added for Payments icon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,9 +51,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navItems = [
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { 
-      path: '/admin/users', 
-      label: 'Users', 
+    {
+      path: '/admin/users',
+      label: 'Users',
       icon: Users,
       subItems: [
         { path: '/admin/users/customers', label: 'Customers', icon: User },
@@ -60,7 +61,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ]
     },
     { path: '/admin/experiences', label: 'Experiences', icon: Gift },
-    { path: '/admin/categories', label: 'Categories', icon: Tag },
+    { path: '/admin/categories', label: 'Categories', icon: Tag }, // ✅ Kept
+    { path: '/admin/payments', label: 'Payments', icon: CreditCard }, // ✅ Kept
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
@@ -86,10 +88,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         />
       )}
 
-      {/* Sidebar */}
       <aside className={cn(
         "fixed top-0 left-0 z-50 h-full bg-white border-r transform transition-all duration-200 ease-in-out",
         isSidebarOpen ? "w-64" : "w-16",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         "lg:translate-x-0"
       )}>
         <div className="flex flex-col h-full">
@@ -113,7 +115,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </button>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 overflow-y-auto py-4">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -160,7 +161,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             })}
           </nav>
 
-          {/* User Profile */}
           <div className={cn("p-4 border-t", !isSidebarOpen && "flex justify-center")}>
             <div className={cn("flex items-center space-x-3", !isSidebarOpen && "flex-col space-y-2")}>
               <Avatar>
@@ -184,9 +184,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className={cn("transition-all duration-200", isSidebarOpen ? "lg:pl-64" : "lg:pl-16")}>
-        {/* Header */}
+      <div className={cn(
+        "transition-all duration-200",
+        isSidebarOpen ? "lg:pl-64" : "lg:pl-16",
+        "pl-0"
+      )}>
         <header className="h-16 border-b bg-white w-full">
           <div className="h-full px-4 flex items-center justify-between w-full">
             <div className="flex items-center w-full min-w-0">
@@ -257,8 +259,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="p-6">
+        <main className="p-4 sm:p-6">
           {children}
         </main>
       </div>

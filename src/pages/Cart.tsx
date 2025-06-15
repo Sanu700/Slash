@@ -1,152 +1,132 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
+import { PaymentNotification } from '@/components/payment/PaymentNotification';
+import { useAuth } from '@/lib/auth';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences } = useCart();
   const navigate = useNavigate();
 
+  const [showNotification, setShowNotification] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'failure' | null>(null);
+  const [paymentMessage, setPaymentMessage] = useState('');
+
   const loadRazorpaySdk = () =>
     new Promise<boolean>((resolve) => {
-      if ((window as any).Razorpay) {
-        return resolve(true);
-      }
+      if ((window as any).Razorpay) return resolve(true);
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload  = () => resolve(true);
+      script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
 
-    const handlePayment = async () => {
-      try {
-        // 0) Load the Razorpay checkout SDK
-        const sdkLoaded = await loadRazorpaySdk();
-        if (!sdkLoaded) {
-          alert('Could not load Razorpay SDK. Please check your internet connection.');
-          return;
-        }
-    
-        // 1) Create the order
-        const response = await fetch('/.netlify/functions/createOrder', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: totalPrice + Math.round(totalPrice * 0.18), // Include tax in the amount
-            currency: 'INR',
-          }),
-        });
-    
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Order creation failed:', errorText);
-          throw new Error('Failed to create order. Please try again.');
-        }
-    
-        let order;
-        try {
-          order = await response.json();
-        } catch (e) {
-          console.error('Failed to parse order response:', e);
-          throw new Error('Invalid response from server');
-        }
-    
-        if (!order || !order.id) {
-          throw new Error('Invalid order data received');
-        }
-    
-        // 2) Configure the checkout
-        const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: order.amount,
-          currency: order.currency,
-          name: 'Slash Experiences',
-          description: 'Complete your booking',
-          order_id: order.id,
-          handler: async (response: any) => {
-            try {
-              // Verify payment on your backend
-              const verifyResponse = await fetch('/.netlify/functions/verifyPayment', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature,
-                }),
-              });
-    
-              if (!verifyResponse.ok) {
-                throw new Error('Payment verification failed');
-              }
-    
-              // Clear cart and navigate to success page
-              navigate('/success');
-            } catch (error) {
-              console.error('Payment verification error:', error);
-              alert('Payment verification failed. Please contact support.');
-            }
-          },
-          prefill: {
-            name: 'Customer Name', // You might want to get this from user data
-            email: 'customer@example.com', // You might want to get this from user data
-          },
-          theme: {
-            color: '#F37254',
-          },
-        };
-    
-        // 3) Open the Razorpay popup
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      } catch (err: any) {
-        console.error('Payment error:', err);
-        alert(`Payment failed: ${err.message}`);
+  const handlePayment = async () => {
+    try {
+      const sdkLoaded = await loadRazorpaySdk();
+      if (!sdkLoaded) {
+        alert('Could not load Razorpay SDK.');
+        return;
       }
-    };
-    
 
-  // Empty cart view
+      const response = await fetch('/.netlify/functions/createOrder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totalPrice + Math.round(totalPrice * 0.18),
+          currency: 'INR',
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create order');
+
+      const order = await response.json();
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Slash Experiences',
+        description: 'Complete your booking',
+        order_id: order.id,
+        handler: async (response: any) => {
+          try {
+            const verifyResponse = await fetch('/.netlify/functions/verifyPayment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response),
+            });
+
+            if (!verifyResponse.ok) throw new Error('Verification failed');
+
+            setPaymentStatus('success');
+            setPaymentMessage('Payment successful!');
+            setShowNotification(true);
+          } catch (error) {
+            console.error(error);
+            setPaymentStatus('failure');
+            setPaymentMessage('Payment verification failed.');
+            setShowNotification(true);
+          }
+        },
+        prefill: {
+          name: 'Customer Name',
+          email: 'customer@example.com',
+        },
+        theme: {
+          color: '#F37254',
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      alert(`Payment failed: ${err.message}`);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Your cart is empty</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-8">Add some experiences to your cart to get started!</p>
-              <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Your cart is empty</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">Add some experiences to your cart to get started!</p>
+            <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
           </div>
         </div>
       </div>
     );
   }
 
-  // Cart with items
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <PaymentNotification
+        isOpen={showNotification}
+        onClose={() => {
+          setShowNotification(false);
+          if (paymentStatus === 'success') navigate('/success');
+        }}
+        status={paymentStatus}
+        message={paymentMessage}
+      />
+      <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => {
                 const experience = cachedExperiences[item.experienceId];
                 if (!experience) return null;
 
                 return (
-                  <Card key={item.experienceId} className="overflow-hidden">
+                  <Card key={item.experienceId}>
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
                         <img
@@ -162,7 +142,9 @@ const Cart: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(item.experienceId, Math.max(1, item.quantity - 1))}
+                                onClick={() =>
+                                  updateQuantity(item.experienceId, Math.max(1, item.quantity - 1))
+                                }
                               >
                                 -
                               </Button>
@@ -170,7 +152,9 @@ const Cart: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
+                                onClick={() =>
+                                  updateQuantity(item.experienceId, item.quantity + 1)
+                                }
                               >
                                 +
                               </Button>
@@ -197,7 +181,6 @@ const Cart: React.FC = () => {
               })}
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card>
                 <CardContent className="p-6">
@@ -208,17 +191,24 @@ const Cart: React.FC = () => {
                       <span>₹{totalPrice}</span>
                     </div>
                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                      <span>Taxes</span>
+                      <span>Tax (18%)</span>
                       <span>₹{Math.round(totalPrice * 0.18)}</span>
                     </div>
-                    <div className="border-t pt-4">
-                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
-                        <span>Total</span>
-                        <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
-                      </div>
+                    <div className="border-t pt-4 flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                      <span>Total</span>
+                      <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
                     </div>
-                    <Button type="button" className="w-full mt-6" onClick={(e) => { e.preventDefault(); handlePayment(); }}>Proceed to Checkout</Button>
                   </div>
+                  <Button
+                    type="button"
+                    className="w-full mt-6"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePayment();
+                    }}
+                  >
+                    Proceed to Checkout
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -230,4 +220,3 @@ const Cart: React.FC = () => {
 };
 
 export default Cart;
-

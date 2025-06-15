@@ -46,26 +46,20 @@ const SuggestedExperiences = () => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
         <Button 
           onClick={handleButtonClick}
-          className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90"
-          style={{ width: '245.13px', height: '48px' }}
+          className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12"
         >
           Suggested Experiences
         </Button>
-        <NavLink to="/gifting-guide" onClick={scrollToTop}>
-          <Button 
-            size="lg" 
-            className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90" 
-            style={{ width: '245.13px', height: '48px' }}
-          >
+        <NavLink to="/gifting-guide" onClick={scrollToTop} className="w-full sm:w-auto">
+          <Button size="lg" className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12">
             Gift Inspiration
           </Button>
         </NavLink>
       </div>
-
       {showCarousel && (
         <div className="flex justify-center w-full mt-6">
           <div className="w-full backdrop-blur-sm bg-white/20 rounded-lg p-4" style={{ width: '1134px', height: '288px' }}>
@@ -101,4 +95,4 @@ const SuggestedExperiences = () => {
   );
 };
 
-export default SuggestedExperiences;
+export default SuggestedExperiences; 

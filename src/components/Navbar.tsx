@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -37,7 +38,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
-  const { itemCount } = useCart();
+  const { itemCount, items } = useCart();
+  const [wishlistCount, setWishlistCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout, signInWithGoogle, login } = useAuth();
@@ -140,22 +142,28 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     navigate('/profile');
   };
 
-  const isDarkPage = 
-    location.pathname === '/' || 
-    location.pathname.includes('/gifting-guide') || 
-    location.pathname.includes('/category/') ||
-    location.pathname.includes('/experience/') ||
+  const isDarkPage = location.pathname === '/';
+
+  const isGiftingPage = 
+    location.pathname.includes('/gifting-guide') ||
     location.pathname.includes('/gift-personalizer');
 
-  const navbarBgClass = isScrolled || !isDarkPage
-    ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm"
-    : "bg-black/30 backdrop-blur-md";
+  const navbarBgClass = isDarkPage
+    ? "bg-black/30 backdrop-blur-md"
+    : "bg-white dark:bg-gray-900/90 backdrop-blur-md shadow-sm";
     
+  const textClass = cn(
+    "transition-colors",
+    isDarkPage
+      ? "text-white hover:text-gray-200"
+      : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
+  );
+
   const iconClass = cn(
     "transition-colors",
-    isScrolled || !isDarkPage
-      ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
-      : "text-white hover:text-gray-200"
+    isDarkPage
+      ? "text-white hover:text-gray-200" 
+      : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
   );
 
   const handleSignOut = async () => {
@@ -209,24 +217,49 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     }
   };
 
+  // Update wishlist count
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      if (!user) {
+        setWishlistCount(0);
+        return;
+      }
+
+      try {
+        const { count, error } = await supabase
+          .from('wishlists')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        setWishlistCount(count || 0);
+      } catch (error) {
+        console.error('Error fetching wishlist count:', error);
+      }
+    };
+
+    fetchWishlistCount();
+  }, [user]);
+
   return (
     <>
       <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4', navbarBgClass)}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
-            <span className={cn("font-medium text-xl transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <span className={cn("font-medium text-xl", textClass)}>
               Slash
             </span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
               All Experiences
             </Link>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium transition-colors flex items-center", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+                <button className={cn("text-sm font-medium flex items-center", textClass)}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -258,7 +291,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium transition-colors flex items-center", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+                <button className={cn("text-sm font-medium flex items-center", textClass)}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -288,10 +321,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gifting-guide" className={cn("text-sm font-medium transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/gifting-guide" className={cn("text-sm font-medium", textClass)}>
               Gifting Guide
             </Link>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
           </div>
@@ -299,7 +332,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleSearch}
-              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
             >
               <Search className="h-5 w-5" />
             </button>
@@ -307,7 +340,14 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {isAuthenticated && (
               <Link to="/wishlist">
                 <Button variant="ghost" size="icon" className={iconClass}>
-                  <Heart className="h-5 w-5" />
+                  <div className="relative">
+                    <Heart className="h-5 w-5" />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </div>
                 </Button>
               </Link>
             )}
@@ -373,6 +413,15 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
+                  {user?.user_metadata?.role === 'admin' && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
                     Wishlist
@@ -408,8 +457,65 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               </DropdownMenu>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button className="md:hidden p-2" onClick={toggleMobileMenu} aria-label="Open menu">
+            <Menu className={iconClass} />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden">
+          <div className="bg-white dark:bg-gray-900 w-4/5 max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
+            <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
+              <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+            </button>
+            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">All Experiences</Link>
+            <Link to="/gifting-guide" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gifting Guide</Link>
+            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gift Personalizer</Link>
+            <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Host an Experience</Link>
+            {/* Company Section */}
+            <div>
+              <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+                Company
+                <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")} />
+              </button>
+              {companyDropdownOpen && (
+                <div className="pl-4 flex flex-col space-y-2 mt-2">
+                  <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
+                  <Link to="/how-it-works" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">How It Works</Link>
+                  <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
+                  <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
+                  <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
+                </div>
+              )}
+            </div>
+            {/* Support Section */}
+            <div>
+              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+                Support
+                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")} />
+              </button>
+              {supportDropdownOpen && (
+                <div className="pl-4 flex flex-col space-y-2 mt-2">
+                  <Link to="/contact" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Contact Us</Link>
+                  <Link to="/faq" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">FAQ</Link>
+                  <Link to="/gift-rules" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Gift Rules</Link>
+                  <Link to="/shipping" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Shipping</Link>
+                  <Link to="/returns" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Returns</Link>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 border-t pt-4">
+              <Link to="/admin/login" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Login as Admin</Link>
+            </div>
+          </div>
+          {/* Click outside to close */}
+          <div className="flex-1" onClick={toggleMobileMenu} />
+        </div>
+      )}
 
       {/* Search Overlay */}
       <div 
