@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { config } from '@/config';
 
 const Checkout = () => {
   const { items, totalPrice, cachedExperiences, clearCart } = useCart();
@@ -19,17 +20,28 @@ const Checkout = () => {
     }
   }, [items, navigate]);
 
-  const loadRazorpaySdk = () =>
-    new Promise<boolean>((resolve) => {
-      if ((window as any).Razorpay) {
-        return resolve(true);
+  const loadRazorpaySdk = () => {
+    return new Promise((resolve, reject) => {
+      if (window.Razorpay) {
+        console.log('Razorpay SDK already loaded');
+        resolve(window.Razorpay);
+        return;
       }
+
+      console.log('Loading Razorpay SDK...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
+      script.onload = () => {
+        console.log('Razorpay SDK loaded successfully');
+        resolve(window.Razorpay);
+      };
+      script.onerror = (error) => {
+        console.error('Failed to load Razorpay SDK:', error);
+        reject(error);
+      };
       document.body.appendChild(script);
     });
+  };
 
   const handlePayment = async () => {
     if (!user) {
@@ -40,130 +52,77 @@ const Checkout = () => {
     setIsLoading(true);
     let order: any = null;
     try {
-      // Load Razorpay SDK
-      const sdkLoaded = await loadRazorpaySdk();
-      if (!sdkLoaded) {
-        throw new Error('Could not load Razorpay SDK');
-      }
-
+      console.log('Starting payment process...');
+      const Razorpay = await loadRazorpaySdk();
+      
       // Create order
-      const { data: orderData, error: orderError } = await supabase
-        .from('bookings')
-        .insert({
-          user_id: user.id,
-          total_amount: totalPrice + Math.round(totalPrice * 0.18),
-          status: 'pending',
-          booking_date: new Date().toISOString(),
-          payment_method: 'razorpay'
-        })
-        .select()
-        .single();
+      console.log('Creating order...');
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { amount: totalPrice * 100 } // Convert to paise
+      });
 
       if (orderError) throw orderError;
       order = orderData;
-
-      // Create booking items
-      const { error: itemsError } = await supabase
-        .from('booking_items')
-        .insert(
-          items.map(item => ({
-            booking_id: order.id,
-            experience_id: item.experienceId,
-            quantity: item.quantity,
-            price_at_booking: cachedExperiences[item.experienceId]?.price || 0
-          }))
-        );
-
-      if (itemsError) throw itemsError;
+      console.log('Order created:', order);
 
       // Configure Razorpay
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: order.total_amount * 100, // Razorpay expects amount in paise
-        currency: 'INR',
-        name: 'Slash Experiences',
-        description: 'Complete your booking',
+        key: config.razorpay.keyId,
+        amount: order.amount,
+        currency: config.razorpay.currency,
+        name: config.razorpay.name,
+        description: config.razorpay.description,
         order_id: order.id,
-        handler: async (response: any) => {
-          try {
-            // Verify payment
-            const { error: verifyError } = await supabase
-              .from('bookings')
-              .update({
-                status: 'completed',
-                payment_method: 'razorpay',
-                notes: `Payment ID: ${response.razorpay_payment_id}`
-              })
-              .eq('id', order.id);
+        handler: async function (response: any) {
+          console.log('Payment successful:', response);
+          // Verify payment
+          const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+            body: {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature
+            }
+          });
 
-            if (verifyError) throw verifyError;
+          if (verifyError) throw verifyError;
 
-            // Clear cart and show success
-            await clearCart();
-            toast.success('Payment successful!');
-            navigate('/');
-          } catch (error) {
-            console.error('Payment verification error:', error);
-            toast.error('Payment verification failed. Please contact support.');
-            // Update booking status to failed
-            await supabase
-              .from('bookings')
-              .update({
-                status: 'failed',
-                notes: 'Payment verification failed'
-              })
-              .eq('id', order.id);
-          }
+          // Create booking
+          const { error: bookingError } = await supabase
+            .from('bookings')
+            .insert({
+              user_id: user.id,
+              experience_id: experience.id,
+              total_amount: totalPrice,
+              payment_id: response.razorpay_payment_id,
+              status: 'confirmed'
+            });
+
+          if (bookingError) throw bookingError;
+
+          toast({
+            title: "Booking Confirmed!",
+            description: "Your experience has been booked successfully.",
+          });
+          navigate('/profile');
         },
         prefill: {
-          name: user.user_metadata?.full_name || 'Customer',
-          email: user.email || '',
+          name: user.user_metadata?.full_name,
+          email: user.email,
+          contact: user.user_metadata?.phone
         },
-        theme: {
-          color: '#F37254',
-        },
-        modal: {
-          ondismiss: async () => {
-            // Update booking status to cancelled
-            await supabase
-              .from('bookings')
-              .update({
-                status: 'cancelled',
-                notes: 'Payment cancelled by user'
-              })
-              .eq('id', order.id);
-            toast.error('Payment cancelled');
-          }
-        }
+        theme: config.razorpay.theme
       };
 
-      // Open Razorpay
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', async (response: any) => {
-        // Update booking status to failed
-        await supabase
-          .from('bookings')
-          .update({
-            status: 'failed',
-            notes: `Payment failed: ${response.error.description}`
-          })
-          .eq('id', order.id);
-        toast.error(`Payment failed: ${response.error.description}`);
-      });
-      rzp.open();
+      console.log('Initializing Razorpay with options:', options);
+      const razorpay = new Razorpay(options);
+      razorpay.open();
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error('Failed to initiate payment. Please try again.');
-      // Update booking status to failed if it exists
-      if (order?.id) {
-        await supabase
-          .from('bookings')
-          .update({
-            status: 'failed',
-            notes: 'Payment initiation failed'
-          })
-          .eq('id', order.id);
-      }
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
