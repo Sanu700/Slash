@@ -142,20 +142,24 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   const isDarkPage = 
     location.pathname === '/' || 
-    location.pathname.includes('/gifting-guide') || 
     location.pathname.includes('/category/') ||
-    location.pathname.includes('/experience/') ||
+    location.pathname.includes('/experience/');
+
+  const isGiftingPage = 
+    location.pathname.includes('/gifting-guide') ||
     location.pathname.includes('/gift-personalizer');
 
-  const navbarBgClass = isScrolled || !isDarkPage
-    ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm"
-    : "bg-black/30 backdrop-blur-md";
+  const navbarBgClass = location.pathname === '/'
+    ? "bg-black/30 backdrop-blur-md"
+    : "bg-white dark:bg-gray-900/90 backdrop-blur-md shadow-sm";
     
   const iconClass = cn(
     "transition-colors",
-    isScrolled || !isDarkPage
-      ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
-      : "text-white hover:text-gray-200"
+    isGiftingPage
+      ? "text-black hover:text-primary" 
+      : isScrolled || !isDarkPage
+        ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
+        : "text-white hover:text-gray-200"
   );
 
   const handleSignOut = async () => {
@@ -215,18 +219,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
-            <span className={cn("font-medium text-xl transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <span className={cn("font-medium text-xl transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
               Slash
             </span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/experiences" className={cn("text-sm font-medium transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
               All Experiences
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium transition-colors flex items-center", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+                <button className={cn("text-sm font-medium transition-colors flex items-center", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -258,7 +262,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium transition-colors flex items-center", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+                <button className={cn("text-sm font-medium transition-colors flex items-center", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -288,10 +292,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gifting-guide" className={cn("text-sm font-medium transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/gifting-guide" className={cn("text-sm font-medium transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
               Gifting Guide
             </Link>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium transition-colors", isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
+            <Link to="/gift-personalizer" className={cn("text-sm font-medium transition-colors", isGiftingPage ? "text-black" : isScrolled || !isDarkPage ? "text-gray-800 dark:text-gray-200" : "text-white")}>
               Gift Personalizer
             </Link>
           </div>
@@ -299,7 +303,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleSearch}
-              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              className={cn(
+                "p-2 hover:bg-white/10 rounded-full transition-colors",
+                isScrolled || !isDarkPage
+                  ? "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary" 
+                  : "text-white hover:text-gray-200"
+              )}
             >
               <Search className="h-5 w-5" />
             </button>
