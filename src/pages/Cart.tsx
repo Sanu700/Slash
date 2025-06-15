@@ -4,11 +4,117 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
-const Cart = () => {
+const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences } = useCart();
   const navigate = useNavigate();
 
+  const loadRazorpaySdk = () =>
+    new Promise<boolean>((resolve) => {
+      if ((window as any).Razorpay) {
+        return resolve(true);
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload  = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+    const handlePayment = async () => {
+      try {
+        // 0) Load the Razorpay checkout SDK
+        const sdkLoaded = await loadRazorpaySdk();
+        if (!sdkLoaded) {
+          alert('Could not load Razorpay SDK. Please check your internet connection.');
+          return;
+        }
+    
+        // 1) Create the order
+        const response = await fetch('/.netlify/functions/createOrder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: totalPrice + Math.round(totalPrice * 0.18), // Include tax in the amount
+            currency: 'INR',
+          }),
+        });
+    
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Order creation failed:', errorText);
+          throw new Error('Failed to create order. Please try again.');
+        }
+    
+        let order;
+        try {
+          order = await response.json();
+        } catch (e) {
+          console.error('Failed to parse order response:', e);
+          throw new Error('Invalid response from server');
+        }
+    
+        if (!order || !order.id) {
+          throw new Error('Invalid order data received');
+        }
+    
+        // 2) Configure the checkout
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'Slash Experiences',
+          description: 'Complete your booking',
+          order_id: order.id,
+          handler: async (response: any) => {
+            try {
+              // Verify payment on your backend
+              const verifyResponse = await fetch('/.netlify/functions/verifyPayment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+    
+              if (!verifyResponse.ok) {
+                throw new Error('Payment verification failed');
+              }
+    
+              // Clear cart and navigate to success page
+              navigate('/success');
+            } catch (error) {
+              console.error('Payment verification error:', error);
+              alert('Payment verification failed. Please contact support.');
+            }
+          },
+          prefill: {
+            name: 'Customer Name', // You might want to get this from user data
+            email: 'customer@example.com', // You might want to get this from user data
+          },
+          theme: {
+            color: '#F37254',
+          },
+        };
+    
+        // 3) Open the Razorpay popup
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } catch (err: any) {
+        console.error('Payment error:', err);
+        alert(`Payment failed: ${err.message}`);
+      }
+    };
+    
+
+  // Empty cart view
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
@@ -17,9 +123,7 @@ const Cart = () => {
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Your cart is empty</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-8">Add some experiences to your cart to get started!</p>
-              <Button onClick={() => navigate('/experiences')}>
-                Browse Experiences
-              </Button>
+              <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
             </div>
           </div>
         </div>
@@ -27,12 +131,13 @@ const Cart = () => {
     );
   }
 
+  // Cart with items
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
@@ -50,12 +155,8 @@ const Cart = () => {
                           className="w-24 h-24 object-cover rounded-lg"
                         />
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {experience.title}
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                            {experience.location}
-                          </p>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{experience.title}</h3>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{experience.location}</p>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Button
@@ -100,9 +201,7 @@ const Cart = () => {
             <div className="lg:col-span-1">
               <Card>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Order Summary
-                  </h2>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
                   <div className="space-y-4">
                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
                       <span>Subtotal</span>
@@ -118,9 +217,7 @@ const Cart = () => {
                         <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
                       </div>
                     </div>
-                    <Button className="w-full mt-6" onClick={() => navigate('/checkout')}>
-                      Proceed to Checkout
-                    </Button>
+                    <Button type="button" className="w-full mt-6" onClick={(e) => { e.preventDefault(); handlePayment(); }}>Proceed to Checkout</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -133,3 +230,4 @@ const Cart = () => {
 };
 
 export default Cart;
+
