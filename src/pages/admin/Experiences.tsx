@@ -1,16 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Search, Edit, Trash2, Eye, Plus } from "lucide-react";
+import { Search, Mail, Phone, MapPin, DollarSign, MoreVertical, Plus, Edit, Trash2, Eye } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Experience {
   id: string;
@@ -19,26 +42,52 @@ interface Experience {
   price: number;
   location: string;
   category: string;
+  provider_id: string;
+  image_url: string;
   created_at: string;
   updated_at: string;
-  image_url: string;
-  duration: string;
-  date: string;
-  adventurous: boolean;
-  group_activity: boolean;
-  featured: boolean;
-  status?: 'active' | 'inactive';
-  provider_id?: string;
+  provider?: {
+    email: string;
+    user_metadata: {
+      full_name?: string;
+      company_name?: string;
+    };
+  };
+  bookings_count?: number;
+}
+
+interface User {
+  id: string;
+  email: string;
+  user_metadata: {
+    role?: string;
+    full_name?: string;
+    company_name?: string;
+  };
 }
 
 export default function Experiences() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedExperience, setSelectedExperience] = useState<Experience | null>(null);
+  const [providers, setProviders] = useState<any[]>([]);
+  const [newExperience, setNewExperience] = useState({
+    title: '',
+    description: '',
+    price: '',
+    location: '',
+    category: '',
+    provider_id: '',
+    image_url: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     fetchExperiences();
+    fetchProviders();
   }, []);
 
   const fetchExperiences = async () => {
@@ -46,12 +95,27 @@ export default function Experiences() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('experiences')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .select('*');
+
       if (error) throw error;
-      
-      setExperiences(data || []);
+
+      // Get booking counts for each experience
+      const experiencesWithBookings = await Promise.all(
+        (data || []).map(async (exp) => {
+          const { count } = await supabase
+            .from('bookings')
+            .select('*', { count: 'exact', head: true })
+            .eq('experience_id', exp.id);
+
+          return {
+            ...exp,
+            bookings_count: count || 0
+          };
+        })
+      );
+
+      console.log('Fetched experiences:', experiencesWithBookings); // Debug log
+      setExperiences(experiencesWithBookings);
     } catch (error) {
       console.error('Error fetching experiences:', error);
       toast({
@@ -64,21 +128,110 @@ export default function Experiences() {
     }
   };
 
-  const handleStatusChange = async (experienceId: string, newStatus: 'active' | 'inactive') => {
-    // If status is not in the schema, do nothing
-    toast({
-      title: "Not Supported",
-      description: "Status field does not exist in the schema.",
-      variant: "destructive",
-    });
+  const fetchProviders = async () => {
+    try {
+      const { data: users, error } = await supabase.auth.admin.listUsers();
+      if (error) throw error;
+
+      const providerUsers = (users.users as User[]).filter(u => u.user_metadata?.role === 'provider');
+      setProviders(providerUsers);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch providers",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteExperience = async (experienceId: string) => {
+  const handleAddExperience = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('experiences')
+        .insert([{
+          title: newExperience.title,
+          description: newExperience.description,
+          price: parseFloat(newExperience.price),
+          location: newExperience.location,
+          category: newExperience.category,
+          provider_id: newExperience.provider_id,
+          image_url: newExperience.image_url
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Experience created successfully",
+      });
+
+      setIsAddDialogOpen(false);
+      setNewExperience({
+        title: '',
+        description: '',
+        price: '',
+        location: '',
+        category: '',
+        provider_id: '',
+        image_url: ''
+      });
+      fetchExperiences();
+    } catch (error) {
+      console.error('Error creating experience:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create experience",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditExperience = async () => {
+    if (!selectedExperience) return;
+
+    try {
+      const { error } = await supabase
+        .from('experiences')
+        .update({
+          title: selectedExperience.title,
+          description: selectedExperience.description,
+          price: selectedExperience.price,
+          location: selectedExperience.location,
+          category: selectedExperience.category,
+          provider_id: selectedExperience.provider_id,
+          image_url: selectedExperience.image_url
+        })
+        .eq('id', selectedExperience.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Experience updated successfully",
+      });
+
+      setIsEditDialogOpen(false);
+      setSelectedExperience(null);
+      fetchExperiences();
+    } catch (error) {
+      console.error('Error updating experience:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update experience",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteExperience = async (id: string) => {
     try {
       const { error } = await supabase
         .from('experiences')
         .delete()
-        .eq('id', experienceId);
+        .eq('id', id);
 
       if (error) throw error;
 
@@ -110,42 +263,132 @@ export default function Experiences() {
 
   return (
     <AdminLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Experiences</h1>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="search"
-                placeholder="Search experiences..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-[300px]"
-              />
-            </div>
-            <Link to="/admin/experiences/new">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Experience Management</h1>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
                 <Plus className="h-4 w-4" /> Add Experience
               </Button>
-            </Link>
-          </div>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Experience</DialogTitle>
+                <DialogDescription>
+                  Create a new experience with the following details.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={newExperience.title}
+                    onChange={(e) => setNewExperience(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newExperience.description}
+                    onChange={(e) => setNewExperience(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={newExperience.price}
+                    onChange={(e) => setNewExperience(prev => ({ ...prev, price: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={newExperience.location}
+                    onChange={(e) => setNewExperience(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={newExperience.category}
+                    onChange={(e) => setNewExperience(prev => ({ ...prev, category: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="provider">Provider</Label>
+                  <Select
+                    value={newExperience.provider_id}
+                    onValueChange={(value) => setNewExperience(prev => ({ ...prev, provider_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {providers.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.user_metadata?.company_name || provider.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="image_url">Image URL</Label>
+                  <Input
+                    id="image_url"
+                    value={newExperience.image_url}
+                    onChange={(e) => setNewExperience(prev => ({ ...prev, image_url: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddExperience}>
+                  Create Experience
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
+        <Card>
+          <CardHeader>
+            <CardTitle>Experiences</CardTitle>
+            <CardDescription>Manage all experiences on the platform</CardDescription>
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search experiences..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Experience</TableHead>
-                    <TableHead>Category</TableHead>
+                    <TableHead>Provider</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead>Bookings</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
@@ -154,16 +397,41 @@ export default function Experiences() {
                   {filteredExperiences.map((experience) => (
                     <TableRow key={experience.id}>
                       <TableCell>
-                        <div className="font-medium">{experience.title}</div>
-                        <div className="text-sm text-muted-foreground line-clamp-2">
-                          {experience.description}
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={experience.image_url} />
+                            <AvatarFallback>
+                              {experience.title[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{experience.title}</div>
+                            <div className="text-sm text-muted-foreground">{experience.category}</div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{experience.category}</Badge>
+                        <div className="text-sm">
+                          {experience.provider?.user_metadata?.company_name || experience.provider?.email}
+                        </div>
                       </TableCell>
-                      <TableCell>{experience.location}</TableCell>
-                      <TableCell>${experience.price}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{experience.location}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <span>{experience.price}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {experience.bookings_count} bookings
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         {format(new Date(experience.created_at), 'MMM d, yyyy')}
                       </TableCell>
@@ -175,33 +443,22 @@ export default function Experiences() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedExperience(experience);
+                              setIsEditDialogOpen(true);
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteExperience(experience.id)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link to={`/experience/${experience.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                View
+                                View Experience
                               </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link to={`/admin/experiences/edit/${experience.id}`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleStatusChange(
-                                experience.id, 
-                                experience.status === 'active' ? 'inactive' : 'active'
-                              )}
-                            >
-                              <Badge className="mr-2 h-4 w-4" />
-                              {experience.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteExperience(experience.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -210,10 +467,122 @@ export default function Experiences() {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Edit Experience Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Experience</DialogTitle>
+            <DialogDescription>
+              Update the experience details.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedExperience && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={selectedExperience.title}
+                  onChange={(e) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    title: e.target.value
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={selectedExperience.description}
+                  onChange={(e) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    description: e.target.value
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-price">Price</Label>
+                <Input
+                  id="edit-price"
+                  type="number"
+                  value={selectedExperience.price}
+                  onChange={(e) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    price: parseFloat(e.target.value)
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Location</Label>
+                <Input
+                  id="edit-location"
+                  value={selectedExperience.location}
+                  onChange={(e) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    location: e.target.value
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Input
+                  id="edit-category"
+                  value={selectedExperience.category}
+                  onChange={(e) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    category: e.target.value
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-provider">Provider</Label>
+                <Select
+                  value={selectedExperience.provider_id}
+                  onValueChange={(value) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    provider_id: value
+                  } : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        {provider.user_metadata?.company_name || provider.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-image_url">Image URL</Label>
+                <Input
+                  id="edit-image_url"
+                  value={selectedExperience.image_url}
+                  onChange={(e) => setSelectedExperience(prev => prev ? {
+                    ...prev,
+                    image_url: e.target.value
+                  } : null)}
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditExperience}>
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 } 
