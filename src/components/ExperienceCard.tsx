@@ -124,14 +124,14 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
               "transition-transform duration-300",
               isHovered ? "translate-y-0" : "translate-y-4"
             )}>
-              <h3 className="text-base sm:text-lg font-medium mb-1.5 line-clamp-2">{experience.title}</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-1.5 line-clamp-2 text-white">{experience.title}</h3>
               
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center text-xs sm:text-sm text-white/80">
                   <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
                   <span className="truncate max-w-[120px] sm:max-w-[200px]">{experience.location}</span>
                 </div>
-                <div className="text-base sm:text-lg font-medium">{formatRupees(experience.price)}</div>
+                <div className="text-base sm:text-lg font-medium text-white">{formatRupees(experience.price)}</div>
               </div>
               
               <div className={cn(
