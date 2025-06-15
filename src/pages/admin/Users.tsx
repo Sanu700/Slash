@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Search, Mail, Phone, Shield, UserPlus, UserMinus, Users as UsersIcon, UserCog } from "lucide-react";
+import { MoreVertical, Search, Mail, Phone, Shield, UserPlus, UserMinus, Users as UsersIcon, UserCog, BarChart } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
@@ -133,6 +133,11 @@ export default function Users() {
             <Link to="/admin/users/providers">
               <Button variant="outline" className="flex items-center gap-2">
                 <UserCog className="h-4 w-4" /> Providers
+              </Button>
+            </Link>
+            <Link to="/admin/analytics">
+              <Button variant="outline" className="flex items-center gap-2">
+                <BarChart className="h-4 w-4" /> Analytics
               </Button>
             </Link>
           </div>
