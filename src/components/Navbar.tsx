@@ -457,8 +457,65 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               </DropdownMenu>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button className="md:hidden p-2" onClick={toggleMobileMenu} aria-label="Open menu">
+            <Menu className={iconClass} />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden">
+          <div className="bg-white dark:bg-gray-900 w-4/5 max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
+            <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
+              <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+            </button>
+            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">All Experiences</Link>
+            <Link to="/gifting-guide" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gifting Guide</Link>
+            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gift Personalizer</Link>
+            <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Host an Experience</Link>
+            {/* Company Section */}
+            <div>
+              <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+                Company
+                <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")} />
+              </button>
+              {companyDropdownOpen && (
+                <div className="pl-4 flex flex-col space-y-2 mt-2">
+                  <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
+                  <Link to="/how-it-works" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">How It Works</Link>
+                  <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
+                  <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
+                  <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
+                </div>
+              )}
+            </div>
+            {/* Support Section */}
+            <div>
+              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+                Support
+                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")} />
+              </button>
+              {supportDropdownOpen && (
+                <div className="pl-4 flex flex-col space-y-2 mt-2">
+                  <Link to="/contact" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Contact Us</Link>
+                  <Link to="/faq" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">FAQ</Link>
+                  <Link to="/gift-rules" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Gift Rules</Link>
+                  <Link to="/shipping" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Shipping</Link>
+                  <Link to="/returns" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Returns</Link>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 border-t pt-4">
+              <Link to="/admin/login" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Login as Admin</Link>
+            </div>
+          </div>
+          {/* Click outside to close */}
+          <div className="flex-1" onClick={toggleMobileMenu} />
+        </div>
+      )}
 
       {/* Search Overlay */}
       <div 
