@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { PaymentNotification } from '@/components/payment/PaymentNotification';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences, clearCart } = useCart();
@@ -187,7 +187,7 @@ const Cart: React.FC = () => {
                   if (!experience) return null;
 
                   return (
-                    <Card key={item.experienceId} className="overflow-hidden">
+                    <Card key={item.experienceId}>
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
                           <img
@@ -244,21 +244,28 @@ const Cart: React.FC = () => {
                   <CardContent className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
                     <div className="space-y-4">
-                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                        <span>Subtotal</span>
-                        <span>₹{totalPrice}</span>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                        <span className="text-gray-900 dark:text-white">₹{totalPrice}</span>
                       </div>
-                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                        <span>Taxes</span>
-                        <span>₹{Math.round(totalPrice * 0.18)}</span>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Tax (18%)</span>
+                        <span className="text-gray-900 dark:text-white">₹{Math.round(totalPrice * 0.18)}</span>
                       </div>
                       <div className="border-t pt-4">
-                        <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
-                          <span>Total</span>
-                          <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
+                        <div className="flex justify-between">
+                          <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
+                          <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                            ₹{totalPrice + Math.round(totalPrice * 0.18)}
+                          </span>
                         </div>
                       </div>
-                      <Button type="button" className="w-full mt-6" onClick={(e) => { e.preventDefault(); handlePayment(); }}>Proceed to Checkout</Button>
+                      <Button 
+                        className="w-full mt-4"
+                        onClick={() => navigate('/checkout')}
+                      >
+                        Proceed to Checkout
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
