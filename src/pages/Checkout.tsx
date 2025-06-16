@@ -1,17 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '../contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/lib/auth';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '../lib/supabase';
 import { config } from '@/config';
+
+interface UserMetadata {
+  full_name?: string;
+  avatar_url?: string;
+  phone?: string;
+}
+
+interface CartItem {
+  id: string;
+  experienceId: string;
+  quantity: number;
+  price: number;
+  experience?: {
+    title: string;
+    price: number;
+  };
+}
 
 const Checkout = () => {
   const { items, totalPrice, cachedExperiences, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -23,105 +41,107 @@ const Checkout = () => {
   const loadRazorpaySdk = () => {
     return new Promise((resolve, reject) => {
       if (window.Razorpay) {
-        console.log('Razorpay SDK already loaded');
         resolve(window.Razorpay);
         return;
       }
-
-      console.log('Loading Razorpay SDK...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => {
-        console.log('Razorpay SDK loaded successfully');
-        resolve(window.Razorpay);
-      };
-      script.onerror = (error) => {
-        console.error('Failed to load Razorpay SDK:', error);
-        reject(error);
-      };
+      script.onload = () => resolve(window.Razorpay);
+      script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
       document.body.appendChild(script);
     });
   };
 
   const handlePayment = async () => {
     if (!user) {
-      toast.error('Please sign in to proceed with payment');
+      toast({
+        variant: "destructive",
+        description: "Please sign in to complete your purchase",
+      });
       return;
     }
 
-    setIsLoading(true);
-    let order: any = null;
     try {
-      console.log('Starting payment process...');
-      const Razorpay = await loadRazorpaySdk();
-      
-      // Create order
-      console.log('Creating order...');
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: totalPrice * 100 } // Convert to paise
+      setIsLoading(true);
+
+      // Create order on your backend
+      const { data: order, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { amount: totalPrice * 100, currency: config.razorpay.currency }
       });
 
       if (orderError) throw orderError;
-      order = orderData;
-      console.log('Order created:', order);
 
-      // Configure Razorpay
+      const Razorpay = await loadRazorpaySdk();
+      
       const options = {
         key: config.razorpay.keyId,
         amount: order.amount,
-        currency: config.razorpay.currency,
+        currency: order.currency,
         name: config.razorpay.name,
         description: config.razorpay.description,
         order_id: order.id,
         handler: async function (response: any) {
-          console.log('Payment successful:', response);
-          // Verify payment
-          const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-            body: {
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature
-            }
-          });
-
-          if (verifyError) throw verifyError;
-
-          // Create booking
-          const { error: bookingError } = await supabase
-            .from('bookings')
-            .insert({
-              user_id: user.id,
-              experience_id: experience.id,
-              total_amount: totalPrice,
-              payment_id: response.razorpay_payment_id,
-              status: 'confirmed'
+          try {
+            // Verify payment on your backend
+            const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              }
             });
 
-          if (bookingError) throw bookingError;
+            if (verifyError) throw verifyError;
 
-          toast({
-            title: "Booking Confirmed!",
-            description: "Your experience has been booked successfully.",
-          });
-          navigate('/profile');
+            // Create booking records
+            const { error: bookingError } = await supabase
+              .from('bookings')
+              .insert(
+                items.map(item => {
+                  const experience = cachedExperiences[item.experienceId];
+                  return {
+                    user_id: user.id,
+                    experience_id: item.experienceId,
+                    quantity: item.quantity,
+                    total_amount: experience?.price ? experience.price * item.quantity : 0,
+                    payment_id: response.razorpay_payment_id,
+                    status: 'confirmed'
+                  };
+                })
+              );
+
+            if (bookingError) throw bookingError;
+
+            toast({
+              description: "Your experience has been booked successfully",
+            });
+            clearCart();
+            navigate('/profile');
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            toast({
+              variant: "destructive",
+              description: "There was an error verifying your payment. Please contact support",
+            });
+          }
         },
         prefill: {
-          name: user.user_metadata?.full_name,
+          name: (user.user_metadata as UserMetadata)?.full_name,
           email: user.email,
-          contact: user.user_metadata?.phone
+          contact: (user.user_metadata as UserMetadata)?.phone || ''
         },
-        theme: config.razorpay.theme
+        theme: {
+          color: "#000000"
+        }
       };
 
-      console.log('Initializing Razorpay with options:', options);
-      const razorpay = new Razorpay(options);
+      const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
     } catch (error) {
       console.error('Payment error:', error);
       toast({
-        title: "Payment Failed",
-        description: "There was an error processing your payment. Please try again.",
         variant: "destructive",
+        description: "There was an error processing your payment. Please try again",
       });
     } finally {
       setIsLoading(false);
@@ -148,14 +168,10 @@ const Checkout = () => {
                       return (
                         <div key={item.experienceId} className="flex justify-between items-center">
                           <div>
-                            <h3 className="text-gray-900 dark:text-white">{experience.title}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Quantity: {item.quantity}
-                            </p>
+                            <p className="font-medium">{experience.title}</p>
+                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                           </div>
-                          <span className="text-gray-900 dark:text-white">
-                            ₹{experience.price * item.quantity}
-                          </span>
+                          <p className="font-medium">₹{experience.price * item.quantity}</p>
                         </div>
                       );
                     })}
