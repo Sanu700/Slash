@@ -23,6 +23,13 @@ const AllExperiences = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
 
+  const clearFilters = () => {
+    setActiveFilters(null);
+    setSearchTerm('');
+    setSortOrder('default');
+    setCurrentPage(1);
+  };
+
   // Handle initial filters from location state
   useEffect(() => {
     // Get search term from URL query params
@@ -33,7 +40,9 @@ const AllExperiences = () => {
     }
 
     // Handle initial filters from location state
-    if (location.state?.initialFilters) {
+    if (location.state?.initialFilters === null) {
+      clearFilters();
+    } else if (location.state?.initialFilters) {
       setActiveFilters(location.state.initialFilters);
     }
   }, [location]);
@@ -140,7 +149,8 @@ const AllExperiences = () => {
   const activeFiltersCount =
     (activeFilters?.categories?.length || 0) +
     (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
-    (activeFilters?.priceRange ? 1 : 0);
+    (activeFilters?.priceRange && 
+     (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) ? 1 : 0);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -242,11 +252,13 @@ const AllExperiences = () => {
               {/* Experiences Grid */}
               {currentExperiences.length > 0 ? (
                 <div className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center stagger-children",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
                   {currentExperiences.map((experience) => (
-                    <ExperienceCard key={experience.id} experience={experience} />
+                    <div key={experience.id} className="flex justify-center">
+                      <ExperienceCard experience={experience} />
+                    </div>
                   ))}
                 </div>
               ) : (
