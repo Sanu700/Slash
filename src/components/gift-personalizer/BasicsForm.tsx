@@ -107,7 +107,7 @@ const BasicsForm = ({
           )}
         </div>
 
-        {/* <div>
+        <div>
           <Label htmlFor="budgetRange">Budget Range</Label>
           <div className="h-4" />
           <Slider
@@ -125,12 +125,12 @@ const BasicsForm = ({
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>₹0</span>
-            <span>₹100,000+</span>
+            <span>₹1,00,000</span>
           </div>
           <div className="text-center mt-1">
             ₹{formData.budgetRange[0]} - ₹{formData.budgetRange[1]}
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );
