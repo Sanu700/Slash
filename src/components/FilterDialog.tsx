@@ -73,12 +73,12 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(100000);
 
-  // Only reset filters when initialFilters is provided
+  // Update filters when initialFilters changes
   useEffect(() => {
-    if (isOpen && initialFilters) {
+    if (initialFilters) {
       setFilters(initialFilters);
     }
-  }, [isOpen, initialFilters]);
+  }, [initialFilters]);
 
   // Fetch filter data from Supabase when dialog opens
   useEffect(() => {
@@ -127,11 +127,13 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
         setMinPrice(min);
         setMaxPrice(max);
         
-        // Update price range in filters
-        setFilters(prev => ({
-          ...prev,
-          priceRange: [min, max]
-        }));
+        // Only update price range if it hasn't been set by initialFilters
+        if (!initialFilters) {
+          setFilters(prev => ({
+            ...prev,
+            priceRange: [min, max]
+          }));
+        }
       } catch (err) {
         console.error('Error fetching filter data:', err);
         setError('Failed to load filter options');
@@ -141,7 +143,7 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
     };
 
     fetchFilterData();
-  }, [isOpen]);
+  }, [isOpen, initialFilters]);
 
   const handlePriceChange = (value: number[]) => {
     try {
