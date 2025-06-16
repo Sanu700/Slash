@@ -8,9 +8,9 @@ import { LoginModal } from '@/components/LoginModal';
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (experienceId: string) => Promise<void>;
+  addToCart: (experienceId: string, selectedDate?: Date | null, selectedTime?: string | null) => Promise<void>;
   removeFromCart: (experienceId: string) => Promise<void>;
-  updateQuantity: (experienceId: string, quantity: number) => Promise<void>;
+  updateQuantity: (experienceId: string, quantity: number, selectedDate?: Date | null, selectedTime?: string | null) => Promise<void>;
   clearCart: () => Promise<void>;
   itemCount: number;
   totalPrice: number;
@@ -62,7 +62,9 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
           
           const cartItems: CartItem[] = data.map(item => ({
             experienceId: item.experience_id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            selectedDate: item.selected_date ? new Date(item.selected_date) : null,
+            selectedTime: item.selected_time
           }));
           
           setItems(cartItems);
@@ -133,7 +135,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
     fetchExperiencesForCart();
   }, [items]);
 
-  const addToCart = async (experienceId: string) => {
+  const addToCart = async (experienceId: string, selectedDate?: Date | null, selectedTime?: string | null) => {
     try {
       // Check if user is authenticated
       if (!user?.id) {
@@ -167,6 +169,8 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
               user_id: user.id,
               experience_id: experienceId,
               quantity: newQuantity,
+              selected_date: selectedDate?.toISOString() || null,
+              selected_time: selectedTime || null,
               updated_at: new Date().toISOString()
             },
             { 
@@ -183,10 +187,10 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         const updatedItems = existingItem
           ? items.map(item => 
               item.experienceId === experienceId 
-                ? { ...item, quantity: item.quantity + 1 } 
+                ? { ...item, quantity: item.quantity + 1, selectedDate, selectedTime } 
                 : item
             )
-          : [...items, { experienceId, quantity: 1 }];
+          : [...items, { experienceId, quantity: 1, selectedDate, selectedTime }];
         
         setItems(updatedItems);
         localStorage.setItem('cart', JSON.stringify(updatedItems));
@@ -199,11 +203,11 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         if (existingItem) {
           return prevItems.map(item => 
             item.experienceId === experienceId 
-              ? { ...item, quantity: item.quantity + 1 } 
+              ? { ...item, quantity: item.quantity + 1, selectedDate, selectedTime } 
               : item
           );
         } else {
-          return [...prevItems, { experienceId, quantity: 1 }];
+          return [...prevItems, { experienceId, quantity: 1, selectedDate, selectedTime }];
         }
       });
       
@@ -246,7 +250,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const updateQuantity = async (experienceId: string, quantity: number) => {
+  const updateQuantity = async (experienceId: string, quantity: number, selectedDate?: Date | null, selectedTime?: string | null) => {
     try {
       if (quantity <= 0) {
         await removeFromCart(experienceId);
@@ -259,6 +263,8 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
           .from('cart_items')
           .update({ 
             quantity,
+            selected_date: selectedDate?.toISOString() || null,
+            selected_time: selectedTime || null,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id)
@@ -275,7 +281,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
       setItems(prevItems => 
         prevItems.map(item => 
           item.experienceId === experienceId 
-            ? { ...item, quantity } 
+            ? { ...item, quantity, selectedDate, selectedTime } 
             : item
         )
       );
