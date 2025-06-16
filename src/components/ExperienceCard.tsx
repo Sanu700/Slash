@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 interface ExperienceCardProps {
   experience: Experience;
   featured?: boolean;
+  onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
 }
 
-const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) => {
+const ExperienceCard = ({ experience, featured = false, onWishlistChange }: ExperienceCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -56,7 +57,9 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
       return;
     }
     await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, (experiences) => {
-      setIsInWishlist(!isInWishlist);
+      const newWishlistState = !isInWishlist;
+      setIsInWishlist(newWishlistState);
+      onWishlistChange?.(experience.id, newWishlistState);
     });
   };
 
