@@ -10,7 +10,6 @@ import NavButtons from '@/components/gift-personalizer/NavButtons';
 import { Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
-import Layout from '@/components/Layout';
 
 type Step = 'basics' | 'interests' | 'preferences' | 'results';
 
@@ -106,86 +105,84 @@ export default function GiftPersonalizer() {
   };
 
   return (
-    <Layout isDarkPage={true}>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-        {/* Hero Section */}
-        <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
-          <img 
-            src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
-            alt="Gift Personalizer"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-            <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
-              <Wand2 className="h-8 w-8" />
-            </div>
-            <h1 className="text-3xl md:text-5xl font-medium mb-4">Gift Personalizer</h1>
-            <p className="max-w-2xl text-white/80 text-lg mb-8">
-              Answer a few questions to find the perfect experience gift for your special someone
-            </p>
+    <div className="bg-gradient-to-b from-background to-muted/20">
+      {/* Hero Section */}
+      <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
+        <img 
+          src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
+          alt="Gift Personalizer"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
+          <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
+            <Wand2 className="h-8 w-8" />
           </div>
-        </div>
-
-        {/* Form Section */}
-        <div
-          ref={formRef}
-          className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"
-        >
-          <motion.div
-            ref={contentRef}
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="bg-card rounded-lg shadow-lg p-6"
-          >
-            <div className="mb-6">
-              <Progress value={getStepProgress()} className="h-2" />
-            </div>
-
-            {currentStep === 'basics' && (
-              <BasicsForm
-                formData={formData}
-                handleInputChange={handleInputChange}
-                setFormData={setFormData}
-              />
-            )}
-
-            {currentStep === 'interests' && (
-              <InterestsForm
-                formData={formData}
-                handleInterestToggle={handleInterestToggle}
-              />
-            )}
-
-            {currentStep === 'preferences' && (
-              <PreferencesForm
-                formData={formData}
-                handleInputChange={handleInputChange}
-              />
-            )}
-
-            {currentStep === 'results' && (
-              <ResultsSection
-                suggestedExperiences={suggestedExperiences}
-                formData={formData}
-                onBack={handlePreviousStep}
-              />
-            )}
-
-            {/* Nav Buttons */}
-            {currentStep !== 'results' && (
-              <NavButtons
-                currentStep={currentStep}
-                handlePreviousStep={handlePreviousStep}
-                handleNextStep={handleNextStep}
-                isGenerating={isGenerating}
-                disabled={!isStepValid()}
-              />
-            )}
-          </motion.div>
+          <h1 className="text-3xl md:text-5xl font-medium mb-4">Gift Personalizer</h1>
+          <p className="max-w-2xl text-white/80 text-lg mb-8">
+            Answer a few questions to find the perfect experience gift for your special someone
+          </p>
         </div>
       </div>
-    </Layout>
+
+      {/* Form Section */}
+      <div
+        ref={formRef}
+        className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"
+      >
+        <motion.div
+          ref={contentRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="bg-card rounded-lg shadow-lg p-6"
+        >
+          <div className="mb-6">
+            <Progress value={getStepProgress()} className="h-2" />
+          </div>
+
+          {currentStep === 'basics' && (
+            <BasicsForm
+              formData={formData}
+              handleInputChange={handleInputChange}
+              setFormData={setFormData}
+            />
+          )}
+
+          {currentStep === 'interests' && (
+            <InterestsForm
+              formData={formData}
+              handleInterestToggle={handleInterestToggle}
+            />
+          )}
+
+          {currentStep === 'preferences' && (
+            <PreferencesForm
+              formData={formData}
+              handleInputChange={handleInputChange}
+            />
+          )}
+
+          {currentStep === 'results' && (
+            <ResultsSection
+              suggestedExperiences={suggestedExperiences}
+              formData={formData}
+              onBack={handlePreviousStep}
+            />
+          )}
+
+          {/* Nav Buttons */}
+          {currentStep !== 'results' && (
+            <NavButtons
+              currentStep={currentStep}
+              handlePreviousStep={handlePreviousStep}
+              handleNextStep={handleNextStep}
+              isGenerating={isGenerating}
+              disabled={!isStepValid()}
+            />
+          )}
+        </motion.div>
+      </div>
+    </div>
   );
 }
