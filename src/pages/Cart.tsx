@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { config } from '@/config';
+import { format } from 'date-fns';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences, clearCart } = useCart();
@@ -167,7 +168,7 @@ const Cart: React.FC = () => {
                 return (
                   <Card key={item.experienceId} className="overflow-hidden">
                     <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
+                      <div className="flex gap-4">
                         <img
                           src={experience.imageUrl}
                           alt={experience.title}
@@ -176,6 +177,11 @@ const Cart: React.FC = () => {
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{experience.title}</h3>
                           <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{experience.location}</p>
+                          {item.selectedDate && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                              Date: {format(new Date(item.selectedDate), 'PPP')}
+                            </p>
+                          )}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Button

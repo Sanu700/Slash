@@ -154,9 +154,6 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
                   View Experience
                 </Button>
               </Link>
-              <Button size="sm" variant="outline" className="w-full mt-2 text-black" onClick={handleAddToCart}>
-                Add to Cart
-              </Button>
             </div>
           </div>
         </div>

@@ -101,6 +101,11 @@ const ExperienceView = () => {
   const isGuest = !user || !user.id || typeof user.id !== 'string' || user.id.length < 10;
   
   const handleAddToCart = async () => {
+    if (!selectedDate) {
+      setShowDatePopover(true);
+      toast.error('Please select a date before adding to cart.');
+      return;
+    }
     if (isGuest) {
       // LocalStorage fallback ONLY, do not call CartContext or Supabase
       if (!experience) return;
@@ -108,11 +113,15 @@ const ExperienceView = () => {
       let cartArr = cart ? JSON.parse(cart) : [];
       const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
       if (idx > -1) {
-        cartArr[idx].quantity += 1;
+        cartArr[idx].quantity = quantityInCart;
         setQuantityInCart(cartArr[idx].quantity);
       } else {
-        cartArr.push({ experienceId: experience.id, quantity: 1 });
-        setQuantityInCart(1);
+        cartArr.push({ 
+          experienceId: experience.id, 
+          quantity: quantityInCart,
+          selectedDate: selectedDate.toISOString()
+        });
+        setQuantityInCart(quantityInCart);
       }
       localStorage.setItem('cart', JSON.stringify(cartArr));
       toast.success('Added to cart');
@@ -120,7 +129,8 @@ const ExperienceView = () => {
     }
     setIsCartLoading(true);
     try {
-      await addToCart(experience.id);
+      // Add to cart with the selected quantity
+      await addToCart(experience.id, selectedDate, quantityInCart);
       toast.success('Added to cart');
     } catch (e) {
       toast.error('Failed to add to cart');
@@ -151,6 +161,7 @@ const ExperienceView = () => {
     setIsCartLoading(true);
     try {
       await updateQuantity(experience.id, quantityInCart - 1);
+      setQuantityInCart(prev => prev - 1);
       toast.success('Updated quantity');
     } catch (e) {
       toast.error('Failed to update quantity');
@@ -172,7 +183,11 @@ const ExperienceView = () => {
         newQty = cartArr[idx].quantity;
         cartArr = [...cartArr]; // force new array reference
       } else {
-        cartArr.push({ experienceId: experience.id, quantity: 1 });
+        cartArr.push({ 
+          experienceId: experience.id, 
+          quantity: 1,
+          selectedDate: selectedDate?.toISOString()
+        });
         newQty = 1;
       }
       localStorage.setItem('cart', JSON.stringify(cartArr));
@@ -183,6 +198,7 @@ const ExperienceView = () => {
     setIsCartLoading(true);
     try {
       await updateQuantity(experience.id, quantityInCart + 1);
+      setQuantityInCart(prev => prev + 1);
       toast.success('Updated quantity');
     } catch (e) {
       toast.error('Failed to update quantity');
@@ -475,7 +491,7 @@ const ExperienceView = () => {
                   <Button 
                     className="w-full"
                     onClick={handleAddToCart}
-                    disabled={isCartLoading}
+                    disabled={isCartLoading /* Don't disable for !selectedDate, handle in logic */}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     {isCartLoading ? 'Processing...' : 'Add to Cart'}
