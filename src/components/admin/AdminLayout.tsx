@@ -17,8 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Briefcase,
-  CreditCard
+  Briefcase
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,7 +60,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ]
     },
     { path: '/admin/experiences', label: 'Experiences', icon: Gift },
-    { path: '/admin/payments', label: 'Payments', icon: CreditCard },
+    
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
@@ -80,7 +79,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Backdrop */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -92,7 +90,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <aside className={cn(
         "fixed top-0 left-0 z-50 h-full bg-white border-r transform transition-all duration-200 ease-in-out",
         isSidebarOpen ? "w-64" : "w-16",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         "lg:translate-x-0"
       )}>
         <div className="flex flex-col h-full">
@@ -188,11 +185,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className={cn(
-        "transition-all duration-200",
-        isSidebarOpen ? "lg:pl-64" : "lg:pl-16",
-        "pl-0"
-      )}>
+      <div className={cn("transition-all duration-200", isSidebarOpen ? "lg:pl-64" : "lg:pl-16")}>
         {/* Header */}
         <header className="h-16 border-b bg-white w-full">
           <div className="h-full px-4 flex items-center justify-between w-full">
@@ -265,7 +258,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6">
+        <main className="p-6">
           {children}
         </main>
       </div>

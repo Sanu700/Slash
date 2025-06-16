@@ -84,12 +84,12 @@ const Hero = () => {
       <div className="container max-w-6xl mx-auto px-6 md:px-10 relative z-10 text-white mt-20">
         <div className="max-w-3xl">
           <div className={cn("transition-all duration-1000 transform", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
-            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 -ml-[3px]">
+            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 -ml-[0px]">
               <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-4 w-4" />
               <span className="text-sm font-medium">Curated Experience Gifts</span>
             </div>
             
-            <div className="-ml-[10px]">
+            <div className="-ml-[2px]">
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow max-w-2xl">
                 Gifting Something, <br />
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
@@ -103,7 +103,7 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col items-start space-y-6">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 -ml-[-0.5px]">
                 <SuggestedExperiences />
         </div>
         

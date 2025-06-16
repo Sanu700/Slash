@@ -5,7 +5,6 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id: string;
-  handler: (response: RazorpayResponse) => void;
   prefill?: {
     name?: string;
     email?: string;
@@ -14,6 +13,7 @@ interface RazorpayOptions {
   theme?: {
     color: string;
   };
+  handler: (response: any) => void;
 }
 
 interface RazorpayResponse {
@@ -22,17 +22,19 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
-interface Razorpay {
-  new(options: RazorpayOptions): RazorpayInstance;
+interface RazorpayInstance {
+  open: () => void;
+  close: () => void;
 }
 
-interface RazorpayInstance {
-  open(): void;
-  close(): void;
+interface Razorpay {
+  new (options: RazorpayOptions): RazorpayInstance;
 }
 
 declare global {
   interface Window {
     Razorpay: Razorpay;
   }
-} 
+}
+
+export {}; 
