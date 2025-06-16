@@ -194,14 +194,11 @@ const AllExperiences = () => {
     (activeFilters?.categories?.length || 0) +
     (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
     (activeFilters?.priceRange && 
-<<<<<<< Anirudh
      (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) ? 1 : 0) +
     (activeFilters?.duration && activeFilters.duration !== 'any' ? 1 : 0) +
     (activeFilters?.experienceTypes && 
      Object.values(activeFilters.experienceTypes).filter(Boolean).length);
-=======
-     (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) ? 1 : 0);
->>>>>>> main
+
 
   return (
     <div className="min-h-screen flex flex-col">
