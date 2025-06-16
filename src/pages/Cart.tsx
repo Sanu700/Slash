@@ -30,7 +30,13 @@ const Cart: React.FC = () => {
       }
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(window.Razorpay);
+      script.onload = () => {
+        if (window.Razorpay) {
+          resolve(window.Razorpay);
+        } else {
+          reject(new Error('Razorpay SDK failed to load'));
+        }
+      };
       script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
       document.body.appendChild(script);
     });
@@ -51,10 +57,20 @@ const Cart: React.FC = () => {
 
       // Create order on your backend
       const { data: order, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: totalPrice * 100, currency: config.razorpay.currency }
+        body: { 
+          amount: Math.round(totalPrice * 100), // Ensure amount is in paise and is an integer
+          currency: config.razorpay.currency 
+        }
       });
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
+
+      if (!order || !order.id) {
+        throw new Error('Invalid order response from server');
+      }
 
       const Razorpay = await loadRazorpaySdk();
       
@@ -76,7 +92,10 @@ const Cart: React.FC = () => {
               }
             });
 
-            if (verifyError) throw verifyError;
+            if (verifyError) {
+              console.error('Payment verification error:', verifyError);
+              throw new Error(`Payment verification failed: ${verifyError.message}`);
+            }
 
             // Create booking records
             const { error: bookingError } = await supabase
@@ -95,38 +114,50 @@ const Cart: React.FC = () => {
                 })
               );
 
-            if (bookingError) throw bookingError;
+            if (bookingError) {
+              console.error('Booking creation error:', bookingError);
+              throw new Error(`Failed to create booking: ${bookingError.message}`);
+            }
 
             toast({
               description: "Your experience has been booked successfully",
             });
             clearCart();
             navigate('/profile');
-          } catch (error) {
-            console.error('Payment verification error:', error);
+          } catch (error: any) {
+            console.error('Payment processing error:', error);
             toast({
               variant: "destructive",
-              description: "There was an error verifying your payment. Please contact support",
+              title: "Payment Processing Error",
+              description: error.message || "There was an error processing your payment. Please contact support",
             });
           }
         },
         prefill: {
-          name: user.user_metadata?.full_name,
-          email: user.email,
+          name: user.user_metadata?.full_name || '',
+          email: user.email || '',
           contact: user.user_metadata?.phone || ''
         },
         theme: {
           color: "#000000"
+        },
+        modal: {
+          ondismiss: function() {
+            toast({
+              description: "Payment cancelled",
+            });
+          }
         }
       };
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
-    } catch (error) {
-      console.error('Payment error:', error);
+    } catch (error: any) {
+      console.error('Payment initialization error:', error);
       toast({
         variant: "destructive",
-        description: "There was an error processing your payment. Please try again",
+        title: "Payment Error",
+        description: error.message || "There was an error initializing the payment. Please try again",
       });
     } finally {
       setIsLoading(false);
