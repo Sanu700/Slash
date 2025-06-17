@@ -155,8 +155,9 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
   const handleCategoryChange = (category: string) => {
     setFilters(prev => {
       const currentCategories = prev.categories || [];
-      const newCategories = currentCategories.includes(category)
-        ? currentCategories.filter(c => c !== category)
+      const categoryExists = currentCategories.some(c => c.toLowerCase() === category.toLowerCase());
+      const newCategories = categoryExists
+        ? currentCategories.filter(c => c.toLowerCase() !== category.toLowerCase())
         : [...currentCategories, category];
       
       return {
@@ -266,7 +267,7 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
                     <div key={category} className="flex items-center space-x-2">
                       <Checkbox
                         id={category}
-                        checked={filters.categories.includes(category)}
+                        checked={filters.categories.some(c => c.toLowerCase() === category.toLowerCase())}
                         onCheckedChange={() => handleCategoryChange(category)}
                       />
                       <Label 
