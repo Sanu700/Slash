@@ -12,7 +12,7 @@ export interface PaymentDetails {
 
 export const createPayment = async (details: PaymentDetails) => {
   try {
-    const response = await fetch('/api/payment/create-order', {
+    const response = await fetch('http://localhost:3001/api/payment/create-order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export const verifyPayment = async (
   razorpay_signature: string
 ) => {
   try {
-    const response = await fetch('/api/payment/verify-payment', {
+    const response = await fetch('http://localhost:3001/api/payment/verify-payment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
