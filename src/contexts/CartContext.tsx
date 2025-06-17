@@ -267,14 +267,6 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Validate user ID is a valid UUID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(user.id)) {
-        console.warn('Invalid user ID format:', user.id);
-        toast.error('Unable to update cart. Please try logging in again.');
-        return;
-      }
-
       // Get the existing item to preserve selectedDate
       const existingItem = items.find(item => item.experienceId === experienceId);
 
@@ -282,20 +274,19 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { error } = await supabase
           .from('cart_items')
-
           .upsert(
             {
               user_id: user.id,
               experience_id: experienceId,
               quantity,
-              selected_date: existingItem?.selectedDate?.toISOString(),
+              selected_date: existingItem?.selectedDate?.toISOString() || null,
+              selected_time: selectedTime || null,
               updated_at: new Date().toISOString()
             },
             {
               onConflict: 'user_id,experience_id'
             }
           );
-
 
         if (error) {
           throw error;
@@ -312,11 +303,9 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Update local state
-
       setItems(prevItems =>
         prevItems.map(item =>
           item.experienceId === experienceId ? { ...item, quantity } : item
-
         )
       );
     } catch (error) {
