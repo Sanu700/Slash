@@ -1,10 +1,4 @@
-import Razorpay from 'razorpay';
-
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-});
+// Removed Razorpay import and usage. This file should only contain client-side logic and API calls to your backend for payment creation/verification.
 
 export interface PaymentDetails {
   amount: number;
