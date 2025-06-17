@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { config } from '@/config';
 import { format } from 'date-fns';
+import { RazorpayPayment } from '@/components/RazorpayPayment';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences, clearCart } = useCart();
@@ -266,13 +267,17 @@ const Cart: React.FC = () => {
                         <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
                       </div>
                     </div>
-                    <Button 
-                      className="w-full mt-6" 
-                      onClick={handlePayment} 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Processing...' : 'Proceed to Payment'}
-                    </Button>
+                    <RazorpayPayment
+                      onSuccess={handlePayment}
+                      onError={(error) => {
+                        console.error('Payment error:', error);
+                        toast({
+                          variant: "destructive",
+                          title: "Payment Error",
+                          description: error.message || "There was an error processing your payment. Please contact support",
+                        });
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
