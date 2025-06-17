@@ -1,25 +1,4 @@
-import Razorpay from 'razorpay';
+// This file should not import or use 'razorpay'.
+// If you need to create orders, call your backend API endpoint from the frontend instead.
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-  try {
-    const { amount, currency, receipt, notes } = req.body;
-    const order = await razorpay.orders.create({
-      amount: amount * 100,
-      currency,
-      receipt,
-      notes,
-    });
-    res.json(order);
-  } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ error: 'Failed to create order' });
-  }
-} 
+// You can delete this file if not needed, or leave it as a placeholder. 
