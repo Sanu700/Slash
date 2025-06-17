@@ -65,7 +65,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await addToCart(experience.id, null, null);
+    if (!user) {
+      toast.error('Please log in to add items to cart');
+      return;
+    }
+    await addToCart(experience.id, new Date(), 1);
   };
 
   return (
@@ -152,11 +156,20 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               "transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
-              <Link to={`/experience/${experience.id}`}>
-                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
-                  View Experience
+              <div className="grid grid-cols-2 gap-2">
+                <Link to={`/experience/${experience.id}`}>
+                  <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
+                    View Experience
+                  </Button>
+                </Link>
+                <Button 
+                  size="sm" 
+                  className="w-full bg-primary text-white hover:bg-primary/90"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
                 </Button>
-              </Link>
+              </div>
             </div>
           </div>
         </div>
