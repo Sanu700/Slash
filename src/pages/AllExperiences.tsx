@@ -23,6 +23,13 @@ const AllExperiences = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
 
+  const clearFilters = () => {
+    setActiveFilters(null);
+    setSearchTerm('');
+    setSortOrder('default');
+    setCurrentPage(1);
+  };
+
   // Handle initial filters from location state
   useEffect(() => {
     // Get search term from URL query params
@@ -33,7 +40,9 @@ const AllExperiences = () => {
     }
 
     // Handle initial filters from location state
-    if (location.state?.initialFilters) {
+    if (location.state?.initialFilters === null) {
+      clearFilters();
+    } else if (location.state?.initialFilters) {
       setActiveFilters(location.state.initialFilters);
     }
   }, [location]);
@@ -56,6 +65,7 @@ const AllExperiences = () => {
 
     // Apply active filters
     if (activeFilters) {
+      // Category filter
       if (activeFilters.categories?.length) {
         filtered = filtered.filter(exp => 
           activeFilters.categories.some(category => 
@@ -64,17 +74,60 @@ const AllExperiences = () => {
         );
       }
 
+      // Location filter
       if (activeFilters.location && activeFilters.location !== 'any') {
         filtered = filtered.filter(exp => 
           exp.location.toLowerCase() === activeFilters.location.toLowerCase()
         );
       }
 
+      // Price range filter
       if (activeFilters.priceRange) {
         filtered = filtered.filter(exp => 
           exp.price >= activeFilters.priceRange[0] && 
           exp.price <= activeFilters.priceRange[1]
         );
+      }
+
+      // Duration filter
+      if (activeFilters.duration && activeFilters.duration !== 'any') {
+        filtered = filtered.filter(exp => {
+          const [min, max] = activeFilters.duration.split('-').map(Number);
+          
+          // Parse duration string to handle different formats
+          const durationStr = exp.duration.toLowerCase();
+          let expDuration: number;
+          
+          if (durationStr.includes('day') || durationStr.includes('days')) {
+            // Convert days to hours (1 day = 24 hours)
+            const days = parseInt(durationStr);
+            expDuration = days * 24;
+          } else if (durationStr.includes('full day')) {
+            expDuration = 24; // Full day is considered as 24 hours
+          } else {
+            // Extract hours from string like "2 hours" or "3-4 hours"
+            expDuration = parseInt(durationStr);
+          }
+          
+          if (activeFilters.duration === '12+') {
+            // Include experiences that are 12+ hours, including full day and multi-day experiences
+            return expDuration >= 12 || durationStr.includes('full day');
+          }
+          
+          return expDuration >= min && expDuration <= max;
+        });
+      }
+
+      // Experience types filter
+      if (Object.values(activeFilters.experienceTypes).some(Boolean)) {
+        filtered = filtered.filter(exp => {
+          if (activeFilters.experienceTypes.romantic && exp.romantic) return true;
+          if (activeFilters.experienceTypes.adventurous && exp.adventurous) return true;
+          if (activeFilters.experienceTypes.group && exp.group) return true;
+          if (activeFilters.experienceTypes.trending && exp.trending) return true;
+          if (activeFilters.experienceTypes.featured && exp.featured) return true;
+          return false;
+        });
       }
     }
     
@@ -140,7 +193,12 @@ const AllExperiences = () => {
   const activeFiltersCount =
     (activeFilters?.categories?.length || 0) +
     (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
-    (activeFilters?.priceRange ? 1 : 0);
+    (activeFilters?.priceRange && 
+     (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) ? 1 : 0) +
+    (activeFilters?.duration && activeFilters.duration !== 'any' ? 1 : 0) +
+    (activeFilters?.experienceTypes && 
+     Object.values(activeFilters.experienceTypes).filter(Boolean).length);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -242,11 +300,13 @@ const AllExperiences = () => {
               {/* Experiences Grid */}
               {currentExperiences.length > 0 ? (
                 <div className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center stagger-children",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
                   {currentExperiences.map((experience) => (
-                    <ExperienceCard key={experience.id} experience={experience} />
+                    <div key={experience.id} className="flex justify-center">
+                      <ExperienceCard experience={experience} />
+                    </div>
                   ))}
                 </div>
               ) : (
