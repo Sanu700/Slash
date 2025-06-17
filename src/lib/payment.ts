@@ -18,14 +18,19 @@ export interface PaymentDetails {
 
 export const createPayment = async (details: PaymentDetails) => {
   try {
-    const order = await razorpay.orders.create({
-      amount: details.amount * 100, // Razorpay expects amount in paise
-      currency: details.currency,
-      receipt: details.receipt,
-      notes: details.notes,
+    const response = await fetch('http://localhost:3001/api/payment/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(details),
     });
 
-    return order;
+    if (!response.ok) {
+      throw new Error('Failed to create order');
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error creating payment:', error);
     throw error;
@@ -38,36 +43,24 @@ export const verifyPayment = async (
   razorpay_signature: string
 ) => {
   try {
-    // Convert the secret key to a Uint8Array
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(process.env.RAZORPAY_KEY_SECRET || '');
-    
-    // Import the key
-    const key = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
+    const response = await fetch('http://localhost:3001/api/payment/verify-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        razorpay_payment_id,
+        razorpay_order_id,
+        razorpay_signature,
+      }),
+    });
 
-    // Create the message
-    const message = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const messageData = encoder.encode(message);
+    if (!response.ok) {
+      throw new Error('Payment verification failed');
+    }
 
-    // Sign the message
-    const signature = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      messageData
-    );
-
-    // Convert the signature to hex
-    const generated_signature = Array.from(new Uint8Array(signature))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    return generated_signature === razorpay_signature;
+    const data = await response.json();
+    return data.verified;
   } catch (error) {
     console.error('Error verifying payment:', error);
     throw error;
