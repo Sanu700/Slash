@@ -150,20 +150,11 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
   }, [items]);
 
 
-  const addToCart = async (experienceId: string, selectedDate: Date, quantity: number = 1) => {
-
+  const addToCart = async (experienceId: string, selectedDate: Date | null = null, quantity: number = 1) => {
     try {
       // Check if user is authenticated
       if (!user?.id) {
         setShowLoginModal(true);
-        return;
-      }
-
-      // Validate user ID is a valid UUID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(user.id)) {
-        console.warn('Invalid user ID format:', user.id);
-        toast.error('Unable to add item to cart. Please try logging in again.');
         return;
       }
 
@@ -183,10 +174,8 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
             { 
               user_id: user.id,
               experience_id: experienceId,
-
               quantity: quantity,
-              selected_date: selectedDate.toISOString(),
-
+              selected_date: selectedDate?.toISOString() || null,
               updated_at: new Date().toISOString()
             },
             { 
@@ -203,12 +192,10 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         const updatedItems = existingItem
           ? items.map(item => 
               item.experienceId === experienceId 
-
-                ? { ...item, quantity: quantity } 
+                ? { ...item, quantity: quantity, selectedDate } 
                 : item
             )
           : [...items, { experienceId, quantity, selectedDate }];
-
         
         setItems(updatedItems);
         localStorage.setItem('cart', JSON.stringify(updatedItems));
@@ -221,13 +208,11 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         if (existingItem) {
           return prevItems.map(item => 
             item.experienceId === experienceId 
-
-              ? { ...item, quantity: quantity } 
+              ? { ...item, quantity: quantity, selectedDate } 
               : item
           );
         } else {
           return [...prevItems, { experienceId, quantity, selectedDate }];
-
         }
       });
       
