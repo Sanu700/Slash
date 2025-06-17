@@ -26,7 +26,7 @@ const Footer = () => {
       state: {
         initialFilters: {
           priceRange: [0, 100000],
-          categories: [category.toLowerCase()],
+          categories: [category],
           experienceTypes: {
             romantic: false,
             adventurous: false,
@@ -37,6 +37,16 @@ const Footer = () => {
           duration: 'any',
           location: 'any'
         }
+      }
+    });
+  };
+
+  const handleAllExperiencesClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    scrollToTop();
+    navigate('/experiences', {
+      state: {
+        initialFilters: null
       }
     });
   };
@@ -157,7 +167,7 @@ const Footer = () => {
                       <li key={link.name}>
                         <Link 
                           to={link.href}
-                          onClick={scrollToTop}
+                          onClick={handleAllExperiencesClick}
                           className="text-muted-foreground hover:text-foreground transition-colors"
                         >
                           {link.name}
