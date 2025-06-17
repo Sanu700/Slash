@@ -36,14 +36,13 @@ export const useExperienceInteractions = (userId: string | undefined) => {
     experienceId: string,
     isInWishlist: boolean,
     experiences: Record<string, any>,
-    onSuccess?: (experiences: Record<string, any>) => void
+    onSuccess: (experiences: Record<string, any>) => void
   ) => {
     if (!userId) {
-      toast.error('Please log in to manage your wishlist');
+      toast.error('Please log in to save to your wishlist');
       return;
     }
 
-    setIsProcessing(true);
     try {
       if (isInWishlist) {
         // Remove from wishlist
@@ -55,31 +54,35 @@ export const useExperienceInteractions = (userId: string | undefined) => {
         if (error) throw error;
 
         const updatedExperiences = { ...experiences };
-        delete updatedExperiences[experienceId];
-        onSuccess?.(updatedExperiences);
-        toast.success('Removed from wishlist');
+        if (updatedExperiences[experienceId]) {
+          updatedExperiences[experienceId] = {
+            ...updatedExperiences[experienceId],
+            isInWishlist: false
+          };
+        }
+        onSuccess(updatedExperiences);
       } else {
         // Add to wishlist
         const { error } = await supabase
           .from('wishlists')
-          .insert({
-            user_id: userId,
-            experience_id: experienceId,
-            added_at: new Date().toISOString()
-          });
+          .insert([
+            { user_id: userId, experience_id: experienceId }
+          ]);
 
         if (error) throw error;
 
         const updatedExperiences = { ...experiences };
-        updatedExperiences[experienceId] = true;
-        onSuccess?.(updatedExperiences);
-        toast.success('Added to wishlist');
+        if (updatedExperiences[experienceId]) {
+          updatedExperiences[experienceId] = {
+            ...updatedExperiences[experienceId],
+            isInWishlist: true
+          };
+        }
+        onSuccess(updatedExperiences);
       }
     } catch (error) {
-      console.error('Error toggling wishlist:', error);
+      console.error('Error updating wishlist:', error);
       toast.error('Failed to update wishlist');
-    } finally {
-      setIsProcessing(false);
     }
   };
   
