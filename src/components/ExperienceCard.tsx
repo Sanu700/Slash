@@ -65,7 +65,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await addToCart(experience.id);
+    await addToCart(experience.id, null, null);
   };
 
   return (

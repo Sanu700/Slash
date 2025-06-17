@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/lib/auth';
-import { createPayment } from '@/lib/payment';
+import { createPayment, verifyPayment } from '@/lib/payment';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface RazorpayOptions {
   key: string;
@@ -46,6 +47,7 @@ export const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
 }) => {
   const { totalPrice, checkout } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const initializePayment = async () => {
     try {
@@ -73,11 +75,25 @@ export const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
         order_id: order.id,
         handler: async function (response: RazorpayResponse) {
           try {
-            // Handle successful payment
+            // Verify the payment
+            const isValid = await verifyPayment(
+              response.razorpay_payment_id,
+              response.razorpay_order_id,
+              response.razorpay_signature
+            );
+
+            if (!isValid) {
+              toast.error('Payment verification failed');
+              onError?.(new Error('Payment verification failed'));
+              return;
+            }
+
+            // Process the booking
             const success = await checkout();
             if (success) {
               toast.success('Payment successful!');
               onSuccess?.();
+              navigate('/profile');
             } else {
               toast.error('Payment successful but booking failed');
               onError?.(new Error('Booking failed'));
