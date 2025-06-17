@@ -1,5 +1,4 @@
 import Razorpay from 'razorpay';
-import crypto from 'crypto';
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -39,15 +38,36 @@ export const verifyPayment = async (
   razorpay_signature: string
 ) => {
   try {
-    const generated_signature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
-      .update(razorpay_order_id + '|' + razorpay_payment_id)
-      .digest('hex');
+    // Convert the secret key to a Uint8Array
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(process.env.RAZORPAY_KEY_SECRET || '');
+    
+    // Import the key
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
 
-    if (generated_signature === razorpay_signature) {
-      return true;
-    }
-    return false;
+    // Create the message
+    const message = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const messageData = encoder.encode(message);
+
+    // Sign the message
+    const signature = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      messageData
+    );
+
+    // Convert the signature to hex
+    const generated_signature = Array.from(new Uint8Array(signature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return generated_signature === razorpay_signature;
   } catch (error) {
     console.error('Error verifying payment:', error);
     throw error;
