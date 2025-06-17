@@ -40,7 +40,7 @@ const AboutUs = () => {
             <div>
               <h2 className="text-3xl font-medium mb-6">Our Story</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                Founded in 2020, Slash Experiences began with a simple idea: what if gifts could create lasting memories instead of collecting dust?
+                Founded in 2024, Slash Experiences began with a simple idea: what if gifts could create lasting memories instead of collecting dust?
               </p>
               <p className="text-lg text-muted-foreground mb-6">
                 Our founder, after struggling to find meaningful gifts for loved ones, realized that experiences bring more joy and connection than material possessions. This insight led to the creation of our curated experience marketplace.
@@ -97,57 +97,12 @@ const AboutUs = () => {
       {/* Team Section */}
       <section ref={teamRef} className="py-12 md:py-24">
         <div className="container max-w-6xl mx-auto px-4 md:px-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Team Member 1 */}
-            <div className="text-center">
-              <div className="rounded-full overflow-hidden w-40 h-40 mx-auto mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&auto=format&fit=crop"
-                  alt="Sarah Johnson" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-medium">Sarah Johnson</h3>
-              <p className="text-muted-foreground">Founder & CEO</p>
-            </div>
-            
-            {/* Team Member 2 */}
-            <div className="text-center">
-              <div className="rounded-full overflow-hidden w-40 h-40 mx-auto mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&auto=format&fit=crop"
-                  alt="Michael Chen" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-medium">Michael Chen</h3>
-              <p className="text-muted-foreground">Head of Experiences</p>
-            </div>
-            
-            {/* Team Member 3 */}
-            <div className="text-center">
-              <div className="rounded-full overflow-hidden w-40 h-40 mx-auto mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&auto=format&fit=crop"
-                  alt="Priya Patel" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-medium">Priya Patel</h3>
-              <p className="text-muted-foreground">Customer Experience</p>
-            </div>
-            
-            {/* Team Member 4 */}
-            <div className="text-center">
-              <div className="rounded-full overflow-hidden w-40 h-40 mx-auto mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=400&h=400&auto=format&fit=crop"
-                  alt="David Wilson" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-medium">David Wilson</h3>
-              <p className="text-muted-foreground">Partner Relations</p>
+          <div className="text-center">
+            <h2 className="text-3xl font-medium mb-6">Founders</h2>
+            <div className="text-xl text-muted-foreground space-y-2">
+              <div>Aryan Jain</div>
+              <div>Apoorv Kakar</div>
+              <div>Kaushal Rathi</div>
             </div>
           </div>
         </div>

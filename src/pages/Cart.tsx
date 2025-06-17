@@ -31,7 +31,13 @@ const Cart: React.FC = () => {
       }
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(window.Razorpay);
+      script.onload = () => {
+        if (window.Razorpay) {
+          resolve(window.Razorpay);
+        } else {
+          reject(new Error('Razorpay SDK failed to load'));
+        }
+      };
       script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
       document.body.appendChild(script);
     });
@@ -50,12 +56,21 @@ const Cart: React.FC = () => {
     try {
       setIsLoading(true);
 
-      // Create order on your backend
       const { data: order, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: totalPrice * 100, currency: config.razorpay.currency }
+        body: { 
+          amount: Math.round(totalPrice * 100),
+          currency: config.razorpay.currency 
+        }
       });
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
+
+      if (!order || !order.id) {
+        throw new Error('Invalid order response from server');
+      }
 
       const Razorpay = await loadRazorpaySdk();
       
@@ -68,7 +83,6 @@ const Cart: React.FC = () => {
         order_id: order.id,
         handler: async function (response: any) {
           try {
-            // Verify payment on your backend
             const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -77,9 +91,11 @@ const Cart: React.FC = () => {
               }
             });
 
-            if (verifyError) throw verifyError;
+            if (verifyError) {
+              console.error('Payment verification error:', verifyError);
+              throw new Error(`Payment verification failed: ${verifyError.message}`);
+            }
 
-            // Create booking records
             const { error: bookingError } = await supabase
               .from('bookings')
               .insert(
@@ -96,45 +112,56 @@ const Cart: React.FC = () => {
                 })
               );
 
-            if (bookingError) throw bookingError;
+            if (bookingError) {
+              console.error('Booking creation error:', bookingError);
+              throw new Error(`Failed to create booking: ${bookingError.message}`);
+            }
 
             toast({
               description: "Your experience has been booked successfully",
             });
             clearCart();
             navigate('/profile');
-          } catch (error) {
-            console.error('Payment verification error:', error);
+          } catch (error: any) {
+            console.error('Payment processing error:', error);
             toast({
               variant: "destructive",
-              description: "There was an error verifying your payment. Please contact support",
+              title: "Payment Processing Error",
+              description: error.message || "There was an error processing your payment. Please contact support",
             });
           }
         },
         prefill: {
-          name: user.user_metadata?.full_name,
-          email: user.email,
+          name: user.user_metadata?.full_name || '',
+          email: user.email || '',
           contact: user.user_metadata?.phone || ''
         },
         theme: {
           color: "#000000"
+        },
+        modal: {
+          ondismiss: function() {
+            toast({
+              description: "Payment cancelled",
+            });
+          }
         }
       };
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
-    } catch (error) {
-      console.error('Payment error:', error);
+    } catch (error: any) {
+      console.error('Payment initialization error:', error);
       toast({
         variant: "destructive",
-        description: "There was an error processing your payment. Please try again",
+        title: "Payment Error",
+        description: error.message || "There was an error initializing the payment. Please try again",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Empty cart view
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
@@ -151,7 +178,6 @@ const Cart: React.FC = () => {
     );
   }
 
-  // Cart with items
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -159,7 +185,6 @@ const Cart: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => {
                 const experience = cachedExperiences[item.experienceId];
@@ -200,19 +225,19 @@ const Cart: React.FC = () => {
                                 +
                               </Button>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                                ₹{experience.price * item.quantity}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeFromCart(item.experienceId)}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 justify-between mt-4">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                              ₹{experience.price * item.quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromCart(item.experienceId)}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -222,7 +247,6 @@ const Cart: React.FC = () => {
               })}
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card>
                 <CardContent className="p-6">
@@ -261,4 +285,3 @@ const Cart: React.FC = () => {
 };
 
 export default Cart;
-

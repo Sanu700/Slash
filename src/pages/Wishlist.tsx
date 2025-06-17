@@ -54,23 +54,10 @@ const Wishlist = () => {
     fetchWishlist();
   }, [user]);
 
-  const handleRemoveFromWishlist = async (experienceId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('wishlists')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('experience_id', experienceId);
-
-      if (error) throw error;
-
+  const handleWishlistChange = (experienceId: string, isInWishlist: boolean) => {
+    if (!isInWishlist) {
+      // Remove the experience from the list when it's un-wishlisted
       setWishlistItems(prev => prev.filter(item => item.id !== experienceId));
-      toast.success('Removed from wishlist');
-    } catch (error) {
-      console.error('Error removing from wishlist:', error);
-      toast.error('Failed to remove from wishlist');
     }
   };
 
@@ -91,15 +78,11 @@ const Wishlist = () => {
       {wishlistItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {wishlistItems.map((experience) => (
-            <div key={experience.id} className="relative">
-              <ExperienceCard experience={experience} />
-              <button
-                onClick={() => handleRemoveFromWishlist(experience.id)}
-                className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-sm hover:bg-white transition-colors"
-              >
-                <Heart className="h-5 w-5 text-red-500" fill="currentColor" />
-              </button>
-            </div>
+            <ExperienceCard 
+              key={experience.id} 
+              experience={experience}
+              onWishlistChange={handleWishlistChange}
+            />
           ))}
         </div>
       ) : (

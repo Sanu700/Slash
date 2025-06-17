@@ -8,9 +8,11 @@ import { LoginModal } from '@/components/LoginModal';
 
 interface CartContextType {
   items: CartItem[];
+
   addToCart: (experienceId: string, selectedDate: Date, quantity?: number) => Promise<void>;
+
   removeFromCart: (experienceId: string) => Promise<void>;
-  updateQuantity: (experienceId: string, quantity: number) => Promise<void>;
+  updateQuantity: (experienceId: string, quantity: number, selectedDate?: Date | null, selectedTime?: string | null) => Promise<void>;
   clearCart: () => Promise<void>;
   itemCount: number;
   totalPrice: number;
@@ -56,6 +58,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
             throw error;
           }
           
+
           if (data && data.length > 0) {
             const cartItems: CartItem[] = data.map(item => ({
               experienceId: item.experience_id,
@@ -65,6 +68,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
             setItems(cartItems);
           } else {
             // If no items in Supabase, try loading from localStorage
+
             const savedCart = localStorage.getItem('cart');
             if (savedCart) {
               const localCartItems = JSON.parse(savedCart);
@@ -145,7 +149,9 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
     fetchExperiencesForCart();
   }, [items]);
 
+
   const addToCart = async (experienceId: string, selectedDate: Date, quantity: number = 1) => {
+
     try {
       // Check if user is authenticated
       if (!user?.id) {
@@ -177,8 +183,10 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
             { 
               user_id: user.id,
               experience_id: experienceId,
+
               quantity: quantity,
               selected_date: selectedDate.toISOString(),
+
               updated_at: new Date().toISOString()
             },
             { 
@@ -195,10 +203,12 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         const updatedItems = existingItem
           ? items.map(item => 
               item.experienceId === experienceId 
+
                 ? { ...item, quantity: quantity } 
                 : item
             )
           : [...items, { experienceId, quantity, selectedDate }];
+
         
         setItems(updatedItems);
         localStorage.setItem('cart', JSON.stringify(updatedItems));
@@ -211,11 +221,13 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
         if (existingItem) {
           return prevItems.map(item => 
             item.experienceId === experienceId 
+
               ? { ...item, quantity: quantity } 
               : item
           );
         } else {
           return [...prevItems, { experienceId, quantity, selectedDate }];
+
         }
       });
       
@@ -258,7 +270,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const updateQuantity = async (experienceId: string, quantity: number) => {
+  const updateQuantity = async (experienceId: string, quantity: number, selectedDate?: Date | null, selectedTime?: string | null) => {
     try {
       if (!user?.id) {
         // For guest users, update localStorage
@@ -285,6 +297,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { error } = await supabase
           .from('cart_items')
+
           .upsert(
             {
               user_id: user.id,
@@ -297,6 +310,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
               onConflict: 'user_id,experience_id'
             }
           );
+
 
         if (error) {
           throw error;
@@ -313,9 +327,11 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Update local state
+
       setItems(prevItems =>
         prevItems.map(item =>
           item.experienceId === experienceId ? { ...item, quantity } : item
+
         )
       );
     } catch (error) {
