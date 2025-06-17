@@ -152,11 +152,20 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               "transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
-              <Link to={`/experience/${experience.id}`}>
-                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
-                  View Experience
+              <div className="flex gap-2">
+                <Link to={`/experience/${experience.id}`} className="flex-1">
+                  <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
+                    View Experience
+                  </Button>
+                </Link>
+                <Button 
+                  size="sm" 
+                  className="bg-black text-white hover:bg-black/90"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
                 </Button>
-              </Link>
+              </div>
             </div>
           </div>
         </div>

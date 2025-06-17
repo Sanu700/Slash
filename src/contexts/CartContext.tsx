@@ -9,7 +9,7 @@ import { LoginModal } from '@/components/LoginModal';
 interface CartContextType {
   items: CartItem[];
 
-  addToCart: (experienceId: string, selectedDate: Date, quantity?: number) => Promise<void>;
+  addToCart: (experienceId: string, selectedDate: string | null, quantity: number) => Promise<void>;
 
   removeFromCart: (experienceId: string) => Promise<void>;
   updateQuantity: (experienceId: string, quantity: number, selectedDate?: Date | null, selectedTime?: string | null) => Promise<void>;
@@ -150,82 +150,69 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
   }, [items]);
 
 
-  const addToCart = async (experienceId: string, selectedDate: Date | null = null, quantity: number = 1) => {
+  const addToCart = async (experienceId: string, selectedDate: string | null, quantity: number) => {
+    if (!user) {
+      toast.error('Please log in to add items to cart');
+      return;
+    }
+
     try {
-      // Check if user is authenticated
-      if (!user?.id) {
-        setShowLoginModal(true);
-        return;
+      const { data: existingItem, error: fetchError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('experience_id', experienceId)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
       }
 
-      const experience = await getExperienceById(experienceId);
-      if (!experience) {
-        toast.error("Unable to add item to cart");
-        return;
-      }
-      
-      const existingItem = items.find(item => item.experienceId === experienceId);
-      
-      // Try to update Supabase first
-      try {
-        const { error } = await supabase
+      if (existingItem) {
+        // Update quantity if item exists
+        const { error: updateError } = await supabase
           .from('cart_items')
-          .upsert(
-            { 
-              user_id: user.id,
-              experience_id: experienceId,
-              quantity: quantity,
-              selected_date: selectedDate?.toISOString() || null,
-              updated_at: new Date().toISOString()
-            },
-            { 
-              onConflict: 'user_id,experience_id'
-            }
-          );
-          
-        if (error) {
-          throw error;
-        }
-      } catch (error) {
-        console.error('Error adding item to cart in Supabase:', error);
-        // Fallback to localStorage if Supabase fails
-        const updatedItems = existingItem
-          ? items.map(item => 
-              item.experienceId === experienceId 
-                ? { ...item, quantity: quantity, selectedDate } 
-                : item
-            )
-          : [...items, { experienceId, quantity, selectedDate }];
-        
-        setItems(updatedItems);
-        localStorage.setItem('cart', JSON.stringify(updatedItems));
-        toast.success(`Added ${experience.title} to cart (offline mode)`);
-        return;
+          .update({ 
+            quantity: existingItem.quantity + quantity,
+            selected_date: selectedDate || existingItem.selected_date
+          })
+          .eq('id', existingItem.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Add new item
+        const { error: insertError } = await supabase
+          .from('cart_items')
+          .insert([{
+            user_id: user.id,
+            experience_id: experienceId,
+            quantity,
+            selected_date: selectedDate
+          }]);
+
+        if (insertError) throw insertError;
       }
-      
+
       // Update local state
-      setItems(prevItems => {
-        if (existingItem) {
-          return prevItems.map(item => 
-            item.experienceId === experienceId 
-              ? { ...item, quantity: quantity, selectedDate } 
-              : item
-          );
-        } else {
-          return [...prevItems, { experienceId, quantity, selectedDate }];
-        }
-      });
-      
-      // Cache the experience
-      setExperienceCache(prev => ({
-        ...prev,
-        [experienceId]: experience
-      }));
-      
-      toast.success(`Added ${experience.title} to cart`);
+      const updatedItems = { ...items };
+      if (updatedItems[experienceId]) {
+        updatedItems[experienceId] = {
+          ...updatedItems[experienceId],
+          quantity: (updatedItems[experienceId].quantity || 0) + quantity,
+          selectedDate: selectedDate || updatedItems[experienceId].selectedDate
+        };
+      } else {
+        updatedItems[experienceId] = {
+          experienceId,
+          quantity,
+          selectedDate
+        };
+      }
+      setItems(updatedItems);
+      toast.success('Added to cart');
     } catch (error) {
-      console.error('Error in addToCart:', error);
-      toast.error('Failed to add item to cart');
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart');
     }
   };
 
