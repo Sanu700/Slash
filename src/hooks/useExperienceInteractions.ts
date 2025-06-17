@@ -32,37 +32,32 @@ export const useExperienceInteractions = (userId: string | undefined) => {
   };
   
   // Function to toggle wishlist
-  const toggleWishlist = async (experienceId: string, isInWishlist: boolean, cachedExperiences: Record<string, Experience>, onSuccess?: (experiences: Experience[]) => void) => {
-    if (!userId) return;
+  const toggleWishlist = async (
+    experienceId: string,
+    isInWishlist: boolean,
+    experiences: Record<string, any>,
+    onSuccess?: (experiences: Record<string, any>) => void
+  ) => {
+    if (!userId) {
+      toast.error('Please log in to manage your wishlist');
+      return;
+    }
+
     setIsProcessing(true);
-    
     try {
       if (isInWishlist) {
         // Remove from wishlist
         const { error } = await supabase
           .from('wishlists')
           .delete()
-          .eq('user_id', userId)
-          .eq('experience_id', experienceId);
-          
+          .match({ user_id: userId, experience_id: experienceId });
+
         if (error) throw error;
-        
+
+        const updatedExperiences = { ...experiences };
+        delete updatedExperiences[experienceId];
+        onSuccess?.(updatedExperiences);
         toast.success('Removed from wishlist');
-        if (onSuccess) {
-          // Get updated wishlist
-          const { data } = await supabase
-            .from('wishlists')
-            .select('experience_id')
-            .eq('user_id', userId);
-            
-          const experiences = data 
-            ? data
-                .map(item => cachedExperiences[item.experience_id])
-                .filter(exp => exp !== undefined)
-            : [];
-          
-          onSuccess(experiences);
-        }
       } else {
         // Add to wishlist
         const { error } = await supabase
@@ -72,28 +67,13 @@ export const useExperienceInteractions = (userId: string | undefined) => {
             experience_id: experienceId,
             added_at: new Date().toISOString()
           });
-          
+
         if (error) throw error;
-        
-        // Get the experience details
-        const experience = cachedExperiences[experienceId];
-        if (experience) {
-          toast.success('Added to wishlist');
-          if (onSuccess) {
-            const { data } = await supabase
-              .from('wishlists')
-              .select('experience_id')
-              .eq('user_id', userId);
-              
-            const experiences = data 
-              ? data
-                  .map(item => cachedExperiences[item.experience_id])
-                  .filter(exp => exp !== undefined)
-              : [];
-            
-            onSuccess(experiences);
-          }
-        }
+
+        const updatedExperiences = { ...experiences };
+        updatedExperiences[experienceId] = true;
+        onSuccess?.(updatedExperiences);
+        toast.success('Added to wishlist');
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
