@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { config } from '@/config';
+import { format } from 'date-fns';
+import { RazorpayPayment } from '@/components/RazorpayPayment';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences, clearCart } = useCart();
@@ -55,6 +57,7 @@ const Cart: React.FC = () => {
     try {
       setIsLoading(true);
 
+
       // Calculate total amount with tax
       const totalAmountWithTax = Math.round((totalPrice + Math.round(totalPrice * 0.18)) * 100);
 
@@ -62,6 +65,7 @@ const Cart: React.FC = () => {
       const { data: order, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: { 
           amount: totalAmountWithTax,
+
           currency: config.razorpay.currency 
         }
       });
@@ -86,7 +90,6 @@ const Cart: React.FC = () => {
         order_id: order.id,
         handler: async function (response: any) {
           try {
-            // Verify payment on your backend
             const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -105,7 +108,6 @@ const Cart: React.FC = () => {
               throw new Error(`Payment verification failed: ${verifyError.message}`);
             }
 
-            // Create booking records
             const { error: bookingError } = await supabase
               .from('bookings')
               .insert(
@@ -147,7 +149,9 @@ const Cart: React.FC = () => {
           contact: user.user_metadata?.phone || ''
         },
         theme: {
+
           color: config.razorpay.theme.color
+
         },
         modal: {
           ondismiss: function() {
@@ -172,7 +176,6 @@ const Cart: React.FC = () => {
     }
   };
 
-  // Empty cart view
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
@@ -189,7 +192,6 @@ const Cart: React.FC = () => {
     );
   }
 
-  // Cart with items
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -197,7 +199,6 @@ const Cart: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => {
                 const experience = cachedExperiences[item.experienceId];
@@ -206,7 +207,7 @@ const Cart: React.FC = () => {
                 return (
                   <Card key={item.experienceId} className="overflow-hidden">
                     <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
+                      <div className="flex gap-4">
                         <img
                           src={experience.imageUrl}
                           alt={experience.title}
@@ -215,6 +216,11 @@ const Cart: React.FC = () => {
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{experience.title}</h3>
                           <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{experience.location}</p>
+                          {item.selectedDate && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                              Date: {format(new Date(item.selectedDate), 'PPP')}
+                            </p>
+                          )}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Button
@@ -233,19 +239,19 @@ const Cart: React.FC = () => {
                                 +
                               </Button>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                                ₹{experience.price * item.quantity}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeFromCart(item.experienceId)}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 justify-between mt-4">
+                            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                              ₹{experience.price * item.quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromCart(item.experienceId)}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -255,7 +261,6 @@ const Cart: React.FC = () => {
               })}
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card>
                 <CardContent className="p-6">
@@ -275,13 +280,17 @@ const Cart: React.FC = () => {
                         <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
                       </div>
                     </div>
-                    <Button 
-                      className="w-full mt-6" 
-                      onClick={handlePayment} 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Processing...' : 'Proceed to Payment'}
-                    </Button>
+                    <RazorpayPayment
+                      onSuccess={handlePayment}
+                      onError={(error) => {
+                        console.error('Payment error:', error);
+                        toast({
+                          variant: "destructive",
+                          title: "Payment Error",
+                          description: error.message || "There was an error processing your payment. Please contact support",
+                        });
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -294,4 +303,3 @@ const Cart: React.FC = () => {
 };
 
 export default Cart;
-
