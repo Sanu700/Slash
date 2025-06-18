@@ -57,9 +57,15 @@ const Cart: React.FC = () => {
     try {
       setIsLoading(true);
 
+
+      // Calculate total amount with tax
+      const totalAmountWithTax = Math.round((totalPrice + Math.round(totalPrice * 0.18)) * 100);
+
+      // Create order on your backend
       const { data: order, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: { 
-          amount: Math.round(totalPrice * 100),
+          amount: totalAmountWithTax,
+
           currency: config.razorpay.currency 
         }
       });
@@ -77,7 +83,7 @@ const Cart: React.FC = () => {
       
       const options = {
         key: config.razorpay.keyId,
-        amount: order.amount,
+        amount: totalAmountWithTax,
         currency: order.currency,
         name: config.razorpay.name,
         description: config.razorpay.description,
@@ -88,7 +94,12 @@ const Cart: React.FC = () => {
               body: {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature
+                razorpay_signature: response.razorpay_signature,
+                user_id: user.id,
+                cart_items: {
+                  total_amount: totalAmountWithTax / 100,
+                  items: items
+                }
               }
             });
 
@@ -138,7 +149,9 @@ const Cart: React.FC = () => {
           contact: user.user_metadata?.phone || ''
         },
         theme: {
-          color: "#000000"
+
+          color: config.razorpay.theme.color
+
         },
         modal: {
           ondismiss: function() {
