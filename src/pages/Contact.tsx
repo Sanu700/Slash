@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, MapPin, Clock, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Mail, Phone, Clock, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 export default function Contact() {
   return (
@@ -21,18 +21,12 @@ export default function Contact() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-gray-500 mt-1" />
-                  <div>
-                    <h3 className="font-medium">Address</h3>
-                    <p className="text-gray-600">123 Experience Street, Mumbai, Maharashtra 400001</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-gray-500 mt-1" />
                   <div>
                     <h3 className="font-medium">Phone</h3>
-                    <p className="text-gray-600">+91 123 456 7890</p>
+                    <p className="text-gray-600">Aryan Jain - 8468951580</p>
+                    <p className="text-gray-600">Apoorv Kakar - 8076586928</p>
+                    <p className="text-gray-600">Kaushal Rathi - 9007488827</p>
                   </div>
                 </div>
                 
