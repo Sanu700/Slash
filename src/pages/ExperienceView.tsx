@@ -14,6 +14,9 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { LoginModal } from '@/components/LoginModal';
+import { Calendar as DatePicker } from '@/components/ui/calendar';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { format } from 'date-fns';
 
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,17 +29,32 @@ const ExperienceView = () => {
   const { user } = useAuth();
   const [quantityInCart, setQuantityInCart] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showDatePopover, setShowDatePopover] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [wishlistLocal, setWishlistLocal] = useState<string[]>(() => {
+    const saved = localStorage.getItem('wishlist');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
   
-  // Get current quantity in cart
+  // Sync quantityInCart from localStorage or Supabase on mount and when experience changes
   useEffect(() => {
-    if (id) {
-      const cartItem = items.find(item => item.experienceId === id);
-      setQuantityInCart(cartItem ? cartItem.quantity : 0);
+    if (!experience) return;
+    if (!user) {
+      // LocalStorage fallback
+      let cart = localStorage.getItem('cart');
+      let cartArr = cart ? JSON.parse(cart) : [];
+      const item = cartArr.find((item: any) => item.experienceId === experience.id);
+      setQuantityInCart(item ? item.quantity : 1); // default to 1 if not in cart
+    } else {
+      const cartItem = items.find(item => item.experienceId === experience.id);
+      setQuantityInCart(cartItem ? cartItem.quantity : 1); // default to 1 if not in cart
     }
-  }, [id, items]);
+  }, [experience, user]);
   
   useEffect(() => {
     const fetchExperience = async () => {
@@ -75,97 +93,202 @@ const ExperienceView = () => {
   
   // Check if the experience is in the user's wishlist
   useEffect(() => {
-    const checkWishlist = async () => {
-      if (!user || !id) {
-        setIsInWishlist(false);
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from('wishlists')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('experience_id', id)
-          .single();
-          
-        setIsInWishlist(!!data);
-      } catch (error) {
-        console.error('Error checking wishlist status:', error);
-      }
-    };
-    
-    checkWishlist();
-  }, [id, user]);
+    if (!user && experience) {
+      setIsInWishlist(wishlistLocal.includes(experience.id));
+    }
+  }, [user, experience, wishlistLocal]);
   
-  const handleAddToCart = () => {
-    if (!user) {
-      setShowLoginModal(true);
+  const isGuest = !user || !user.id || typeof user.id !== 'string' || user.id.length < 10;
+  
+  const handleAddToCart = async () => {
+    if (!selectedDate) {
+      setShowDatePopover(true);
+      toast.error('Please select a date before adding to cart.');
       return;
     }
-    if (experience) {
-      addToCart(experience.id);
+    if (isGuest) {
+      // LocalStorage fallback ONLY, do not call CartContext or Supabase
+      if (!experience) return;
+      let cart = localStorage.getItem('cart');
+      let cartArr = cart ? JSON.parse(cart) : [];
+      const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
+      if (idx > -1) {
+        cartArr[idx].quantity = quantityInCart;
+        setQuantityInCart(cartArr[idx].quantity);
+      } else {
+        cartArr.push({ 
+          experienceId: experience.id, 
+          quantity: quantityInCart,
+          selectedDate: selectedDate.toISOString()
+        });
+        setQuantityInCart(quantityInCart);
+      }
+      localStorage.setItem('cart', JSON.stringify(cartArr));
+      toast.success('Added to cart');
+      return;
+    }
+    setIsCartLoading(true);
+    try {
+      // Add to cart with the selected quantity
+      await addToCart(experience.id, selectedDate, quantityInCart);
+      toast.success('Added to cart');
+    } catch (e) {
+      toast.error('Failed to add to cart');
+    } finally {
+      setIsCartLoading(false);
     }
   };
 
-  const handleDecreaseQuantity = () => {
-    if (!user) {
-      setShowLoginModal(true);
+  const handleDecreaseQuantity = async () => {
+    if (quantityInCart <= 1) return; // Prevent going below 1
+    if (isGuest) {
+      // LocalStorage fallback ONLY
+      if (!experience) return;
+      let cart = localStorage.getItem('cart');
+      let cartArr = cart ? JSON.parse(cart) : [];
+      const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
+      let newQty = quantityInCart;
+      if (idx > -1 && cartArr[idx].quantity > 1) {
+        cartArr[idx].quantity -= 1;
+        newQty = cartArr[idx].quantity;
+        cartArr = [...cartArr]; // force new array reference
+        localStorage.setItem('cart', JSON.stringify(cartArr));
+        setQuantityInCart(newQty);
+        toast.success('Updated quantity');
+      }
       return;
     }
-    if (experience && quantityInCart > 0) {
-      updateQuantity(experience.id, quantityInCart - 1);
+    setIsCartLoading(true);
+    try {
+      await updateQuantity(experience.id, quantityInCart - 1);
+      setQuantityInCart(prev => prev - 1);
+      toast.success('Updated quantity');
+    } catch (e) {
+      toast.error('Failed to update quantity');
+    } finally {
+      setIsCartLoading(false);
     }
   };
 
-  const handleIncreaseQuantity = () => {
-    if (!user) {
-      setShowLoginModal(true);
+  const handleIncreaseQuantity = async () => {
+    if (isGuest) {
+      // LocalStorage fallback ONLY
+      if (!experience) return;
+      let cart = localStorage.getItem('cart');
+      let cartArr = cart ? JSON.parse(cart) : [];
+      const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
+      let newQty = 1;
+      if (idx > -1) {
+        cartArr[idx].quantity += 1;
+        newQty = cartArr[idx].quantity;
+        cartArr = [...cartArr]; // force new array reference
+      } else {
+        cartArr.push({ 
+          experienceId: experience.id, 
+          quantity: 1,
+          selectedDate: selectedDate?.toISOString()
+        });
+        newQty = 1;
+      }
+      localStorage.setItem('cart', JSON.stringify(cartArr));
+      setQuantityInCart(newQty);
+      toast.success(idx > -1 ? 'Updated quantity' : 'Added to cart');
       return;
     }
-    if (experience) {
-      updateQuantity(experience.id, quantityInCart + 1);
+    setIsCartLoading(true);
+    try {
+      await updateQuantity(experience.id, quantityInCart + 1);
+      setQuantityInCart(prev => prev + 1);
+      toast.success('Updated quantity');
+    } catch (e) {
+      toast.error('Failed to update quantity');
+    } finally {
+      setIsCartLoading(false);
     }
   };
   
   const toggleWishlist = async () => {
-    if (!user) {
-      setShowLoginModal(true);
+    if (isGuest) {
+      // LocalStorage fallback ONLY
+      if (!experience) return;
+      let wishlist = localStorage.getItem('wishlist');
+      let wishlistArr = wishlist ? JSON.parse(wishlist) : [];
+      if (wishlistArr.includes(experience.id)) {
+        wishlistArr = wishlistArr.filter((id: string) => id !== experience.id);
+        setIsInWishlist(false);
+        setWishlistLocal(wishlistArr);
+        localStorage.setItem('wishlist', JSON.stringify(wishlistArr));
+        toast.success('Removed from wishlist');
+      } else {
+        wishlistArr.push(experience.id);
+        setIsInWishlist(true);
+        setWishlistLocal(wishlistArr);
+        localStorage.setItem('wishlist', JSON.stringify(wishlistArr));
+        toast.success('Added to wishlist');
+      }
       return;
     }
-    
-    if (!experience) return;
-    
+    setIsWishlistLoading(true);
     try {
       if (isInWishlist) {
-        // Remove from wishlist
         const { error } = await supabase
           .from('wishlists')
           .delete()
           .eq('user_id', user.id)
           .eq('experience_id', experience.id);
-          
         if (error) throw error;
-        
         setIsInWishlist(false);
         toast.success('Removed from wishlist');
       } else {
-        // Add to wishlist
         const { error } = await supabase
           .from('wishlists')
           .insert({
             user_id: user.id,
             experience_id: experience.id
           });
-          
         if (error) throw error;
-        
         setIsInWishlist(true);
         toast.success('Added to wishlist');
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
       toast.error('Failed to update wishlist');
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  };
+  
+  const handleSaveForLater = () => {
+    if (!experience) return;
+    if (isGuest) {
+      try {
+        const saved = localStorage.getItem('savedExperiences');
+        let savedExperiences = saved ? JSON.parse(saved) : [];
+        if (!savedExperiences.find((exp: any) => exp.id === experience.id)) {
+          savedExperiences.push({ ...experience });
+          localStorage.setItem('savedExperiences', JSON.stringify(savedExperiences));
+          toast.success('Saved for later!');
+        } else {
+          toast.info('Already saved for later!');
+        }
+      } catch (error) {
+        toast.error('Failed to save for later');
+      }
+      return;
+    }
+    // If logged in, you can add Supabase logic here if needed
+    try {
+      const saved = localStorage.getItem('savedExperiences');
+      let savedExperiences = saved ? JSON.parse(saved) : [];
+      if (!savedExperiences.find((exp: any) => exp.id === experience.id)) {
+        savedExperiences.push({ ...experience });
+        localStorage.setItem('savedExperiences', JSON.stringify(savedExperiences));
+        toast.success('Saved for later!');
+      } else {
+        toast.info('Already saved for later!');
+      }
+    } catch (error) {
+      toast.error('Failed to save for later');
     }
   };
   
@@ -296,6 +419,7 @@ const ExperienceView = () => {
                       "p-2 rounded-full transition-colors",
                       isInWishlist ? "text-red-500" : "text-muted-foreground hover:text-red-500"
                     )}
+                    disabled={isWishlistLoading}
                   >
                     <Heart className="h-6 w-6" fill={isInWishlist ? "currentColor" : "none"} />
                   </button>
@@ -307,19 +431,35 @@ const ExperienceView = () => {
                       <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-sm">Select Date</span>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        if (!user) {
-                          setShowLoginModal(true);
-                          return;
-                        }
-                        // TODO: Add choose date logic here
-                      }}
-                    >
-                      Choose Date
-                    </Button>
+                    <Popover open={showDatePopover} onOpenChange={setShowDatePopover}>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (!user) {
+                              setShowLoginModal(true);
+                              return;
+                            }
+                            setShowDatePopover(true);
+                          }}
+                        >
+                          {selectedDate ? format(selectedDate, 'PPP') : 'Choose Date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-auto p-0">
+                        <DatePicker
+                          mode="single"
+                          selected={selectedDate as Date}
+                          onSelect={(date) => {
+                            setSelectedDate(date as Date);
+                            setShowDatePopover(false);
+                          }}
+                          initialFocus
+                          disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -331,6 +471,7 @@ const ExperienceView = () => {
                       <button
                         onClick={handleDecreaseQuantity}
                         className="p-1 rounded-full hover:bg-secondary"
+                        disabled={isCartLoading || quantityInCart <= 1}
                       >
                         <Minus className="h-4 w-4" />
                       </button>
@@ -338,6 +479,7 @@ const ExperienceView = () => {
                       <button
                         onClick={handleIncreaseQuantity}
                         className="p-1 rounded-full hover:bg-secondary"
+                        disabled={isCartLoading}
                       >
                         <Plus className="h-4 w-4" />
                       </button>
@@ -349,10 +491,10 @@ const ExperienceView = () => {
                   <Button 
                     className="w-full"
                     onClick={handleAddToCart}
-                    disabled={quantityInCart === 0}
+                    disabled={isCartLoading /* Don't disable for !selectedDate, handle in logic */}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
+                    {isCartLoading ? 'Processing...' : 'Add to Cart'}
                   </Button>
                 </div>
                 
@@ -360,13 +502,7 @@ const ExperienceView = () => {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => {
-                      if (!user) {
-                        setShowLoginModal(true);
-                        return;
-                      }
-                      // TODO: Add save for later logic here
-                    }}
+                    onClick={handleSaveForLater}
                   >
                     <Bookmark className="h-4 w-4 mr-2" />
                     Save for Later

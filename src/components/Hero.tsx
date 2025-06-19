@@ -84,12 +84,12 @@ const Hero = () => {
       <div className="container max-w-6xl mx-auto px-6 md:px-10 relative z-10 text-white mt-20">
         <div className="max-w-3xl">
           <div className={cn("transition-all duration-1000 transform", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
-            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 -ml-[3px]">
+            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 -ml-[0px]">
               <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-4 w-4" />
               <span className="text-sm font-medium">Curated Experience Gifts</span>
             </div>
             
-            <div className="-ml-[10px]">
+            <div className="-ml-[2px]">
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow max-w-2xl">
                 Gifting Something, <br />
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
@@ -103,31 +103,31 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col items-start space-y-6">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 -ml-[-0.5px]">
                 <SuggestedExperiences />
         </div>
         
-              <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
-          {[{
-            value: "500+",
-            label: "Experiences"
-          }, {
-            value: "50k+",
-            label: "Happy Recipients"
-          }, {
-            value: "4.9",
-            label: "Average Rating"
-          }, {
-            value: "100%",
-            label: "Satisfaction"
-          }].map((stat, index) => (
-            <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-6">
-              <p className="text-2xl md:text-3xl font-medium">
-                <AnimatedCounter value={stat.value} />
-              </p>
-              <p className="text-sm text-white/90">{stat.label}</p>
-            </div>
-          ))}
+              <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 max-w-5xl mx-auto transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
+                {[{
+                  value: "500+",
+                  label: "Experiences"
+                }, {
+                  value: "50k+",
+                  label: "Happy Recipients"
+                }, {
+                  value: "4.9",
+                  label: "Average Rating"
+                }, {
+                  value: "100%",
+                  label: "Satisfaction"
+                }].map((stat, index) => (
+                  <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-5 flex flex-col items-center justify-center text-center">
+                    <p className="text-2xl md:text-3xl font-medium mb-1">
+                      <AnimatedCounter value={stat.value} />
+                    </p>
+                    <p className="text-sm text-white/90">{stat.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

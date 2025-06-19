@@ -168,27 +168,14 @@ const ContactUs = () => {
               <div className="space-y-8">
                 <div className="flex items-start">
                   <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                    <MapPin className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-1">Office Location</h3>
-                    <p className="text-muted-foreground">
-                      123 Experience Street<br />
-                      San Francisco, CA 94105<br />
-                      United States
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-medium mb-1">Phone</h3>
                     <p className="text-muted-foreground">
-                      Customer Support: +1 (555) 123-4567<br />
-                      Partner Relations: +1 (555) 765-4321
+                      Aryan Jain - 8468951580<br />
+                      Apoorv Kakar - 8076586928<br />
+                      Kaushal Rathi - 9007488827
                     </p>
                   </div>
                 </div>

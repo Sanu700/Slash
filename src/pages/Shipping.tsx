@@ -14,9 +14,9 @@ const Shipping = () => {
       {/* Hero Section */}
       <div 
         ref={heroRef}
-        className="relative bg-gradient-to-r from-slate-800 to-slate-700 text-white py-16 md:py-24"
+        className="relative bg-gradient-to-r from-slate-800 to-slate-700 text-white py-12 md:py-24"
       >
-        <div className="container max-w-6xl mx-auto px-6 md:px-10">
+        <div className="container max-w-6xl mx-auto px-4 md:px-10">
           <div className={`max-w-2xl transition-all duration-700 ${heroInView ? "opacity-100" : "opacity-0 translate-y-8"}`}>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">Shipping & Delivery</h1>
             <p className="text-xl mb-8">
@@ -27,8 +27,8 @@ const Shipping = () => {
       </div>
       
       {/* Gift Delivery Options */}
-      <section className="py-16 md:py-24">
-        <div className="container max-w-6xl mx-auto px-6 md:px-10">
+      <section ref={contentRef} className="py-12 md:py-24">
+        <div className="container max-w-4xl mx-auto px-4 md:px-10">
           <h2 className="text-3xl font-medium mb-12 text-center">Gift Delivery Options</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
