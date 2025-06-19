@@ -39,7 +39,9 @@ export interface NicheCategory {
 export interface CartItem {
   experienceId: string;
   quantity: number;
+  selectedDate?: Date | null;
 }
+
 
 // Add this interface to properly type profile data
 export interface ExtendedProfile {

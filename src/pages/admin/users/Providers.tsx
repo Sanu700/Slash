@@ -1,298 +1,825 @@
-import React, { useState } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Search, MoreVertical, Mail, Phone, Calendar, MapPin, Star, Briefcase } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { MoreVertical, Search, Mail, Phone, Briefcase, UserPlus, UserMinus, Edit, Eye } from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
+import { useToast } from '@/components/ui/use-toast';
+import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { toast } from 'sonner';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-// Mock data - replace with actual data from your backend
-const mockProviders = [
-  {
-    id: "1",
-    name: "Adventure Tours India",
-    email: "contact@adventuretours.com",
-    phone: "+91 98765 43210",
-    location: "Mumbai, Maharashtra",
-    joinDate: "2024-01-15",
-    status: "active",
-    experiences: 8,
-    rating: 4.8
-  },
-  {
-    id: "2",
-    name: "Heritage Walks",
-    email: "info@heritagewalks.com",
-    phone: "+91 98765 43211",
-    location: "Delhi, NCR",
-    joinDate: "2024-02-01",
-    status: "active",
-    experiences: 5,
-    rating: 4.5
-  },
-  // Add more mock data as needed
-];
+// Define types locally since adminService doesn't exist
+interface AdminUser {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string;
+  experiences_count?: number;
+  user_metadata: {
+    full_name: string;
+    phone: string;
+    role: string;
+    status?: 'active' | 'inactive' | 'pending';
+    company_name?: string;
+    business_type?: string;
+    avatar_url?: string;
+  };
+}
 
-const Providers = () => {
+interface CreateUserData {
+  email: string;
+  password: string;
+  user_metadata: {
+    full_name: string;
+    phone: string;
+    role: string;
+    status?: 'active' | 'inactive' | 'pending';
+    company_name?: string;
+    business_type?: string;
+    avatar_url?: string;
+  };
+}
+
+interface UpdateUserData {
+  userId: string;
+  user_metadata: {
+    role?: string;
+    status?: 'active' | 'inactive' | 'pending';
+    full_name?: string;
+    phone?: string;
+    company_name?: string;
+    business_type?: string;
+    avatar_url?: string;
+  };
+}
+
+// Mock admin service
+const adminService = {
+  listUsers: async (): Promise<AdminUser[]> => {
+    throw new Error('Admin service not available');
+  },
+  updateUser: async (data: UpdateUserData): Promise<void> => {
+    throw new Error('Admin service not available');
+  },
+  deleteUser: async (userId: string): Promise<void> => {
+    throw new Error('Admin service not available');
+  },
+  createUser: async (data: CreateUserData): Promise<AdminUser> => {
+    throw new Error('Admin service not available');
+  }
+};
+
+export default function Providers() {
+  const [providers, setProviders] = useState<AdminUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [providers, setProviders] = useState(mockProviders);
-  const [modal, setModal] = useState<{ type: string, provider: any } | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newProvider, setNewProvider] = useState({ name: '', email: '', phone: '', location: '', joinDate: '', status: 'active', experiences: 0, rating: 0 });
+  const [demoToastShown, setDemoToastShown] = useState(false);
+  const [isAddProviderDialogOpen, setIsAddProviderDialogOpen] = useState(false);
+  const [newProvider, setNewProvider] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    company_name: '',
+    business_type: ''
+  });
+  const { toast } = useToast();
+  const [selectedProvider, setSelectedProvider] = useState<AdminUser | null>(null);
+  const [isEditProviderDialogOpen, setIsEditProviderDialogOpen] = useState(false);
+  const [isDeleteProviderDialogOpen, setIsDeleteProviderDialogOpen] = useState(false);
+  const [providerToDelete, setProviderToDelete] = useState<string | null>(null);
+  const [isViewProviderDialogOpen, setIsViewProviderDialogOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-  const filteredProviders = providers.filter(provider =>
-    provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    provider.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    provider.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const demoModeRef = useRef(false);
+  const demoToastShownRef = useRef(false);
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      active: "default" as const,
-      inactive: "secondary" as const,
-      suspended: "destructive" as const
-    };
-    return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  // Reset dropdown state when dialogs are closed
+  useEffect(() => {
+    if (!isEditProviderDialogOpen && !isViewProviderDialogOpen && !isDeleteProviderDialogOpen) {
+      setOpenDropdownId(null);
+    }
+  }, [isEditProviderDialogOpen, isViewProviderDialogOpen, isDeleteProviderDialogOpen]);
+
+  const fetchProviders = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Try to fetch providers from the admin service
+      try {
+        const providersData = await adminService.listUsers();
+        setProviders(providersData);
+        demoModeRef.current = false;
+      } catch (serviceError) {
+        console.warn('Admin service not available, using fallback data:', serviceError);
+        demoModeRef.current = true;
+        
+        // Fallback: Use mock data for demonstration
+        const mockProviders: AdminUser[] = [
+          {
+            id: '1',
+            email: 'john.provider@example.com',
+            created_at: '2024-01-15T10:30:00Z',
+            last_sign_in_at: '2024-01-20T14:45:00Z',
+            experiences_count: 5,
+            user_metadata: {
+              full_name: 'John Provider',
+              phone: '+1234567890',
+              role: 'provider',
+              status: 'active' as const,
+              company_name: 'Adventure Tours Co.',
+              business_type: 'Adventure & Outdoor'
+            }
+          },
+          {
+            id: '2',
+            email: 'jane.guide@example.com',
+            created_at: '2024-01-10T09:15:00Z',
+            last_sign_in_at: '2024-01-19T16:20:00Z',
+            experiences_count: 3,
+            user_metadata: {
+              full_name: 'Jane Guide',
+              phone: '+1987654321',
+              role: 'provider',
+              status: 'inactive' as const,
+              company_name: 'City Explorers',
+              business_type: 'City Tours'
+            }
+          },
+          {
+            id: '3',
+            email: 'bob.host@example.com',
+            created_at: '2024-01-05T11:00:00Z',
+            last_sign_in_at: '2024-01-18T13:30:00Z',
+            experiences_count: 0,
+            user_metadata: {
+              full_name: 'Bob Host',
+              phone: '+1122334455',
+              role: 'provider',
+              status: 'pending' as const,
+              company_name: 'Food & Culture Tours',
+              business_type: 'Food & Beverage'
+            }
+          }
+        ];
+        
+        setProviders(mockProviders);
+        demoModeRef.current = true;
+      }
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch providers",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAction = (type: string, provider: any) => setModal({ type, provider });
-  const closeModal = () => setModal(null);
-
-  const handleSuspend = (id: string) => {
-    setProviders(prev => prev.map(p => p.id === id ? { ...p, status: p.status === 'suspended' ? 'active' : 'suspended' } : p));
-    toast.success('Account status updated!');
-    closeModal();
+  const handleAddProvider = async () => {
+    try {
+      if (demoModeRef.current) {
+        setProviders(prev => [
+          ...prev,
+          {
+            id: (prev.length + 1).toString(),
+            email: newProvider.email,
+            created_at: new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+            user_metadata: {
+              full_name: newProvider.full_name,
+              phone: newProvider.phone,
+              role: 'provider',
+              company_name: newProvider.company_name,
+              business_type: newProvider.business_type,
+              status: 'pending'
+            },
+            experiences_count: 0
+          }
+        ]);
+        setIsAddProviderDialogOpen(false);
+        setNewProvider({
+          email: '',
+          password: '',
+          full_name: '',
+          phone: '',
+          company_name: '',
+          business_type: ''
+        });
+        return;
+      }
+      // Real mode
+      const userData = {
+        email: newProvider.email,
+        password: newProvider.password,
+        user_metadata: {
+          full_name: newProvider.full_name,
+          phone: newProvider.phone,
+          role: 'provider',
+          company_name: newProvider.company_name,
+          business_type: newProvider.business_type
+        }
+      };
+      await adminService.createUser(userData);
+      toast({
+        title: "Success",
+        description: "Provider created successfully",
+      });
+      setIsAddProviderDialogOpen(false);
+      setNewProvider({
+        email: '',
+        password: '',
+        full_name: '',
+        phone: '',
+        company_name: '',
+        business_type: ''
+      });
+      fetchProviders();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create provider. Set up SUPABASE_SERVICE_ROLE_KEY for real provider management.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Location', 'Join Date', 'Status', 'Experiences', 'Rating'];
-    const rows = filteredProviders.map(p => [p.name, p.email, p.phone, p.location, p.joinDate, p.status, p.experiences, p.rating]);
-    let csv = headers.join(',') + '\n';
-    csv += rows.map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'providers.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleStatusChange = async (userId: string, newStatus: 'active' | 'inactive' | 'pending') => {
+    try {
+      if (demoModeRef.current) {
+        setProviders(prev => prev.map(provider =>
+          provider.id === userId
+            ? {
+                ...provider,
+                user_metadata: {
+                  ...provider.user_metadata,
+                  status: newStatus as 'active' | 'inactive' | 'pending'
+                }
+              }
+            : provider
+        ));
+        toast({
+          title: "Success",
+          description: "Provider status updated successfully",
+        });
+        return;
+      }
+
+      await adminService.updateUser({
+        userId,
+        user_metadata: { status: newStatus }
+      });
+
+      toast({
+        title: "Success",
+        description: "Provider status updated successfully",
+      });
+
+      fetchProviders();
+    } catch (error) {
+      console.error('Error updating provider status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update provider status",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleEditProvider = async () => {
+    if (!selectedProvider) return;
+    try {
+      if (demoModeRef.current) {
+        setProviders(prev => prev.map(p =>
+          p.id === selectedProvider.id
+            ? {
+                ...p,
+                user_metadata: {
+                  ...p.user_metadata,
+                  full_name: selectedProvider.user_metadata.full_name,
+                  phone: selectedProvider.user_metadata.phone,
+                  company_name: selectedProvider.user_metadata.company_name,
+                  business_type: selectedProvider.user_metadata.business_type
+                }
+              }
+            : p
+        ));
+        setIsEditProviderDialogOpen(false);
+        setSelectedProvider(null);
+        return;
+      }
+      // Real mode
+      await adminService.updateUser({
+        userId: selectedProvider.id,
+        user_metadata: {
+          full_name: selectedProvider.user_metadata.full_name,
+          phone: selectedProvider.user_metadata.phone,
+          company_name: selectedProvider.user_metadata.company_name,
+          business_type: selectedProvider.user_metadata.business_type
+        }
+      });
+      toast({
+        title: "Success",
+        description: "Provider updated successfully",
+      });
+      setIsEditProviderDialogOpen(false);
+      setSelectedProvider(null);
+      fetchProviders();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update provider. Set up SUPABASE_SERVICE_ROLE_KEY for real provider management.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteProvider = async (id: string) => {
+    try {
+      if (demoModeRef.current) {
+        setProviders(prev => prev.filter(p => p.id !== id));
+        return;
+      }
+      await adminService.deleteUser(id);
+      toast({
+        title: "Success",
+        description: "Provider deleted successfully",
+      });
+      fetchProviders();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete provider. Set up SUPABASE_SERVICE_ROLE_KEY for real provider management.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredProviders = providers.filter(provider => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      provider.email.toLowerCase().includes(searchTerm) ||
+      provider.user_metadata?.full_name?.toLowerCase().includes(searchTerm) ||
+      provider.user_metadata?.phone?.toLowerCase().includes(searchTerm) ||
+      provider.user_metadata?.company_name?.toLowerCase().includes(searchTerm)
+    );
+  });
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Briefcase className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Experience Providers</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Provider Management</h1>
+          <Dialog open={isAddProviderDialogOpen} onOpenChange={setIsAddProviderDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" /> Add Provider
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Provider</DialogTitle>
+                <DialogDescription>
+                  Create a new provider account with the following details.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newProvider.email}
+                    onChange={(e) => setNewProvider(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={newProvider.password}
+                    onChange={(e) => setNewProvider(prev => ({ ...prev, password: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name</Label>
+                  <Input
+                    id="full_name"
+                    value={newProvider.full_name}
+                    onChange={(e) => setNewProvider(prev => ({ ...prev, full_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={newProvider.phone}
+                    onChange={(e) => setNewProvider(prev => ({ ...prev, phone: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company_name">Company Name</Label>
+                  <Input
+                    id="company_name"
+                    value={newProvider.company_name}
+                    onChange={(e) => setNewProvider(prev => ({ ...prev, company_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="business_type">Business Type</Label>
+                  <Input
+                    id="business_type"
+                    value={newProvider.business_type}
+                    onChange={(e) => setNewProvider(prev => ({ ...prev, business_type: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddProviderDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddProvider}>
+                  Create Provider
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        <p className="text-muted-foreground">
-          Manage your experience provider accounts and view their activity
-        </p>
 
         <Card>
           <CardHeader>
-            <CardTitle>Provider Management</CardTitle>
-            <CardDescription>
-              View and manage all experience providers
-            </CardDescription>
-            <Button className="ml-auto" onClick={() => setShowAddModal(true)}>Add New Provider</Button>
+            <CardTitle>Providers</CardTitle>
+            <CardDescription>View and manage experience providers</CardDescription>
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search providers..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-6">
-              <div className="relative w-72">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search providers..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            {isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
-              <Button onClick={exportToCSV}>Export Data</Button>
-            </div>
-
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Provider Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Experiences</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProviders.map((provider) => (
-                  <TableRow key={provider.id}>
-                    <TableCell className="font-medium">{provider.name}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center text-sm">
-                          <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-                          {provider.email}
-                        </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Phone className="mr-2 h-4 w-4" />
-                          {provider.phone}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm">
-                        <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {provider.location}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm">
-                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {provider.joinDate}
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(provider.status)}</TableCell>
-                    <TableCell>{provider.experiences}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm">
-                        <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                        {provider.rating}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleAction('details', provider)}>View Details</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('experiences', provider)}>View Experiences</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('reviews', provider)}>View Reviews</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('message', provider)}>Send Message</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleAction('suspend', provider)}>
-                            {provider.status === 'suspended' ? 'Activate Account' : 'Suspend Account'}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Provider</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Experiences</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Last Sign In</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredProviders.map((provider) => (
+                    <TableRow key={provider.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={provider.user_metadata?.avatar_url} />
+                            <AvatarFallback>
+                              {provider.user_metadata?.full_name?.[0] || provider.email[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{provider.user_metadata?.full_name || 'No name'}</div>
+                            <div className="text-sm text-muted-foreground">{provider.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <Mail className="h-4 w-4" />
+                          <span>{provider.email}</span>
+                        </div>
+                        {provider.user_metadata?.phone && (
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
+                            <Phone className="h-4 w-4" />
+                            <span>{provider.user_metadata.phone}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{provider.user_metadata?.company_name || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">{provider.user_metadata?.business_type || 'N/A'}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={provider.user_metadata?.status === 'active' ? 'default' : 'secondary'}>
+                          {provider.user_metadata?.status || 'pending'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          <span>{provider.experiences_count}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(provider.created_at), 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {provider.last_sign_in_at 
+                          ? format(new Date(provider.last_sign_in_at), 'MMM d, yyyy')
+                          : 'Never'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu open={openDropdownId === provider.id} onOpenChange={(open) => {
+                          setOpenDropdownId(open ? provider.id : null);
+                        }}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
+                            <DropdownMenuItem onClick={() => {
+                              handleStatusChange(provider.id, 'active');
+                              setOpenDropdownId(null);
+                            }}>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Activate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              handleStatusChange(provider.id, 'inactive');
+                              setOpenDropdownId(null);
+                            }}>
+                              <UserMinus className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => { 
+                                setSelectedProvider(provider); 
+                                setIsEditProviderDialogOpen(true);
+                                setOpenDropdownId(null);
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => { 
+                                setSelectedProvider(provider); 
+                                setIsViewProviderDialogOpen(true);
+                                setOpenDropdownId(null);
+                              }}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => { 
+                                setProviderToDelete(provider.id); 
+                                setIsDeleteProviderDialogOpen(true);
+                                setOpenDropdownId(null);
+                              }}
+                              className="text-red-600"
+                            >
+                              <UserMinus className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
-
-        {/* Modals */}
-        {modal && modal.type === 'details' && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-2">Provider Details</h2>
-              <div className="mb-4">
-                <div><b>Name:</b> {modal.provider.name}</div>
-                <div><b>Email:</b> {modal.provider.email}</div>
-                <div><b>Phone:</b> {modal.provider.phone}</div>
-                <div><b>Location:</b> {modal.provider.location}</div>
-                <div><b>Join Date:</b> {modal.provider.joinDate}</div>
-                <div><b>Status:</b> {modal.provider.status}</div>
-                <div><b>Experiences:</b> {modal.provider.experiences}</div>
-                <div><b>Rating:</b> {modal.provider.rating}</div>
-              </div>
-              <Button onClick={closeModal} className="w-full">Close</Button>
-            </div>
-          </div>
-        )}
-        {modal && modal.type === 'experiences' && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-2">Experiences by {modal.provider.name}</h2>
-              <div className="mb-4">
-                <ul className="list-disc pl-5">
-                  <li>Mumbai Street Food Tour</li>
-                  <li>Old Delhi Heritage Walk</li>
-                </ul>
-              </div>
-              <Button onClick={closeModal} className="w-full">Close</Button>
-            </div>
-          </div>
-        )}
-        {modal && modal.type === 'reviews' && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-2">Reviews for {modal.provider.name}</h2>
-              <div className="mb-4">
-                <ul className="list-disc pl-5">
-                  <li><b>John Doe:</b> 5★ - Excellent guide!</li>
-                  <li><b>Jane Smith:</b> 4★ - Very informative.</li>
-                </ul>
-              </div>
-              <Button onClick={closeModal} className="w-full">Close</Button>
-            </div>
-          </div>
-        )}
-        {modal && modal.type === 'message' && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-2">Send Message to {modal.provider.name}</h2>
-              <div className="mb-4">
-                <textarea className="w-full border rounded p-2" rows={3} placeholder="Type your message..." />
-              </div>
-              <Button onClick={() => { toast.success('Message sent!'); closeModal(); }} className="w-full">Send</Button>
-              <Button variant="outline" onClick={closeModal} className="w-full mt-2">Cancel</Button>
-            </div>
-          </div>
-        )}
-        {modal && modal.type === 'suspend' && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-2">{modal.provider.status === 'suspended' ? 'Activate Account' : 'Suspend Account'}</h2>
-              <div className="mb-4">Are you sure you want to {modal.provider.status === 'suspended' ? 'activate' : 'suspend'} {modal.provider.name}'s account?</div>
-              <Button onClick={() => handleSuspend(modal.provider.id)} className="w-full" variant={modal.provider.status === 'suspended' ? 'default' : 'destructive'}>{modal.provider.status === 'suspended' ? 'Activate' : 'Suspend'}</Button>
-              <Button variant="outline" onClick={closeModal} className="w-full mt-2">Cancel</Button>
-            </div>
-          </div>
-        )}
-        {showAddModal && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Add New Provider</h2>
-              <div className="mb-4 space-y-2">
-                <Input placeholder="Name" value={newProvider.name} onChange={e => setNewProvider({ ...newProvider, name: e.target.value })} />
-                <Input placeholder="Email" value={newProvider.email} onChange={e => setNewProvider({ ...newProvider, email: e.target.value })} />
-                <Input placeholder="Phone" value={newProvider.phone} onChange={e => setNewProvider({ ...newProvider, phone: e.target.value })} />
-                <Input placeholder="Location" value={newProvider.location} onChange={e => setNewProvider({ ...newProvider, location: e.target.value })} />
-                <Input placeholder="Join Date" type="date" value={newProvider.joinDate} onChange={e => setNewProvider({ ...newProvider, joinDate: e.target.value })} />
-              </div>
-              <Button className="w-full" onClick={() => {
-                if (!newProvider.name || !newProvider.email || !newProvider.phone || !newProvider.location || !newProvider.joinDate) {
-                  toast.error('Please fill all fields');
-                  return;
-                }
-                setProviders(prev => [
-                  ...prev,
-                  { ...newProvider, id: (prev.length + 1).toString(), experiences: 0, rating: 0 }
-                ]);
-                setShowAddModal(false);
-                setNewProvider({ name: '', email: '', phone: '', location: '', joinDate: '', status: 'active', experiences: 0, rating: 0 });
-                toast.success('Provider added!');
-              }} disabled={!newProvider.name || !newProvider.email || !newProvider.phone || !newProvider.location || !newProvider.joinDate}>Add</Button>
-              <Button variant="outline" className="w-full mt-2" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Edit Provider Dialog */}
+      <Dialog open={isEditProviderDialogOpen} onOpenChange={setIsEditProviderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Provider</DialogTitle>
+            <DialogDescription>
+              Update the provider's details.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedProvider && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-full_name">Full Name</Label>
+                <Input
+                  id="edit-full_name"
+                  value={selectedProvider.user_metadata.full_name || ''}
+                  onChange={(e) => setSelectedProvider(prev => prev ? {
+                    ...prev,
+                    user_metadata: {
+                      ...prev.user_metadata,
+                      full_name: e.target.value
+                    }
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={selectedProvider.user_metadata.phone || ''}
+                  onChange={(e) => setSelectedProvider(prev => prev ? {
+                    ...prev,
+                    user_metadata: {
+                      ...prev.user_metadata,
+                      phone: e.target.value
+                    }
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-company_name">Company Name</Label>
+                <Input
+                  id="edit-company_name"
+                  value={selectedProvider.user_metadata.company_name || ''}
+                  onChange={(e) => setSelectedProvider(prev => prev ? {
+                    ...prev,
+                    user_metadata: {
+                      ...prev.user_metadata,
+                      company_name: e.target.value
+                    }
+                  } : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-business_type">Business Type</Label>
+                <Input
+                  id="edit-business_type"
+                  value={selectedProvider.user_metadata.business_type || ''}
+                  onChange={(e) => setSelectedProvider(prev => prev ? {
+                    ...prev,
+                    user_metadata: {
+                      ...prev.user_metadata,
+                      business_type: e.target.value
+                    }
+                  } : null)}
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditProviderDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditProvider}>
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Provider Dialog */}
+      <Dialog open={isViewProviderDialogOpen} onOpenChange={setIsViewProviderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Provider Profile</DialogTitle>
+            <DialogDescription>
+              View provider details and information.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedProvider && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.user_metadata.full_name || 'Not provided'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.email}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.user_metadata.phone || 'Not provided'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Company Name</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.user_metadata.company_name || 'Not provided'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Business Type</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.user_metadata.business_type || 'Not provided'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  <Badge variant={selectedProvider.user_metadata?.status === 'active' ? 'default' : 'secondary'}>
+                    {selectedProvider.user_metadata?.status || 'pending'}
+                  </Badge>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Provider ID</Label>
+                <div className="p-2 bg-muted rounded-md font-mono text-sm">
+                  {selectedProvider.id}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Joined Date</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {format(new Date(selectedProvider.created_at), 'PPP')}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Last Sign In</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.last_sign_in_at 
+                    ? format(new Date(selectedProvider.last_sign_in_at), 'PPP')
+                    : 'Never'
+                  }
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Total Experiences</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedProvider.experiences_count || 0} experiences
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsViewProviderDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              setIsViewProviderDialogOpen(false);
+              setIsEditProviderDialogOpen(true);
+            }}>
+              Edit Provider
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Provider Confirmation Dialog */}
+      <Dialog open={isDeleteProviderDialogOpen} onOpenChange={setIsDeleteProviderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Provider</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this provider? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteProviderDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (providerToDelete) {
+                  handleDeleteProvider(providerToDelete);
+                  setIsDeleteProviderDialogOpen(false);
+                  setProviderToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
-};
-
-export default Providers; 
+} 
