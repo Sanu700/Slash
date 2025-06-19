@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import ScrollToTop from "@/components/ScrollToTop";
+
 
 import { AuthProvider, requireAuth } from "@/lib/auth";
 import { CartProvider } from "@/contexts/CartContext";
@@ -15,12 +17,12 @@ import ExperienceView from "./pages/ExperienceView";
 import CategoryExplore from "./pages/CategoryExplore";
 import AllExperiences from "./pages/AllExperiences";
 import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
 import Booking from "./pages/Booking";
 import Wishlist from "./pages/Wishlist";
+import Checkout from "./pages/Checkout";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -51,6 +53,7 @@ import Customers from './pages/admin/users/Customers';
 import Providers from './pages/admin/users/Providers';
 import Experiences from './pages/admin/Experiences';
 import AdminProfile from './pages/admin/Profile';
+import { PaymentDetails } from '@/components/admin/PaymentDetails';
 
 // Protect Routes
 const ProtectedProfile = requireAuth(Profile, false);
@@ -65,6 +68,7 @@ const ProtectedCustomers = requireAuth(Customers, true);
 const ProtectedProviders = requireAuth(Providers, true);
 const ProtectedExperiences = requireAuth(Experiences, true);
 const ProtectedAdminProfile = requireAuth(AdminProfile, true);
+const ProtectedPaymentDetails = requireAuth(PaymentDetails, true);
 
 const queryClient = new QueryClient();
 
@@ -75,6 +79,7 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Layout><Index /></Layout>} />
@@ -117,6 +122,7 @@ function App() {
                 <Route path="/admin/users/providers" element={<ProtectedProviders />} />
                 <Route path="/admin/experiences" element={<ProtectedExperiences />} />
                 <Route path="/admin/profile" element={<ProtectedAdminProfile />} />
+                <Route path="/admin/payments" element={<ProtectedPaymentDetails />} />
 
                 {/* 404 Page */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />

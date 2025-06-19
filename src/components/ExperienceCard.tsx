@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 interface ExperienceCardProps {
   experience: Experience;
   featured?: boolean;
+  onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
 }
 
-const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) => {
+const ExperienceCard = ({ experience, featured = false, onWishlistChange }: ExperienceCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -56,13 +57,19 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
       return;
     }
     await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, (experiences) => {
-      setIsInWishlist(!isInWishlist);
+      const newWishlistState = !isInWishlist;
+      setIsInWishlist(newWishlistState);
+      onWishlistChange?.(experience.id, newWishlistState);
     });
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await addToCart(experience.id);
+    if (!user) {
+      toast.error('Please log in to add items to cart');
+      return;
+    }
+    await addToCart(experience.id, new Date(), 1);
   };
 
   return (
@@ -149,14 +156,20 @@ const ExperienceCard = ({ experience, featured = false }: ExperienceCardProps) =
               "transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
-              <Link to={`/experience/${experience.id}`}>
-                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
-                  View Experience
+              <div className="grid grid-cols-2 gap-2">
+                <Link to={`/experience/${experience.id}`}>
+                  <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
+                    View Experience
+                  </Button>
+                </Link>
+                <Button 
+                  size="sm" 
+                  className="w-full bg-primary text-white hover:bg-primary/90"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
                 </Button>
-              </Link>
-              <Button size="sm" variant="outline" className="w-full mt-2 text-black" onClick={handleAddToCart}>
-                Add to Cart
-              </Button>
+              </div>
             </div>
           </div>
         </div>

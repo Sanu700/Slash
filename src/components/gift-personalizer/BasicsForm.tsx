@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormData } from "@/types/personalizerTypes";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 interface BasicsFormProps {
   formData: FormData;
@@ -37,13 +39,19 @@ const BasicsForm = ({
         </div>
         <div>
           <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            name="city"
+          <Select
             value={formData.city}
-            onChange={handleInputChange}
-            placeholder="e.g., Mumbai"
-          />
+            onValueChange={val => setFormData(prev => ({ ...prev, city: val }))}
+          >
+            <SelectTrigger id="city" className="w-full">
+              <SelectValue placeholder="Select a city" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Delhi">Delhi</SelectItem>
+              <SelectItem value="Bangalore">Bangalore</SelectItem>
+              <SelectItem value="Gurgaon">Gurgaon</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
