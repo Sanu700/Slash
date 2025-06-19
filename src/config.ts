@@ -27,8 +27,8 @@ export const config: Config = {
     key: import.meta.env.VITE_SUPABASE_KEY || DEV_CREDENTIALS.key
   },
   razorpay: {
-    keyId: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_PbaLvTkf2JcPOv',
-    keySecret: import.meta.env.VITE_RAZORPAY_KEY_SECRET || 'Me8xWnnYkvAf37VGaQYJiGNS',
+    keyId: import.meta.env.RAZORPAY_KEY_ID || '',
+    keySecret: '',
     currency: 'INR',
     name: 'Slash Experiences',
     description: 'Complete your booking',
@@ -37,4 +37,3 @@ export const config: Config = {
     }
   }
 };
-

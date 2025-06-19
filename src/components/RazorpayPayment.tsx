@@ -67,7 +67,7 @@ export const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
       });
 
       const options: RazorpayOptions = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+        key: import.meta.env.RAZORPAY_KEY_ID || '',
         amount: Number(order.amount),
         currency: order.currency,
         name: 'Slash Experiences',
