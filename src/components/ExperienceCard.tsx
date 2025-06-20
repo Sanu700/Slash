@@ -10,6 +10,7 @@ import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -24,6 +25,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
+  const { refreshWishlistCount } = useWishlist();
 
   // Check if experience is in wishlist
   useEffect(() => {
@@ -60,6 +62,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       const newWishlistState = !isInWishlist;
       setIsInWishlist(newWishlistState);
       onWishlistChange?.(experience.id, newWishlistState);
+      refreshWishlistCount();
     });
   };
 
@@ -156,19 +159,12 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               "transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
-              <div className="grid grid-cols-2 gap-2">
+              <div>
                 <Link to={`/experience/${experience.id}`}>
-                  <Button size="sm" className="w-full bg-white text-black hover:bg-white/90">
+                  <Button size="lg" className="w-full bg-white text-black hover:bg-white/90 font-semibold py-3 text-base">
                     View Experience
                   </Button>
                 </Link>
-                <Button 
-                  size="sm" 
-                  className="w-full bg-primary text-white hover:bg-primary/90"
-                  onClick={handleAddToCart}
-                >
-                  Add to Cart
-                </Button>
               </div>
             </div>
           </div>

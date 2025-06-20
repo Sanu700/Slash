@@ -23,10 +23,6 @@ const Cart: React.FC = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (items.length === 0) navigate('/experiences');
-  }, [items, navigate]);
-
   const loadRazorpaySdk = (): Promise<typeof window.Razorpay> =>
     new Promise((resolve, reject) => {
       if (window.Razorpay) return resolve(window.Razorpay);
@@ -97,101 +93,107 @@ const Cart: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
             Your Cart
           </h1>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Items list */}
-            <div className="lg:col-span-2 space-y-4">
-              {items.map(item => {
-                const exp = cachedExperiences[item.experienceId];
-                if (!exp) return null;
-                return (
-                  <Card key={item.experienceId} className="overflow-hidden">
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        <img
-                          src={exp.imageUrl}
-                          alt={exp.title}
-                          className="w-24 h-24 object-cover rounded-lg"
-                        />
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {exp.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {exp.location}
-                          </p>
-                          {item.selectedDate && (
+          {items.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-lg text-gray-600 dark:text-gray-300">Your cart is empty.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Items list */}
+              <div className="lg:col-span-2 space-y-4">
+                {items.map(item => {
+                  const exp = cachedExperiences[item.experienceId];
+                  if (!exp) return null;
+                  return (
+                    <Card key={item.experienceId} className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex gap-4">
+                          <img
+                            src={exp.imageUrl}
+                            alt={exp.title}
+                            className="w-24 h-24 object-cover rounded-lg"
+                          />
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {exp.title}
+                            </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              Date: {format(new Date(item.selectedDate), 'PPP')}
+                              {exp.location}
                             </p>
-                          )}
-                          <div className="flex items-center gap-2 mb-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.experienceId, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
-                            >–</Button>
-                            <span className="w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
-                            >+</Button>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                              ₹{exp.price * item.quantity}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFromCart(item.experienceId)}
-                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {item.selectedDate && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                Date: {format(new Date(item.selectedDate), 'PPP')}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mb-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.experienceId, item.quantity - 1)}
+                                disabled={item.quantity <= 1}
+                              >–</Button>
+                              <span className="w-8 text-center">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
+                              >+</Button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                                ₹{exp.price * item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFromCart(item.experienceId)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              {/* Order summary */}
+              <div className="lg:col-span-1">
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                      Order Summary
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Subtotal</span>
+                        <span>₹{totalPrice}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-            {/* Order summary */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Order Summary
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                      <span>Subtotal</span>
-                      <span>₹{totalPrice}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                      <span>Taxes (18%)</span>
-                      <span>₹{Math.round(totalPrice * 0.18)}</span>
-                    </div>
-                    <div className="border-t pt-4">
-                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
-                        <span>Total</span>
-                        <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Taxes (18%)</span>
+                        <span>₹{Math.round(totalPrice * 0.18)}</span>
                       </div>
+                      <div className="border-t pt-4">
+                        <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                          <span>Total</span>
+                          <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handlePayment}
+                        disabled={isLoading}
+                        className="w-full mt-6"
+                      >
+                        {isLoading ? 'Processing…' : 'Proceed to Payment'}
+                      </Button>
                     </div>
-                    <Button
-                      onClick={handlePayment}
-                      disabled={isLoading}
-                      className="w-full mt-6"
-                    >
-                      {isLoading ? 'Processing…' : 'Proceed to Payment'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
