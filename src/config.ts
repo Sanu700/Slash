@@ -1,4 +1,6 @@
-console.log('🔑 razorpay key →', import.meta.env.VITE_RAZORPAY_KEY_ID);
+console.log('🚀 import.meta.env →', import.meta.env);
+console.log('🔑 VITE_RAZORPAY_KEY →', import.meta.env.VITE_RAZORPAY_KEY);
+
 interface Config {
   supabase: {
     url: string;
