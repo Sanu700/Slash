@@ -262,7 +262,16 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       // Update local state
-      setItems(prevItems => prevItems.filter(item => item.experienceId !== experienceId));
+      setItems(prevItems => {
+        const updatedItems = prevItems.filter(item => item.experienceId !== experienceId);
+        // Update localStorage accordingly
+        if (updatedItems.length > 0) {
+          localStorage.setItem('cart', JSON.stringify(updatedItems));
+        } else {
+          localStorage.removeItem('cart');
+        }
+        return updatedItems;
+      });
       toast.success('Item removed from cart');
     } catch (error) {
       console.error('Error in removeFromCart:', error);
