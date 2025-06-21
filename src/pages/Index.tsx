@@ -103,18 +103,22 @@ const Index = () => {
               </div>
             ) : featuredExperiences.length > 0 ? (
               <div className="relative">
-                <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
-                  <CarouselContent>
+                <Carousel opts={{ 
+                  align: 'center', 
+                  slidesToScroll: 1,
+                  containScroll: 'trimSnaps'
+                }}>
+                  <CarouselContent className="-ml-2 md:-ml-4">
                     {featuredExperiences.map((experience) => (
-                      <CarouselItem key={experience.id} className="md:basis-1/3 px-6">
-                        <div className="w-[341.34px] h-[256px]">
+                      <CarouselItem key={experience.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3">
+                        <div className="w-full h-auto min-h-[200px] md:min-h-[256px]">
                           <ExperienceCard experience={experience} />
-                  </div>
+                        </div>
                       </CarouselItem>
-                ))}
+                    ))}
                   </CarouselContent>
-                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white -ml-8" />
-                  <CarouselNext className="bg-black hover:bg-black/90 text-white -mr-8" />
+                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white left-2 md:-left-8" />
+                  <CarouselNext className="bg-black hover:bg-black/90 text-white right-2 md:-right-8" />
                 </Carousel>
               </div>
             ) : (
