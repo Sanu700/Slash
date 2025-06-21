@@ -62,25 +62,29 @@ const SuggestedExperiences = () => {
       </div>
       {showCarousel && (
         <div className="flex justify-center w-full mt-6">
-          <div className="w-full backdrop-blur-sm bg-white/20 rounded-lg p-4" style={{ width: '1134px', height: '288px' }}>
+          <div className="w-full backdrop-blur-sm bg-white/20 rounded-lg p-4" style={{ width: '100%', maxWidth: '1134px', height: 'auto', minHeight: '288px' }}>
             {isAllLoading ? (
               <div className="flex justify-center items-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : allExperiences.length > 0 ? (
               <div className="relative">
-                <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
-                  <CarouselContent>
+                <Carousel opts={{ 
+                  align: 'center', 
+                  slidesToScroll: 1,
+                  containScroll: 'trimSnaps'
+                }}>
+                  <CarouselContent className="-ml-2 md:-ml-4">
                     {allExperiences.map((experience) => (
-                      <CarouselItem key={experience.id} className="md:basis-1/3 px-6">
-                        <div className="w-[341.34px] h-[256px]">
+                      <CarouselItem key={experience.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3">
+                        <div className="w-full h-auto min-h-[200px] md:min-h-[256px]">
                           <ExperienceCard experience={experience} />
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="bg-white/80 hover:bg-white text-black -ml-8" />
-                  <CarouselNext className="bg-white/80 hover:bg-white text-black -mr-8" />
+                  <CarouselPrevious className="bg-white/80 hover:bg-white text-black left-2 md:-left-8" />
+                  <CarouselNext className="bg-white/80 hover:bg-white text-black right-2 md:-right-8" />
                 </Carousel>
               </div>
             ) : (
