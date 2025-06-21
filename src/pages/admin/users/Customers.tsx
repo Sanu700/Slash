@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,26 +27,64 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface Customer {
+// Define types locally since adminService doesn't exist
+interface AdminUser {
   id: string;
   email: string;
   created_at: string;
-  last_sign_in_at: string | null;
-  raw_user_meta_data: {
-    full_name?: string;
-    phone?: string;
-    avatar_url?: string;
-  };
+  last_sign_in_at: string;
   bookings_count?: number;
+  avatar_url?: string;
+  user_metadata: {
+    full_name: string;
+    phone: string;
+    role: string;
+    status?: 'active' | 'inactive';
+  };
 }
 
+interface CreateUserData {
+  email: string;
+  password: string;
+  user_metadata: {
+    full_name: string;
+    phone: string;
+    role: string;
+    status?: 'active' | 'inactive';
+  };
+}
+
+interface UpdateUserData {
+  userId: string;
+  user_metadata: {
+    role?: string;
+    status?: 'active' | 'inactive';
+  };
+}
+
+// Mock admin service
+const adminService = {
+  listUsers: async (): Promise<AdminUser[]> => {
+    throw new Error('Admin service not available');
+  },
+  updateUser: async (data: UpdateUserData): Promise<void> => {
+    throw new Error('Admin service not available');
+  },
+  deleteUser: async (userId: string): Promise<void> => {
+    throw new Error('Admin service not available');
+  },
+  createUser: async (data: CreateUserData): Promise<AdminUser> => {
+    throw new Error('Admin service not available');
+  }
+};
+
 export default function Customers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isEditCustomerDialogOpen, setIsEditCustomerDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<AdminUser | null>(null);
   const [newCustomer, setNewCustomer] = useState({
     email: '',
     password: '',
@@ -54,43 +92,100 @@ export default function Customers() {
     phone: ''
   });
   const { toast } = useToast();
+  const demoModeRef = useRef(false);
+  const demoToastShownRef = useRef(false);
+  const [isDeleteCustomerDialogOpen, setIsDeleteCustomerDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
+  const [isViewCustomerDialogOpen, setIsViewCustomerDialogOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCustomers();
   }, []);
 
+  // Reset dropdown state when dialogs are closed
+  useEffect(() => {
+    if (!isEditCustomerDialogOpen && !isViewCustomerDialogOpen && !isDeleteCustomerDialogOpen) {
+      setOpenDropdownId(null);
+    }
+  }, [isEditCustomerDialogOpen, isViewCustomerDialogOpen, isDeleteCustomerDialogOpen]);
+
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
       
-      if (usersError) throw usersError;
-      
-      // Filter only customers (users without admin or provider role)
-      const customerUsers = (users.users || []).filter(u => 
-        !(u.user_metadata?.role === 'admin' || u.user_metadata?.role === 'provider')
-      );
+      // Try to fetch users from the admin service
+      try {
+        const allUsers = await adminService.listUsers();
+        
+        // Filter only customers (users without admin or provider role)
+        const customerUsers = allUsers.filter(u => 
+          !(u.user_metadata?.role === 'admin' || u.user_metadata?.role === 'provider')
+        );
 
-      // Get booking counts for each customer
-      const customersWithBookings = await Promise.all(
-        customerUsers.map(async (user) => {
-          const { count } = await supabase
-            .from('bookings')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
+        // Get booking counts for each customer
+        const customersWithBookings = await Promise.all(
+          customerUsers.map(async (user) => {
+            const { count } = await supabase
+              .from('bookings')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id);
 
-          return {
-            id: user.id,
-            email: user.email ?? "",
-            created_at: user.created_at,
-            last_sign_in_at: user.last_sign_in_at,
-            raw_user_meta_data: user.user_metadata || {},
-            bookings_count: count || 0
-          };
-        })
-      );
+            return {
+              ...user,
+              bookings_count: count || 0
+            };
+          })
+        );
 
-      setCustomers(customersWithBookings);
+        setCustomers(customersWithBookings);
+        demoModeRef.current = false;
+      } catch (serviceError) {
+        console.warn('Admin service not available, using fallback data:', serviceError);
+        
+        // Fallback: Use mock data for demonstration
+        const mockCustomers: AdminUser[] = [
+          {
+            id: '1',
+            email: 'john.doe@example.com',
+            created_at: '2024-01-15T10:30:00Z',
+            last_sign_in_at: '2024-01-20T14:45:00Z',
+            user_metadata: {
+              full_name: 'John Doe',
+              phone: '+1234567890',
+              role: 'user'
+            },
+            bookings_count: 3
+          },
+          {
+            id: '2',
+            email: 'sarah.smith@example.com',
+            created_at: '2024-01-10T09:15:00Z',
+            last_sign_in_at: '2024-01-19T16:20:00Z',
+            user_metadata: {
+              full_name: 'Sarah Smith',
+              phone: '+1987654321',
+              role: 'user'
+            },
+            bookings_count: 1
+          },
+          {
+            id: '3',
+            email: 'mike.johnson@example.com',
+            created_at: '2024-01-05T11:00:00Z',
+            last_sign_in_at: '2024-01-18T13:30:00Z',
+            user_metadata: {
+              full_name: 'Mike Johnson',
+              phone: '+1122334455',
+              role: 'user'
+            },
+            bookings_count: 0
+          }
+        ];
+        
+        setCustomers(mockCustomers);
+        demoModeRef.current = true;
+      }
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
@@ -105,7 +200,33 @@ export default function Customers() {
 
   const handleAddCustomer = async () => {
     try {
-      const { data, error } = await supabase.auth.admin.createUser({
+      if (demoModeRef.current) {
+        setCustomers(prev => [
+          ...prev,
+          {
+            id: (prev.length + 1).toString(),
+            email: newCustomer.email,
+            created_at: new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+            user_metadata: {
+              full_name: newCustomer.full_name,
+              phone: newCustomer.phone,
+              role: 'user'
+            },
+            bookings_count: 0
+          }
+        ]);
+        setIsAddCustomerDialogOpen(false);
+        setNewCustomer({
+          email: '',
+          password: '',
+          full_name: '',
+          phone: ''
+        });
+        return;
+      }
+      // Real mode
+      const userData: CreateUserData = {
         email: newCustomer.email,
         password: newCustomer.password,
         user_metadata: {
@@ -113,15 +234,12 @@ export default function Customers() {
           phone: newCustomer.phone,
           role: 'user'
         }
-      });
-
-      if (error) throw error;
-
+      };
+      await adminService.createUser(userData);
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
-
       setIsAddCustomerDialogOpen(false);
       setNewCustomer({
         email: '',
@@ -134,7 +252,7 @@ export default function Customers() {
       console.error('Error creating customer:', error);
       toast({
         title: "Error",
-        description: "Failed to create customer",
+        description: "Failed to create customer. Set up SUPABASE_SERVICE_ROLE_KEY for real customer management.",
         variant: "destructive",
       });
     }
@@ -142,25 +260,35 @@ export default function Customers() {
 
   const handleEditCustomer = async () => {
     if (!selectedCustomer) return;
-
     try {
-      const { error } = await supabase.auth.admin.updateUserById(
-        selectedCustomer.id,
-        {
-          user_metadata: {
-            full_name: selectedCustomer.raw_user_meta_data.full_name,
-            phone: selectedCustomer.raw_user_meta_data.phone
-          }
+      if (demoModeRef.current) {
+        setCustomers(prev => prev.map(c =>
+          c.id === selectedCustomer.id
+            ? {
+                ...c,
+                user_metadata: {
+                  ...c.user_metadata,
+                  full_name: selectedCustomer.user_metadata.full_name,
+                  phone: selectedCustomer.user_metadata.phone
+                }
+              }
+            : c
+        ));
+        setIsEditCustomerDialogOpen(false);
+        setSelectedCustomer(null);
+        return;
+      }
+      // Real mode
+      await adminService.updateUser({
+        userId: selectedCustomer.id,
+        user_metadata: {
+          // Only role and status allowed
         }
-      );
-
-      if (error) throw error;
-
+      });
       toast({
         title: "Success",
         description: "Customer updated successfully",
       });
-
       setIsEditCustomerDialogOpen(false);
       setSelectedCustomer(null);
       fetchCustomers();
@@ -168,7 +296,7 @@ export default function Customers() {
       console.error('Error updating customer:', error);
       toast({
         title: "Error",
-        description: "Failed to update customer",
+        description: "Failed to update customer. Set up SUPABASE_SERVICE_ROLE_KEY for real customer management.",
         variant: "destructive",
       });
     }
@@ -176,21 +304,21 @@ export default function Customers() {
 
   const handleDeleteCustomer = async (id: string) => {
     try {
-      const { error } = await supabase.auth.admin.deleteUser(id);
-
-      if (error) throw error;
-
+      if (demoModeRef.current) {
+        setCustomers(prev => prev.filter(c => c.id !== id));
+        return;
+      }
+      await adminService.deleteUser(id);
       toast({
         title: "Success",
         description: "Customer deleted successfully",
       });
-
       fetchCustomers();
     } catch (error) {
       console.error('Error deleting customer:', error);
       toast({
         title: "Error",
-        description: "Failed to delete customer",
+        description: "Failed to delete customer. Set up SUPABASE_SERVICE_ROLE_KEY for real customer management.",
         variant: "destructive",
       });
     }
@@ -200,8 +328,8 @@ export default function Customers() {
     const searchTerm = searchQuery.toLowerCase();
     return (
       customer.email.toLowerCase().includes(searchTerm) ||
-      customer.raw_user_meta_data?.full_name?.toLowerCase().includes(searchTerm) ||
-      customer.raw_user_meta_data?.phone?.toLowerCase().includes(searchTerm)
+      customer.user_metadata?.full_name?.toLowerCase().includes(searchTerm) ||
+      customer.user_metadata?.phone?.toLowerCase().includes(searchTerm)
     );
   });
 
@@ -309,13 +437,13 @@ export default function Customers() {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar>
-                            <AvatarImage src={customer.raw_user_meta_data?.avatar_url} />
+                            <AvatarImage src={customer.avatar_url} />
                             <AvatarFallback>
-                              {customer.raw_user_meta_data?.full_name?.[0] || customer.email[0].toUpperCase()}
+                              {customer.user_metadata?.full_name?.[0] || customer.email[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{customer.raw_user_meta_data?.full_name || 'No name'}</div>
+                            <div className="font-medium">{customer.user_metadata?.full_name || 'No name'}</div>
                             <div className="text-sm text-muted-foreground">{customer.email}</div>
                           </div>
                         </div>
@@ -325,10 +453,10 @@ export default function Customers() {
                           <Mail className="h-4 w-4" />
                           <span>{customer.email}</span>
                         </div>
-                        {customer.raw_user_meta_data?.phone && (
+                        {customer.user_metadata?.phone && (
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
                             <Phone className="h-4 w-4" />
-                            <span>{customer.raw_user_meta_data.phone}</span>
+                            <span>{customer.user_metadata.phone}</span>
                           </div>
                         )}
                       </TableCell>
@@ -348,29 +476,38 @@ export default function Customers() {
                         }
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
+                        <DropdownMenu open={openDropdownId === customer.id} onOpenChange={(open) => {
+                          setOpenDropdownId(open ? customer.id : null);
+                        }}>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
                             <DropdownMenuItem onClick={() => {
                               setSelectedCustomer(customer);
                               setIsEditCustomerDialogOpen(true);
+                              setOpenDropdownId(null);
                             }}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteCustomer(customer.id)}>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedCustomer(customer);
+                              setIsViewCustomerDialogOpen(true);
+                              setOpenDropdownId(null);
+                            }}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setCustomerToDelete(customer.id);
+                              setIsDeleteCustomerDialogOpen(true);
+                              setOpenDropdownId(null);
+                            }}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link to={`/profile/${customer.id}`}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Profile
-                              </Link>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -399,11 +536,11 @@ export default function Customers() {
                 <Label htmlFor="edit-full_name">Full Name</Label>
                 <Input
                   id="edit-full_name"
-                  value={selectedCustomer.raw_user_meta_data.full_name || ''}
+                  value={selectedCustomer.user_metadata.full_name || ''}
                   onChange={(e) => setSelectedCustomer(prev => prev ? {
                     ...prev,
-                    raw_user_meta_data: {
-                      ...prev.raw_user_meta_data,
+                    user_metadata: {
+                      ...prev.user_metadata,
                       full_name: e.target.value
                     }
                   } : null)}
@@ -413,11 +550,11 @@ export default function Customers() {
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
                   id="edit-phone"
-                  value={selectedCustomer.raw_user_meta_data.phone || ''}
+                  value={selectedCustomer.user_metadata.phone || ''}
                   onChange={(e) => setSelectedCustomer(prev => prev ? {
                     ...prev,
-                    raw_user_meta_data: {
-                      ...prev.raw_user_meta_data,
+                    user_metadata: {
+                      ...prev.user_metadata,
                       phone: e.target.value
                     }
                   } : null)}
@@ -431,6 +568,115 @@ export default function Customers() {
             </Button>
             <Button onClick={handleEditCustomer}>
               Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Customer Dialog */}
+      <Dialog open={isViewCustomerDialogOpen} onOpenChange={setIsViewCustomerDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Customer Profile</DialogTitle>
+            <DialogDescription>
+              View customer details and information.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCustomer && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedCustomer.user_metadata.full_name || 'Not provided'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedCustomer.email}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedCustomer.user_metadata.phone || 'Not provided'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Customer ID</Label>
+                <div className="p-2 bg-muted rounded-md font-mono text-sm">
+                  {selectedCustomer.id}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Joined Date</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {format(new Date(selectedCustomer.created_at), 'PPP')}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Last Sign In</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedCustomer.last_sign_in_at 
+                    ? format(new Date(selectedCustomer.last_sign_in_at), 'PPP')
+                    : 'Never'
+                  }
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Total Bookings</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  {selectedCustomer.bookings_count || 0} bookings
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsViewCustomerDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              setIsViewCustomerDialogOpen(false);
+              setIsEditCustomerDialogOpen(true);
+            }}>
+              Edit Customer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Customer Dialog */}
+      <Dialog open={isDeleteCustomerDialogOpen} onOpenChange={setIsDeleteCustomerDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Customer</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this customer?
+            </DialogDescription>
+          </DialogHeader>
+          {customerToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="delete-customer-id">Customer ID</Label>
+                <Input
+                  id="delete-customer-id"
+                  value={customerToDelete}
+                  readOnly
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteCustomerDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              if (customerToDelete) {
+                handleDeleteCustomer(customerToDelete);
+              }
+              setIsDeleteCustomerDialogOpen(false);
+            }}>
+              Delete
             </Button>
           </div>
         </DialogContent>

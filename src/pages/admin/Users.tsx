@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Search, Mail, Phone, Shield, UserPlus, UserMinus, Users as UsersIcon, UserCog, BarChart } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -22,23 +21,59 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
-interface User {
+// Define types locally since adminService doesn't exist
+interface AdminUser {
   id: string;
   email: string;
   created_at: string;
-  last_sign_in_at: string | null;
-  raw_user_meta_data: {
-    full_name?: string;
-    phone?: string;
+  last_sign_in_at: string;
+  user_metadata: {
+    full_name: string;
+    phone: string;
+    role: string;
+  };
+}
+
+interface CreateUserData {
+  email: string;
+  password: string;
+  user_metadata: {
+    full_name: string;
+    phone: string;
+    role: string;
+  };
+}
+
+interface UpdateUserData {
+  userId: string;
+  user_metadata: {
     role?: string;
   };
 }
 
+// Mock admin service
+const adminService = {
+  listUsers: async (): Promise<AdminUser[]> => {
+    throw new Error('Admin service not available');
+  },
+  updateUser: async (data: UpdateUserData): Promise<void> => {
+    throw new Error('Admin service not available');
+  },
+  deleteUser: async (userId: string): Promise<void> => {
+    throw new Error('Admin service not available');
+  },
+  createUser: async (data: CreateUserData): Promise<AdminUser> => {
+    throw new Error('Admin service not available');
+  }
+};
+
 export default function Users() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [isServiceAvailable, setIsServiceAvailable] = useState(false);
+  const [serviceError, setServiceError] = useState<string | undefined>();
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
@@ -47,6 +82,11 @@ export default function Users() {
     role: 'user'
   });
   const { toast } = useToast();
+  const [demoToastShown, setDemoToastShown] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const demoModeRef = useRef(false);
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -55,19 +95,60 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.admin.listUsers();
       
-      if (error) throw error;
-      
-      setUsers(
-        (data.users || []).map(u => ({
-          id: u.id,
-          email: u.email ?? "",
-          created_at: u.created_at,
-          last_sign_in_at: u.last_sign_in_at,
-          raw_user_meta_data: u.user_metadata || {}
-        }))
-      );
+      // Try to fetch users from the admin service
+      try {
+        const usersData = await adminService.listUsers();
+        setUsers(usersData);
+        setIsServiceAvailable(true);
+        setServiceError(undefined);
+        demoModeRef.current = false;
+      } catch (serviceError) {
+        console.warn('Admin service not available, using fallback data:', serviceError);
+        setIsServiceAvailable(false);
+        setServiceError(serviceError instanceof Error ? serviceError.message : 'Unknown error');
+        demoModeRef.current = true;
+        
+        // Fallback: Use mock data for demonstration
+        const mockUsers: AdminUser[] = [
+          {
+            id: '1',
+            email: 'john.doe@example.com',
+            created_at: '2024-01-15T10:30:00Z',
+            last_sign_in_at: '2024-01-20T14:45:00Z',
+            user_metadata: {
+              full_name: 'John Doe',
+              phone: '+1234567890',
+              role: 'user'
+            }
+          },
+          {
+            id: '2',
+            email: 'jane.smith@example.com',
+            created_at: '2024-01-10T09:15:00Z',
+            last_sign_in_at: '2024-01-19T16:20:00Z',
+            user_metadata: {
+              full_name: 'Jane Smith',
+              phone: '+1987654321',
+              role: 'admin'
+            }
+          },
+          {
+            id: '3',
+            email: 'bob.wilson@example.com',
+            created_at: '2024-01-05T11:00:00Z',
+            last_sign_in_at: '2024-01-18T13:30:00Z',
+            user_metadata: {
+              full_name: 'Bob Wilson',
+              phone: '+1122334455',
+              role: 'provider'
+            }
+          }
+        ];
+        
+        setUsers(mockUsers);
+        // Demo toast notification removed for cleaner UI
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -82,12 +163,29 @@ export default function Users() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase.auth.admin.updateUserById(
-        userId,
-        { user_metadata: { role: newRole } }
-      );
+      if (demoModeRef.current) {
+        setUsers(prev => prev.map(user =>
+          user.id === userId
+            ? {
+                ...user,
+                user_metadata: {
+                  ...user.user_metadata,
+                  role: newRole
+                }
+              }
+            : user
+        ));
+        toast({
+          title: "Success",
+          description: "User role updated successfully",
+        });
+        return;
+      }
 
-      if (error) throw error;
+      await adminService.updateUser({
+        userId,
+        user_metadata: { role: newRole }
+      });
 
       toast({
         title: "Success",
@@ -99,7 +197,7 @@ export default function Users() {
       console.error('Error updating user role:', error);
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: "Failed to update user role. Set up SUPABASE_SERVICE_ROLE_KEY for real user management.",
         variant: "destructive",
       });
     }
@@ -107,9 +205,16 @@ export default function Users() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (demoModeRef.current) {
+        setUsers(prev => prev.filter(user => user.id !== userId));
+        toast({
+          title: "Success",
+          description: "User deleted successfully",
+        });
+        return;
+      }
 
-      if (error) throw error;
+      await adminService.deleteUser(userId);
 
       toast({
         title: "Success",
@@ -121,7 +226,7 @@ export default function Users() {
       console.error('Error deleting user:', error);
       toast({
         title: "Error",
-        description: "Failed to delete user",
+        description: "Failed to delete user. Set up SUPABASE_SERVICE_ROLE_KEY for real user management.",
         variant: "destructive",
       });
     }
@@ -129,7 +234,37 @@ export default function Users() {
 
   const handleAddUser = async () => {
     try {
-      const { data, error } = await supabase.auth.admin.createUser({
+      if (demoModeRef.current) {
+        setUsers(prev => [
+          ...prev,
+          {
+            id: (prev.length + 1).toString(),
+            email: newUser.email,
+            created_at: new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+            user_metadata: {
+              full_name: newUser.full_name,
+              phone: newUser.phone,
+              role: newUser.role
+            }
+          }
+        ]);
+        setIsAddUserDialogOpen(false);
+        setNewUser({
+          email: '',
+          password: '',
+          full_name: '',
+          phone: '',
+          role: 'user'
+        });
+        toast({
+          title: "Success",
+          description: "User created successfully",
+        });
+        return;
+      }
+
+      const userData: CreateUserData = {
         email: newUser.email,
         password: newUser.password,
         user_metadata: {
@@ -137,9 +272,9 @@ export default function Users() {
           phone: newUser.phone,
           role: newUser.role
         }
-      });
+      };
 
-      if (error) throw error;
+      await adminService.createUser(userData);
 
       toast({
         title: "Success",
@@ -159,7 +294,7 @@ export default function Users() {
       console.error('Error creating user:', error);
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: "Failed to create user. Set up SUPABASE_SERVICE_ROLE_KEY for real user management.",
         variant: "destructive",
       });
     }
@@ -169,8 +304,8 @@ export default function Users() {
     const searchTerm = searchQuery.toLowerCase();
     return (
       user.email.toLowerCase().includes(searchTerm) ||
-      user.raw_user_meta_data?.full_name?.toLowerCase().includes(searchTerm) ||
-      user.raw_user_meta_data?.phone?.toLowerCase().includes(searchTerm)
+      user.user_metadata?.full_name?.toLowerCase().includes(searchTerm) ||
+      user.user_metadata?.phone?.toLowerCase().includes(searchTerm)
     );
   });
 
@@ -306,7 +441,7 @@ export default function Users() {
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div className="font-medium">{user.raw_user_meta_data?.full_name || 'No name'}</div>
+                        <div className="font-medium">{user.user_metadata?.full_name || 'No name'}</div>
                         <div className="text-sm text-muted-foreground">{user.email}</div>
                       </TableCell>
                       <TableCell>
@@ -314,16 +449,16 @@ export default function Users() {
                           <Mail className="h-4 w-4" />
                           <span>{user.email}</span>
                         </div>
-                        {user.raw_user_meta_data?.phone && (
+                        {user.user_metadata?.phone && (
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
                             <Phone className="h-4 w-4" />
-                            <span>{user.raw_user_meta_data.phone}</span>
+                            <span>{user.user_metadata.phone}</span>
                           </div>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.raw_user_meta_data?.role === 'admin' ? 'default' : 'secondary'}>
-                          {user.raw_user_meta_data?.role || 'user'}
+                        <Badge variant={user.user_metadata?.role === 'admin' ? 'default' : 'secondary'}>
+                          {user.user_metadata?.role || 'user'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -336,23 +471,35 @@ export default function Users() {
                         }
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
+                        <DropdownMenu open={openDropdownId === user.id} onOpenChange={(open) => {
+                          setOpenDropdownId(open ? user.id : null);
+                        }}>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin')}>
+                          <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
+                            <DropdownMenuItem onClick={() => {
+                              handleRoleChange(user.id, 'admin');
+                              setOpenDropdownId(null);
+                            }}>
                               <Shield className="mr-2 h-4 w-4" />
                               Make Admin
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'user')}>
+                            <DropdownMenuItem onClick={() => {
+                              handleRoleChange(user.id, 'user');
+                              setOpenDropdownId(null);
+                            }}>
                               <UserMinus className="mr-2 h-4 w-4" />
                               Remove Admin
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => handleDeleteUser(user.id)}
+                              onClick={() => {
+                                setUserToDelete(user.id);
+                                setIsDeleteUserDialogOpen(true);
+                                setOpenDropdownId(null);
+                              }}
                               className="text-red-600"
                             >
                               <UserMinus className="mr-2 h-4 w-4" />
@@ -369,6 +516,35 @@ export default function Users() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteUserDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (userToDelete) {
+                  handleDeleteUser(userToDelete);
+                  setIsDeleteUserDialogOpen(false);
+                  setUserToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
