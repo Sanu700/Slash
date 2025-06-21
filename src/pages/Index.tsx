@@ -21,7 +21,6 @@ const Index = () => {
   const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
   const [isAllLoading, setIsAllLoading] = useState(true);
 
-  // Load featured experiences
   useEffect(() => {
     const loadFeaturedExperiences = async () => {
       setIsLoading(true);
@@ -37,7 +36,6 @@ const Index = () => {
     loadFeaturedExperiences();
   }, []);
 
-  // Load all experiences
   useEffect(() => {
     const loadAllExperiences = async () => {
       setIsAllLoading(true);
@@ -53,7 +51,6 @@ const Index = () => {
     loadAllExperiences();
   }, []);
 
-  // Smooth scroll behavior for anchor links
   useEffect(() => {
     const handleSmoothScroll = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -78,8 +75,8 @@ const Index = () => {
         <Hero />
 
         {/* Featured Experiences */}
-        <section id="experiences" className="py-20 md:py-28 overflow-x-hidden">
-          <div className="container max-w-6xl mx-auto px-4 sm:px-6 md:px-10">
+        <section id="experiences" className="py-20 md:py-28">
+          <div className="container max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-medium mb-4 animate-fade-in">
                 Featured Experiences
@@ -94,24 +91,22 @@ const Index = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : featuredExperiences.length > 0 ? (
-              <div className="relative overflow-x-hidden w-full">
-                <Carousel
-                  opts={{ align: 'center', slidesToScroll: 1, containScroll: 'trimSnaps' }}
-                >
-                  <CarouselContent className="flex gap-4 px-2 md:px-0">
+              <div className="relative overflow-hidden">
+                <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
+                  <CarouselContent>
                     {featuredExperiences.map((experience) => (
                       <CarouselItem
                         key={experience.id}
-                        className="flex-none w-[85%] sm:w-[48%] md:w-[32%]"
+                        className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2"
                       >
-                        <div className="w-full h-auto min-h-[200px] md:min-h-[256px]">
+                        <div className="w-full max-w-[200px] lg:max-w-[280px] xl:max-w-[320px] mx-auto h-[120px] sm:h-[140px] md:h-[160px] lg:h-[200px] xl:h-[240px]">
                           <ExperienceCard experience={experience} />
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white left-2 md:left-4" />
-                  <CarouselNext className="bg-black hover:bg-black/90 text-white right-2 md:right-4" />
+                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white left-0.5 lg:left-4" />
+                  <CarouselNext className="bg-black hover:bg-black/90 text-white right-0.5 lg:right-4" />
                 </Carousel>
               </div>
             ) : (
