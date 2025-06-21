@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -39,7 +40,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
   const { itemCount, items } = useCart();
-  const [wishlistCount, setWishlistCount] = useState(0);
+  const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout, signInWithGoogle, login } = useAuth();
@@ -216,30 +217,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
       setIsSubmitting(false);
     }
   };
-
-  // Update wishlist count
-  useEffect(() => {
-    const fetchWishlistCount = async () => {
-      if (!user) {
-        setWishlistCount(0);
-        return;
-      }
-
-      try {
-        const { count, error } = await supabase
-          .from('wishlists')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        setWishlistCount(count || 0);
-      } catch (error) {
-        console.error('Error fetching wishlist count:', error);
-      }
-    };
-
-    fetchWishlistCount();
-  }, [user]);
 
   return (
     <>

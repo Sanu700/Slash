@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-
 import TrendingSection from '@/components/TrendingSection';
-
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data/types';
-import { cn } from '@/lib/utils';
 import {
   Carousel,
   CarouselContent,
@@ -17,7 +14,6 @@ import {
   CarouselPrevious,
   CarouselNext
 } from '@/components/ui/carousel';
-import SuggestedExperiences from '@/components/SuggestedExperiences';
 
 const Index = () => {
   const [featuredExperiences, setFeaturedExperiences] = useState<Experience[]>([]);
@@ -25,7 +21,6 @@ const Index = () => {
   const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
   const [isAllLoading, setIsAllLoading] = useState(true);
 
-  // Load featured experiences from Supabase
   useEffect(() => {
     const loadFeaturedExperiences = async () => {
       setIsLoading(true);
@@ -38,11 +33,9 @@ const Index = () => {
         setIsLoading(false);
       }
     };
-
     loadFeaturedExperiences();
   }, []);
 
-  // Load all experiences from Supabase
   useEffect(() => {
     const loadAllExperiences = async () => {
       setIsAllLoading(true);
@@ -55,11 +48,9 @@ const Index = () => {
         setIsAllLoading(false);
       }
     };
-
     loadAllExperiences();
   }, []);
 
-  // Smooth scroll for anchor links
   useEffect(() => {
     const handleSmoothScroll = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -68,9 +59,7 @@ const Index = () => {
         e.preventDefault();
         const targetElement = document.querySelector(link.hash);
         if (targetElement) {
-          targetElement.scrollIntoView({
-            behavior: 'smooth'
-          });
+          targetElement.scrollIntoView({ behavior: 'smooth' });
         }
       }
     };
@@ -79,12 +68,12 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen overflow-x-hidden">
       <Navbar />
-      
+
       <main>
-        {/* Hero Section */}
         <Hero />
+
         {/* Featured Experiences */}
         <section id="experiences" className="py-20 md:py-28">
           <div className="container max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-6 md:px-10">
@@ -96,7 +85,7 @@ const Index = () => {
                 Discover our handpicked selection of extraordinary experiences
               </p>
             </div>
-            
+
             {isLoading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -106,7 +95,10 @@ const Index = () => {
                 <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
                   <CarouselContent>
                     {featuredExperiences.map((experience) => (
-                      <CarouselItem key={experience.id} className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2">
+                      <CarouselItem
+                        key={experience.id}
+                        className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2"
+                      >
                         <div className="w-full max-w-[200px] lg:max-w-[280px] xl:max-w-[320px] mx-auto h-[120px] sm:h-[140px] md:h-[160px] lg:h-[200px] xl:h-[240px]">
                           <ExperienceCard experience={experience} />
                         </div>
@@ -119,22 +111,19 @@ const Index = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No featured experiences available at the moment.</p>
+                <p className="text-muted-foreground">
+                  No featured experiences available at the moment.
+                </p>
               </div>
             )}
           </div>
         </section>
-        
-       
-        
-        {/* Trending Section */}
+
         <TrendingSection />
-        
-     
-        
-        {/* Newsletter Section */}
         <Newsletter />
       </main>
+
+      <Footer />
     </div>
   );
 };

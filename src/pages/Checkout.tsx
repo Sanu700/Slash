@@ -64,18 +64,31 @@ const Checkout = () => {
     try {
       setIsLoading(true);
 
+      // Calculate total amount with tax
+      const totalAmountWithTax = Math.round((totalPrice + Math.round(totalPrice * 0.18)) * 100);
+
       // Create order on your backend
       const { data: order, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: totalPrice * 100, currency: config.razorpay.currency }
+        body: { 
+          amount: totalAmountWithTax,
+          currency: config.razorpay.currency 
+        }
       });
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
+
+      if (!order || !order.id) {
+        throw new Error('Invalid order response from server');
+      }
 
       const Razorpay = await loadRazorpaySdk();
       
       const options = {
         key: config.razorpay.keyId,
-        amount: order.amount,
+        amount: totalAmountWithTax,
         currency: order.currency,
         name: config.razorpay.name,
         description: config.razorpay.description,
@@ -87,11 +100,19 @@ const Checkout = () => {
               body: {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature
+                razorpay_signature: response.razorpay_signature,
+                user_id: user.id,
+                cart_items: {
+                  total_amount: totalAmountWithTax / 100,
+                  items: items
+                }
               }
             });
 
-            if (verifyError) throw verifyError;
+            if (verifyError) {
+              console.error('Payment verification error:', verifyError);
+              throw new Error(`Payment verification failed: ${verifyError.message}`);
+            }
 
             // Create booking records
             const { error: bookingError } = await supabase
@@ -110,38 +131,50 @@ const Checkout = () => {
                 })
               );
 
-            if (bookingError) throw bookingError;
+            if (bookingError) {
+              console.error('Booking creation error:', bookingError);
+              throw new Error(`Failed to create booking: ${bookingError.message}`);
+            }
 
             toast({
               description: "Your experience has been booked successfully",
             });
             clearCart();
             navigate('/profile');
-          } catch (error) {
-            console.error('Payment verification error:', error);
+          } catch (error: any) {
+            console.error('Payment processing error:', error);
             toast({
               variant: "destructive",
-              description: "There was an error verifying your payment. Please contact support",
+              title: "Payment Processing Error",
+              description: error.message || "There was an error processing your payment. Please contact support",
             });
           }
         },
         prefill: {
-          name: (user.user_metadata as UserMetadata)?.full_name,
-          email: user.email,
+          name: (user.user_metadata as UserMetadata)?.full_name || '',
+          email: user.email || '',
           contact: (user.user_metadata as UserMetadata)?.phone || ''
         },
         theme: {
-          color: "#000000"
+          color: config.razorpay.theme.color
+        },
+        modal: {
+          ondismiss: function() {
+            toast({
+              description: "Payment cancelled",
+            });
+          }
         }
       };
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment error:', error);
       toast({
         variant: "destructive",
-        description: "There was an error processing your payment. Please try again",
+        title: "Payment Error",
+        description: error.message || "There was an error processing your payment. Please try again",
       });
     } finally {
       setIsLoading(false);

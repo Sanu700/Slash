@@ -37,10 +37,7 @@ const SuggestedExperiences = () => {
     setShowCarousel(!showCarousel);
     if (!showCarousel) {
       setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
     }
   };
@@ -48,18 +45,22 @@ const SuggestedExperiences = () => {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
-        <Button 
+        <Button
           onClick={handleButtonClick}
           className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12"
         >
           Suggested Experiences
         </Button>
         <NavLink to="/gifting-guide" onClick={scrollToTop} className="w-full sm:w-auto">
-          <Button size="lg" className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12">
+          <Button
+            size="lg"
+            className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12"
+          >
             Gift Inspiration
           </Button>
         </NavLink>
       </div>
+
       {showCarousel && (
         <div className="w-full mt-6">
           <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto backdrop-blur-sm bg-white/20 rounded-lg p-2 lg:p-4">
@@ -72,7 +73,10 @@ const SuggestedExperiences = () => {
                 <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
                   <CarouselContent>
                     {allExperiences.map((experience) => (
-                      <CarouselItem key={experience.id} className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2">
+                      <CarouselItem
+                        key={experience.id}
+                        className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2"
+                      >
                         <div className="w-full max-w-[200px] lg:max-w-[280px] xl:max-w-[320px] mx-auto h-[120px] sm:h-[140px] md:h-[160px] lg:h-[200px] xl:h-[240px]">
                           <ExperienceCard experience={experience} />
                         </div>
@@ -95,4 +99,4 @@ const SuggestedExperiences = () => {
   );
 };
 
-export default SuggestedExperiences; 
+export default SuggestedExperiences;
