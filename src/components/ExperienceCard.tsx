@@ -10,6 +10,7 @@ import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -24,6 +25,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
+  const { refreshWishlistCount } = useWishlist();
 
   // Check if experience is in wishlist
   useEffect(() => {
@@ -60,6 +62,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       const newWishlistState = !isInWishlist;
       setIsInWishlist(newWishlistState);
       onWishlistChange?.(experience.id, newWishlistState);
+      refreshWishlistCount();
     });
   };
 
