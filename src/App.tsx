@@ -23,6 +23,7 @@ import GiftPersonalizer from "./pages/GiftPersonalizer";
 import Booking from "./pages/Booking";
 import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
+import { WishlistProvider } from './contexts/WishlistContext';
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -78,58 +79,60 @@ function App() {
       <TooltipProvider>
         <AuthProvider>
           <CartProvider>
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Layout><Index /></Layout>} />
-                <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
-                <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
-                <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
-                <Route path="/cart" element={<Layout><Cart /></Layout>} />
-                <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-                <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
-                <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
-                <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
+            <WishlistProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Layout><Index /></Layout>} />
+                  <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
+                  <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
+                  <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
+                  <Route path="/cart" element={<Layout><Cart /></Layout>} />
+                  <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
+                  <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
+                  <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
+                  <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
 
-                {/* Company Pages */}
-                <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
-                <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
-                <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
-                <Route path="/careers" element={<Layout><Careers /></Layout>} />
-                <Route path="/press" element={<Layout><Press /></Layout>} />
+                  {/* Company Pages */}
+                  <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
+                  <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
+                  <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
+                  <Route path="/careers" element={<Layout><Careers /></Layout>} />
+                  <Route path="/press" element={<Layout><Press /></Layout>} />
 
-                {/* Support Pages */}
-                <Route path="/contact" element={<Layout><ContactUs /></Layout>} />
-                <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-                <Route path="/gift-rules" element={<Layout><GiftRules /></Layout>} />
-                <Route path="/shipping" element={<Layout><Shipping /></Layout>} />
-                <Route path="/returns" element={<Layout><Returns /></Layout>} />
+                  {/* Support Pages */}
+                  <Route path="/contact" element={<Layout><ContactUs /></Layout>} />
+                  <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+                  <Route path="/gift-rules" element={<Layout><GiftRules /></Layout>} />
+                  <Route path="/shipping" element={<Layout><Shipping /></Layout>} />
+                  <Route path="/returns" element={<Layout><Returns /></Layout>} />
 
-                {/* Protected User Routes */}
-                <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
-                <Route path="/wishlist" element={<Layout><ProtectedWishlist /></Layout>} />
-                <Route path="/manage-experiences" element={<Layout><ProtectedExperienceManager /></Layout>} />
-                <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
+                  {/* Protected User Routes */}
+                  <Route path="/profile" element={<Layout><ProtectedProfile /></Layout>} />
+                  <Route path="/wishlist" element={<Layout><ProtectedWishlist /></Layout>} />
+                  <Route path="/manage-experiences" element={<Layout><ProtectedExperienceManager /></Layout>} />
+                  <Route path="/host-experience" element={<Layout><ProtectedHostExperience /></Layout>} />
 
-                {/* Admin Routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<ProtectedAdminDashboard />} />
-                <Route path="/admin/users" element={<ProtectedAdminUsers />} />
-                <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
-                <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
-                <Route path="/admin/users/customers" element={<ProtectedCustomers />} />
-                <Route path="/admin/users/providers" element={<ProtectedProviders />} />
-                <Route path="/admin/experiences" element={<ProtectedExperiences />} />
-                <Route path="/admin/profile" element={<ProtectedAdminProfile />} />
-                <Route path="/admin/payments" element={<ProtectedPaymentDetails />} />
+                  {/* Admin Routes */}
+                  <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin" element={<ProtectedAdminDashboard />} />
+                  <Route path="/admin/users" element={<ProtectedAdminUsers />} />
+                  <Route path="/admin/analytics" element={<ProtectedAdminAnalytics />} />
+                  <Route path="/admin/settings" element={<ProtectedAdminSettings />} />
+                  <Route path="/admin/users/customers" element={<ProtectedCustomers />} />
+                  <Route path="/admin/users/providers" element={<ProtectedProviders />} />
+                  <Route path="/admin/experiences" element={<ProtectedExperiences />} />
+                  <Route path="/admin/profile" element={<ProtectedAdminProfile />} />
+                  <Route path="/admin/payments" element={<ProtectedPaymentDetails />} />
 
-                {/* 404 Page */}
-                <Route path="*" element={<Layout><NotFound /></Layout>} />
-              </Routes>
-            </BrowserRouter>
-            <Toaster />
-            <Sonner position="top-center" />
+                  {/* 404 Page */}
+                  <Route path="*" element={<Layout><NotFound /></Layout>} />
+                </Routes>
+              </BrowserRouter>
+              <Toaster />
+              <Sonner position="top-center" />
+            </WishlistProvider>
           </CartProvider>
         </AuthProvider>
       </TooltipProvider>
