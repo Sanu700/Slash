@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -8,13 +7,18 @@ import { FormData } from '@/types/personalizerTypes';
 interface InterestsFormProps {
   formData: FormData;
   handleInterestToggle: (interest: string) => void;
+  onCustomInterestsChange: (customInterests: string) => void;
 }
 
-const InterestsForm = ({ formData, handleInterestToggle }: InterestsFormProps) => {
+const InterestsForm = ({ formData, handleInterestToggle, onCustomInterestsChange }: InterestsFormProps) => {
   const interests = [
     'Adventure', 'Dining', 'Wellness', 'Luxury', 'Learning', 
     'Sports', 'Arts', 'Music', 'Travel', 'Nature', 'Technology'
   ];
+
+  const handleCustomInterestsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onCustomInterestsChange(e.target.value);
+  };
 
   return (
     <div className="space-y-6">
@@ -47,6 +51,7 @@ const InterestsForm = ({ formData, handleInterestToggle }: InterestsFormProps) =
           id="custom-interests" 
           placeholder="Tell us more about their hobbies and passions..." 
           className="h-24"
+          onChange={handleCustomInterestsChange}
         />
       </div>
     </div>

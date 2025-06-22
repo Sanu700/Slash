@@ -20,6 +20,7 @@ import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
+import AISuggestions from "./pages/AISuggestions";
 import Booking from "./pages/Booking";
 import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
@@ -92,6 +93,7 @@ function App() {
                   <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
                   <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
                   <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
+                  <Route path="/ai-suggestions" element={<Layout><AISuggestions /></Layout>} />
                   <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
 
                   {/* Company Pages */}
