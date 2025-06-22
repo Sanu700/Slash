@@ -45,7 +45,6 @@ const Cart: React.FC = () => {
       const taxAmount = Math.round(subtotal * 0.18);
       const finalAmount = (subtotal + taxAmount) * 100;
 
-      // Create Razorpay order via Edge Function
       const { data: order, error: orderError } = await supabase.functions.invoke(
         'create-razorpay-order',
         { body: { amount: finalAmount, currency: config.razorpay.currency } }
@@ -53,10 +52,8 @@ const Cart: React.FC = () => {
       if (orderError) throw orderError;
       if (!order?.id) throw new Error('Invalid order response');
 
-      // Load Razorpay SDK
       const Razorpay = await loadRazorpaySdk();
 
-      // Configure checkout options
       const options = {
         key: config.razorpay.keyId,
         amount: finalAmount,
@@ -113,7 +110,8 @@ const Cart: React.FC = () => {
           }
         },
         modal: {
-          ondismiss: () => toast({ title: 'Payment Cancelled', description: 'You cancelled the payment.', variant: 'warning' }),
+          ondismiss: () =>
+            toast({ title: 'Payment Cancelled', description: 'You cancelled the payment.', variant: 'warning' }),
         },
       };
 
@@ -172,10 +170,19 @@ const Cart: React.FC = () => {
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
                   <div className="space-y-4">
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{totalPrice}</span></div>
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Taxes (18%)</span><span>₹{Math.round(totalPrice * 0.18)}</span></div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Subtotal</span>
+                      <span>₹{totalPrice}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Taxes (18%)</span>
+                      <span>₹{Math.round(totalPrice * 0.18)}</span>
+                    </div>
                     <div className="border-t pt-4">
-                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white"><span>Total</span><span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span></div>
+                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                        <span>Total</span>
+                        <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
+                      </div>
                     </div>
                     <Button onClick={handlePayment} disabled={isLoading} className="w-full mt-6">
                       {isLoading ? 'Processing…' : 'Proceed to Payment'}
