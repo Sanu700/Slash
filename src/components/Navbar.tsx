@@ -241,8 +241,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-[400px] p-4">
-                <div className="grid grid-cols-2 gap-3">
+              <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Link to="/about-us" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">About Us</div>
                     <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
@@ -273,8 +273,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-[400px] p-4">
-                <div className="grid grid-cols-2 gap-3">
+              <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Link to="/contact" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">Contact Us</div>
                     <p className="text-sm text-muted-foreground">Get in touch with our support team</p>
@@ -342,7 +342,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 {isAuthenticated ? (
                   <>
                     <DropdownMenuItem onClick={() => navigate('/cart')}>
@@ -383,7 +383,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
@@ -421,7 +421,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
                   <DropdownMenuItem onClick={handleSignIn}>
                     <User className="mr-2 h-4 w-4" />
                     Sign in with Google

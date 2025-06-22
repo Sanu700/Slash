@@ -37,10 +37,7 @@ const SuggestedExperiences = () => {
     setShowCarousel(!showCarousel);
     if (!showCarousel) {
       setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
     }
   };
@@ -48,43 +45,46 @@ const SuggestedExperiences = () => {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
-        <Button 
+        <Button
           onClick={handleButtonClick}
           className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12"
         >
           Suggested Experiences
         </Button>
         <NavLink to="/gifting-guide" onClick={scrollToTop} className="w-full sm:w-auto">
-          <Button size="lg" className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12">
+          <Button
+            size="lg"
+            className="bg-white text-black rounded-full font-medium text-base shadow-sm hover:bg-white/90 w-full sm:w-[245.13px] h-12"
+          >
             Gift Inspiration
           </Button>
         </NavLink>
       </div>
+
       {showCarousel && (
-        <div className="flex justify-center w-full mt-6">
-          <div className="w-full backdrop-blur-sm bg-white/20 rounded-lg p-4 relative overflow-hidden" style={{ width: '100%', maxWidth: '1134px', height: 'auto', minHeight: '288px' }}>
+        <div className="w-full mt-6">
+          <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto backdrop-blur-sm bg-white/20 rounded-lg p-2 lg:p-4">
             {isAllLoading ? (
               <div className="flex justify-center items-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : allExperiences.length > 0 ? (
-              <div className="relative">
-                <Carousel opts={{ 
-                  align: 'center', 
-                  slidesToScroll: 1,
-                  containScroll: 'trimSnaps'
-                }}>
-                  <CarouselContent className="-ml-2 md:-ml-4">
+              <div className="relative overflow-hidden">
+                <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
+                  <CarouselContent>
                     {allExperiences.map((experience) => (
-                      <CarouselItem key={experience.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3">
-                        <div className="w-full h-auto min-h-[200px] md:min-h-[256px]">
+                      <CarouselItem
+                        key={experience.id}
+                        className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2"
+                      >
+                        <div className="w-full max-w-[200px] lg:max-w-[280px] xl:max-w-[320px] mx-auto h-[120px] sm:h-[140px] md:h-[160px] lg:h-[200px] xl:h-[240px]">
                           <ExperienceCard experience={experience} />
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="bg-white/80 hover:bg-white text-black left-2 md:left-4" />
-                  <CarouselNext className="bg-white/80 hover:bg-white text-black right-2 md:right-4" />
+                  <CarouselPrevious className="bg-white/80 hover:bg-white text-black left-0.5 lg:left-4" />
+                  <CarouselNext className="bg-white/80 hover:bg-white text-black right-0.5 lg:right-4" />
                 </Carousel>
               </div>
             ) : (
@@ -99,4 +99,4 @@ const SuggestedExperiences = () => {
   );
 };
 
-export default SuggestedExperiences; 
+export default SuggestedExperiences;
