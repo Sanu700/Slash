@@ -25,6 +25,9 @@ interface StepResultsProps {
 }
 
 const StepResults = ({ formData, suggestions, onBack, onStartOver }: StepResultsProps) => {
+  console.log('StepResults received suggestions:', suggestions);
+  console.log('Number of suggestions:', suggestions.length);
+  
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">

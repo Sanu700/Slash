@@ -55,13 +55,13 @@ const StepInterests = ({
     setIsProcessing(true);
     
     try {
-      // First, call /init
-      console.log('=== CALLING /init ===');
+      // Step 1: Call /init first
+      console.log('=== INITIALIZING AI CONTEXT (INTERESTS STEP) ===');
       await fetchInitQuestion();
-      console.log('/init called successfully');
+      console.log('AI initialized successfully in interests step');
       
-      // Then, call /submit with interests data
-      console.log('=== CALLING /submit ===');
+      // Call /submit with interests data
+      console.log('=== SUBMITTING INTERESTS DATA ===');
       
       // Combine predefined interests and custom interests
       const allInterests = [...formData.interests];
@@ -78,7 +78,7 @@ const StepInterests = ({
       console.log('=== END INTERESTS DATA ===');
       
       await submitAnswer(interestsInput);
-      console.log('/submit called successfully');
+      console.log('Interests data submitted successfully');
       
       // Move to next step
       onNext();
