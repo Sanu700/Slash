@@ -39,19 +39,13 @@ const BasicsForm = ({
         </div>
         <div>
           <Label htmlFor="city">City</Label>
-          <Select
+          <Input
+            id="city"
+            name="city"
             value={formData.city}
-            onValueChange={val => setFormData(prev => ({ ...prev, city: val }))}
-          >
-            <SelectTrigger id="city" className="w-full">
-              <SelectValue placeholder="Select a city" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Delhi">Delhi</SelectItem>
-              <SelectItem value="Bangalore">Bangalore</SelectItem>
-              <SelectItem value="Gurgaon">Gurgaon</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={handleInputChange}
+            placeholder="Enter their city"
+          />
         </div>
 
         <div>
