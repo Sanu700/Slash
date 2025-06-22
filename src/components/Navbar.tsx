@@ -349,12 +349,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       View Cart
                     </DropdownMenuItem>
-                    {itemCount > 0 && (
-                      <DropdownMenuItem onClick={() => navigate('/checkout')}>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Checkout
-                      </DropdownMenuItem>
-                    )}
                   </>
                 ) : (
                   <div className="p-4 text-center">

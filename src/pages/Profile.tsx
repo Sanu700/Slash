@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart, Package, CreditCard, Settings, LogOut, User, ShoppingCart } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useNavigate } from 'react-router-dom';
+import GiftingHistoryContent from '@/components/profile/GiftHistoryContent';
+import { GiftHistory } from '@/lib/data/types';
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -16,6 +18,48 @@ const Profile = () => {
   const [avatar, setAvatar] = React.useState(user?.user_metadata?.avatar_url || '/default-avatar.png');
   const [activeTab, setActiveTab] = React.useState('profile');
   const navigate = useNavigate();
+
+  // Mock data for demonstration
+  const mockGiftHistory: GiftHistory[] = [
+    {
+      id: 'gift1',
+      giftedAt: '2024-06-15T10:30:00Z',
+      recipientName: 'Priya Sharma',
+      recipientEmail: 'priya@example.com',
+      experience: {
+        id: 'exp1',
+        title: 'Hot Air Balloon Ride',
+        description: 'A magical sunrise ride above the city.',
+        imageUrl: 'https://images.unsplash.com/photo-1464983953574-0892a716854b',
+        price: 5000,
+        location: 'Jaipur',
+        duration: '2 hours',
+        participants: '2',
+        date: '2024-07-01',
+        category: 'adventure',
+      },
+      message: 'Happy Birthday! Enjoy the skies!'
+    },
+    {
+      id: 'gift2',
+      giftedAt: '2024-05-10T15:00:00Z',
+      recipientName: 'Rahul Verma',
+      recipientEmail: 'rahul@example.com',
+      experience: {
+        id: 'exp2',
+        title: 'Wine Tasting Tour',
+        description: 'Explore the best vineyards and taste premium wines.',
+        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+        price: 3500,
+        location: 'Nashik',
+        duration: '4 hours',
+        participants: '1',
+        date: '2024-06-20',
+        category: 'food',
+      },
+      message: 'Congratulations on your new job!'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,6 +225,12 @@ const Profile = () => {
           </div>
         </div>
       )}
+
+      <section className="mt-10">
+        <h2 className="text-2xl font-bold mb-1">Gifting History</h2>
+        <p className="text-muted-foreground mb-4 text-base">A record of all the experiences you have gifted, including recipient details, date, and your personal message.</p>
+        <GiftingHistoryContent giftHistory={mockGiftHistory} />
+      </section>
     </div>
   );
 };

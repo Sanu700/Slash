@@ -76,3 +76,22 @@ export interface Provider {
     category: string;
   };
 }
+
+// Gift history types
+export interface GiftHistoryItem {
+  id: string;
+  recipientName: string;
+  recipientEmail?: string;
+  experience: Experience;
+  date: string;
+  message?: string;
+}
+
+export interface GiftHistory {
+  id: string;
+  giftedAt: string;
+  recipientName: string;
+  recipientEmail?: string;
+  experience: Experience;
+  message?: string;
+}
