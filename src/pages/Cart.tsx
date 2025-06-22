@@ -1,4 +1,4 @@
-//src/pages/Cart.tsx
+// src/pages/Cart.tsx
 import React, { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
@@ -64,70 +64,67 @@ const Cart: React.FC = () => {
         name: config.razorpay.name,
         description: config.razorpay.description,
         order_id: order.id,
-        method: { card: true, netbanking: false, upi: false, wallet: false, emi: false },
         prefill: {
           name: user.user_metadata?.full_name || '',
           email: user.email || '',
-          contact: user.user_metadata?.phone || ''
+          contact: user.user_metadata?.phone || '',
         },
         theme: config.razorpay.theme,
         handler: async (response: any) => {
           try {
-            // 1) compute totals
-            const subtotal   = totalPrice
-            const tax        = Math.round(subtotal * 0.18)
-            const grandTotal = subtotal + tax
-      
-            // 2) create booking
             const { data: booking, error: bookingErr } = await supabase
               .from('bookings')
               .insert({
-                user_id:        user.id,
-                total_amount:   grandTotal,
-                status:         'confirmed',
+                user_id: user.id,
+                total_amount: subtotal + taxAmount,
+                status: 'confirmed',
                 payment_method: 'razorpay',
-                notes:          null
               })
               .select('id')
-              .single()
-            if (bookingErr) throw bookingErr
-      
-            // 3) create line-items
+              .single();
+            if (bookingErr) throw bookingErr;
+
             const { error: itemsErr } = await supabase
               .from('booking_items')
               .insert(
-                items.map(item => ({
-                  booking_id:       booking.id,
-                  experience_id:    item.experienceId,
-                  quantity:         item.quantity,
-                  price_at_booking: cachedExperiences[item.experienceId]!.price
+                items.map((item) => ({
+                  booking_id: booking.id,
+                  experience_id: item.experienceId,
+                  quantity: item.quantity,
+                  price_at_booking: cachedExperiences[item.experienceId]?.price,
                 }))
-              )
-            if (itemsErr) throw itemsErr
-      
-            // 4) clear cart & redirect
-            await clearCart({ silent: true });
+              );
+            if (itemsErr) throw itemsErr;
 
-            navigate('/profile')
-      
-          } catch (err: any) {
-            console.error('Payment processing error:', err)
+            clearCart({ silent: true });
             toast({
-              variant:     'destructive',
-              title:       'Payment Processing Error',
-              description: err.message
-            })
+              title: 'Payment Successful',
+              description: 'Your payment was successful! Thank you for your purchase.',
+              variant: 'success',
+            });
+            navigate('/profile');
+          } catch (err: any) {
+            console.error('Payment processing error:', err);
+            toast({
+              variant: 'destructive',
+              title: 'Payment Processing Error',
+              description: err.message,
+            });
           }
         },
-      
-        modal: { ondismiss: () => toast({ description: 'Payment cancelled' }) }
+        modal: {
+          ondismiss: () => toast({ title: 'Payment Cancelled', description: 'You cancelled the payment.', variant: 'warning' }),
+        },
       };
 
-      // Open Razorpay checkout
       new Razorpay(options).open();
     } catch (err: any) {
       console.error('Payment initialization error:', err);
-      toast({ variant: 'destructive', title: 'Payment Error', description: err.message });
+      toast({
+        title: 'Payment Error',
+        description: err.message,
+        variant: 'warning',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +137,7 @@ const Cart: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
-              {items.map(item => {
+              {items.map((item) => {
                 const exp = cachedExperiences[item.experienceId];
                 if (!exp) return null;
                 return (
