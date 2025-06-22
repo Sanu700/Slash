@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.DEV 
   ? "/api/ai" 
-  : "https://slash-rag-agent.onrender.com";
+  : "/.netlify/functions/ai-proxy";
 
 export const fetchInitQuestion = async () => {
   try {
