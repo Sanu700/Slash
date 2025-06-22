@@ -45,8 +45,50 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setItems(loaded);
         }
       } else {
-        const saved = localStorage.getItem('cart');
-        if (saved) setItems(JSON.parse(saved));
+        // Load from localStorage for signed out users
+        try {
+          const saved = localStorage.getItem('cart');
+          if (saved) {
+            const parsedItems = JSON.parse(saved);
+            
+            // Validate and deduplicate items
+            if (Array.isArray(parsedItems)) {
+              const uniqueItems = parsedItems.reduce((acc: CartItem[], item: any) => {
+                // Check if item already exists
+                const existingIndex = acc.findIndex(existing => existing.experienceId === item.experienceId);
+                if (existingIndex >= 0) {
+                  // Update existing item with latest data
+                  acc[existingIndex] = {
+                    experienceId: item.experienceId,
+                    quantity: item.quantity || 1,
+                    selectedDate: item.selectedDate ? new Date(item.selectedDate) : undefined,
+                  };
+                } else {
+                  // Add new item
+                  acc.push({
+                    experienceId: item.experienceId,
+                    quantity: item.quantity || 1,
+                    selectedDate: item.selectedDate ? new Date(item.selectedDate) : undefined,
+                  });
+                }
+                return acc;
+              }, []);
+              
+              console.log('Loaded cart from localStorage:', uniqueItems);
+              setItems(uniqueItems);
+            } else {
+              console.warn('Invalid cart data in localStorage, clearing...');
+              localStorage.removeItem('cart');
+              setItems([]);
+            }
+          } else {
+            setItems([]);
+          }
+        } catch (error) {
+          console.error('Error loading cart from localStorage:', error);
+          localStorage.removeItem('cart');
+          setItems([]);
+        }
       }
     })();
   }, [user]);
@@ -60,6 +102,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
   }, [items, user]);
+
+  // Clear cart when user signs out
+  useEffect(() => {
+    if (!user?.id && items.length > 0) {
+      // Only clear if we have items and no user (signed out)
+      console.log('User signed out, clearing cart items');
+      setItems([]);
+      localStorage.removeItem('cart');
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     (async () => {
