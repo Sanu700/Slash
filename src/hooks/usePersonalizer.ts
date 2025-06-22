@@ -163,6 +163,7 @@ export const usePersonalizer = () => {
     handleCustomInterestsChange,
     handleNextStep,
     handlePreviousStep,
-    setFormData
+    setFormData,
+    setSuggestedExperiences
   };
 };
