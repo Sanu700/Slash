@@ -47,7 +47,4 @@ export const useWishlist = () => {
     throw new Error('useWishlist must be used within a WishlistProvider');
   }
   return context;
-};
-
-// If using TypeScript, add the following at the end of the file:
-// declare module '@/contexts/WishlistContext'; 
+}; 
