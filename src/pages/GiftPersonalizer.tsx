@@ -17,6 +17,7 @@ import StepResults from '@/components/gift-personalizer/StepResults';
 const GiftPersonalizer = () => {
   const [ref, isInView] = useInView<HTMLDivElement>();
   const { toast } = useToast();
+  const hasInitializedRef = useRef(false);
   
   const {
     currentStep,
@@ -30,25 +31,30 @@ const GiftPersonalizer = () => {
     handleNextStep,
     handlePreviousStep,
     isGenerating,
-    setFormData
+    setFormData,
+    setSuggestedExperiences
   } = usePersonalizer();
 
-  // Reset AI session when component mounts (page reload)
+  // Reset AI session when component mounts (page reload) - only once
   useEffect(() => {
     const initializeSession = async () => {
+      if (hasInitializedRef.current) return; // Prevent multiple resets
+      
       try {
         console.log('=== PAGE RELOAD - RESETTING AI SESSION ===');
         await resetSession();
         console.log('AI session reset successfully on page load');
+        hasInitializedRef.current = true;
       } catch (error) {
         console.error('Failed to reset AI session on page load:', error);
         // Don't show toast error for reset failure as it might be expected
         // if the backend doesn't support reset endpoint
+        hasInitializedRef.current = true; // Mark as initialized even if reset fails
       }
     };
 
     initializeSession();
-  }, []);
+  }, []); // Empty dependency array - only runs once on mount
 
   const handleStartOver = () => {
     // Reset form data and go back to basics
@@ -85,7 +91,9 @@ const GiftPersonalizer = () => {
           <StepPreferences
             formData={formData}
             onBack={handlePreviousStep}
+            onNext={handleNextStep}
             isGenerating={isGenerating}
+            setSuggestedExperiences={setSuggestedExperiences}
           />
         );
       

@@ -1,26 +1,25 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FormData } from '@/types/personalizerTypes';
-import { fetchInitQuestion, submitAnswer, fetchSuggestions, goBackOneStep } from '@/lib/aiPersonalizer';
+import { submitAnswer, fetchInitQuestion, fetchSuggestions, goBackOneStep } from '@/lib/aiPersonalizer';
 import { useToast } from '@/components/ui/use-toast';
 
 interface StepPreferencesProps {
   formData: FormData;
   onBack: () => void;
+  onNext: () => void;
   isGenerating: boolean;
+  setSuggestedExperiences: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const StepPreferences = ({ formData, onBack, isGenerating }: StepPreferencesProps) => {
-  const navigate = useNavigate();
+const StepPreferences = ({ formData, onBack, onNext, isGenerating, setSuggestedExperiences }: StepPreferencesProps) => {
   const { toast } = useToast();
   const [specificPreferences, setSpecificPreferences] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const handlePreferencesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSpecificPreferences(e.target.value);
@@ -40,14 +39,11 @@ const StepPreferences = ({ formData, onBack, isGenerating }: StepPreferencesProp
     try {
       console.log('Starting AI recommendations process...');
       
-      // Step 1: Call /init if not already initialized
-      if (!isInitialized) {
-        console.log('=== INITIALIZING AI CONTEXT (PREFERENCES STEP) ===');
-        await fetchInitQuestion();
-        console.log('AI initialized successfully in preferences step');
-        setIsInitialized(true);
-      }
-
+      // Step 1: Call /init first
+      console.log('=== INITIALIZING AI CONTEXT (PREFERENCES STEP) ===');
+      await fetchInitQuestion();
+      console.log('AI initialized successfully in preferences step');
+      
       // Step 2: Call /submit with preferences data
       console.log('=== SUBMITTING PREFERENCES DATA ===');
       console.log('Preferences text:', specificPreferences);
@@ -56,9 +52,17 @@ const StepPreferences = ({ formData, onBack, isGenerating }: StepPreferencesProp
       await submitAnswer(specificPreferences);
       console.log('Preferences data submitted successfully');
       
-      // Step 3: Navigate to AI Suggestions page
-      console.log('=== NAVIGATING TO AI SUGGESTIONS PAGE ===');
-      navigate('/ai-suggestions');
+      // Step 3: Call /suggestion to get AI recommendations
+      console.log('=== FETCHING AI SUGGESTIONS ===');
+      const suggestions = await fetchSuggestions();
+      console.log('AI suggestions received:', suggestions);
+      console.log('=== END AI SUGGESTIONS ===');
+      
+      // Store the suggestions in the parent component's state
+      setSuggestedExperiences(suggestions);
+      
+      // Move to results step
+      onNext();
       
     } catch (error) {
       console.error('Error in preferences step:', error);
@@ -135,7 +139,7 @@ const StepPreferences = ({ formData, onBack, isGenerating }: StepPreferencesProp
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {!isInitialized ? 'Initializing...' : 'Processing...'}
+                  Processing...
                 </>
               ) : (
                 <>
