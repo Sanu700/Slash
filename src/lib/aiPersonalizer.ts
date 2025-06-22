@@ -1,17 +1,52 @@
 const BASE_URL = import.meta.env.DEV 
   ? "/api/ai" 
-  : "/.netlify/functions/ai-proxy";
+  : "https://slash-rag-agent.onrender.com";
+
+// Add retry logic for failed requests
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...options.headers,
+        },
+        mode: 'cors',
+      });
+      
+      if (response.ok) {
+        return response;
+      }
+      
+      // If it's a 502 or timeout error, retry
+      if (response.status === 502 || response.status === 504) {
+        console.log(`Attempt ${i + 1} failed with status ${response.status}, retrying...`);
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+          continue;
+        }
+      }
+      
+      return response;
+    } catch (error) {
+      console.log(`Attempt ${i + 1} failed with error:`, error);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+};
 
 export const fetchInitQuestion = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/init`, {
+    const res = await fetchWithRetry(`${BASE_URL}/init`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
     });
+    
     if (!res.ok) {
       const errorText = await res.text();
       console.error('API Error Response:', errorText);
@@ -74,13 +109,8 @@ export const submitAnswer = async (answer: string) => {
     console.log('Full request body:', JSON.stringify(requestBody, null, 2));
     console.log('=== END SUBMIT ANSWER API CALL ===');
     
-    const res = await fetch(`${BASE_URL}/submit`, {
+    const res = await fetchWithRetry(`${BASE_URL}/submit`, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      mode: 'cors',
       body: JSON.stringify(requestBody),
     });
     
@@ -123,13 +153,8 @@ export const submitAnswer = async (answer: string) => {
 
 export const fetchNextQuestion = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/next`, {
+    const res = await fetchWithRetry(`${BASE_URL}/next`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -151,13 +176,8 @@ export const fetchSuggestions = async (query = "", k = 5) => {
     const url = `${BASE_URL}/suggestion?query=${encodeURIComponent(query)}&k=${k}`;
     console.log('Fetching from URL:', url);
     
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -248,13 +268,8 @@ export const fetchSuggestions = async (query = "", k = 5) => {
 
 export const fetchContext = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/context`, {
+    const res = await fetchWithRetry(`${BASE_URL}/context`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -270,13 +285,8 @@ export const fetchContext = async () => {
 
 export const goBackOneStep = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/back`, {
+    const res = await fetchWithRetry(`${BASE_URL}/back`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
     });
     if (!res.ok) {
       const errorText = await res.text();
@@ -293,13 +303,8 @@ export const goBackOneStep = async () => {
 export const resetSession = async () => {
   try {
     console.log('=== RESETTING AI SESSION ===');
-    const res = await fetch(`${BASE_URL}/reset`, {
+    const res = await fetchWithRetry(`${BASE_URL}/reset`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
     });
     if (!res.ok) {
       const errorText = await res.text();
