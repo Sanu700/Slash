@@ -1,59 +1,51 @@
-import React, { useState, useEffect } from 'react';
+//src/pages/Cart.tsx
+import React, { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 import { config } from '@/config';
 import { format } from 'date-fns';
 
-// Verify the file is loaded
-
-
 const Cart: React.FC = () => {
-  // Verify component render
-  console.log('🛒 Cart component rendering');
-
   const { items, removeFromCart, updateQuantity, totalPrice, cachedExperiences, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (items.length === 0) navigate('/experiences');
-  }, [items, navigate]);
-
   const loadRazorpaySdk = (): Promise<typeof window.Razorpay> =>
     new Promise((resolve, reject) => {
       if (window.Razorpay) return resolve(window.Razorpay);
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload  = () => window.Razorpay ? resolve(window.Razorpay) : reject(new Error('SDK load failed'));
+      script.onload = () =>
+        window.Razorpay ? resolve(window.Razorpay) : reject(new Error('SDK load failed'));
       script.onerror = () => reject(new Error('SDK load failed'));
       document.body.appendChild(script);
     });
 
   const handlePayment = async () => {
-    
     if (!user) {
-      toast({ title: "Authentication Required", description: "Please sign in to proceed.", variant: "destructive" });
+      toast({ title: 'Authentication Required', description: 'Please sign in to proceed.', variant: 'destructive' });
       return;
     }
     if (!config.razorpay.keyId) {
-      toast({ title: "Payment Error", description: "Razorpay key missing. Check .env.", variant: "destructive" });
+      toast({ title: 'Payment Error', description: 'Razorpay key missing. Check .env.', variant: 'destructive' });
       return;
     }
 
     setIsLoading(true);
     try {
-      const subtotal    = totalPrice;
-      const taxAmount   = Math.round(subtotal * 0.18);
+      const subtotal = totalPrice;
+      const taxAmount = Math.round(subtotal * 0.18);
       const finalAmount = (subtotal + taxAmount) * 100;
 
+      // Create Razorpay order via Edge Function
       const { data: order, error: orderError } = await supabase.functions.invoke(
         'create-razorpay-order',
         { body: { amount: finalAmount, currency: config.razorpay.currency } }
@@ -61,30 +53,81 @@ const Cart: React.FC = () => {
       if (orderError) throw orderError;
       if (!order?.id) throw new Error('Invalid order response');
 
+      // Load Razorpay SDK
       const Razorpay = await loadRazorpaySdk();
 
+      // Configure checkout options
       const options = {
-        key:         config.razorpay.keyId,
-        amount:      finalAmount,
-        currency:    config.razorpay.currency,
-        name:        config.razorpay.name,
+        key: config.razorpay.keyId,
+        amount: finalAmount,
+        currency: config.razorpay.currency,
+        name: config.razorpay.name,
         description: config.razorpay.description,
-        order_id:    order.id,
-        prefill:     {
-          name:    user.user_metadata?.full_name || '',
-          email:   user.email || '',
+        order_id: order.id,
+        method: { card: true, netbanking: false, upi: false, wallet: false, emi: false },
+        prefill: {
+          name: user.user_metadata?.full_name || '',
+          email: user.email || '',
           contact: user.user_metadata?.phone || ''
         },
-        theme:       config.razorpay.theme,
-        handler:     () => { /* … */ },
-        modal:       { ondismiss: () => toast({ description: "Payment cancelled" }) }
+        theme: config.razorpay.theme,
+        handler: async (response: any) => {
+          try {
+            // 1) compute totals
+            const subtotal   = totalPrice
+            const tax        = Math.round(subtotal * 0.18)
+            const grandTotal = subtotal + tax
+      
+            // 2) create booking
+            const { data: booking, error: bookingErr } = await supabase
+              .from('bookings')
+              .insert({
+                user_id:        user.id,
+                total_amount:   grandTotal,
+                status:         'confirmed',
+                payment_method: 'razorpay',
+                notes:          null
+              })
+              .select('id')
+              .single()
+            if (bookingErr) throw bookingErr
+      
+            // 3) create line-items
+            const { error: itemsErr } = await supabase
+              .from('booking_items')
+              .insert(
+                items.map(item => ({
+                  booking_id:       booking.id,
+                  experience_id:    item.experienceId,
+                  quantity:         item.quantity,
+                  price_at_booking: cachedExperiences[item.experienceId]!.price
+                }))
+              )
+            if (itemsErr) throw itemsErr
+      
+            // 4) clear cart & redirect
+            await clearCart({ silent: true });
+
+            navigate('/profile')
+      
+          } catch (err: any) {
+            console.error('Payment processing error:', err)
+            toast({
+              variant:     'destructive',
+              title:       'Payment Processing Error',
+              description: err.message
+            })
+          }
+        },
+      
+        modal: { ondismiss: () => toast({ description: 'Payment cancelled' }) }
       };
 
-     
+      // Open Razorpay checkout
       new Razorpay(options).open();
     } catch (err: any) {
-      console.error(err);
-      toast({ variant: "destructive", title: "Payment Error", description: err.message || '' });
+      console.error('Payment initialization error:', err);
+      toast({ variant: 'destructive', title: 'Payment Error', description: err.message });
     } finally {
       setIsLoading(false);
     }
@@ -94,11 +137,8 @@ const Cart: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-            Your Cart
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Your Cart</h1>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Items list */}
             <div className="lg:col-span-2 space-y-4">
               {items.map(item => {
                 const exp = cachedExperiences[item.experienceId];
@@ -107,47 +147,19 @@ const Cart: React.FC = () => {
                   <Card key={item.experienceId} className="overflow-hidden">
                     <CardContent className="p-6">
                       <div className="flex gap-4">
-                        <img
-                          src={exp.imageUrl}
-                          alt={exp.title}
-                          className="w-24 h-24 object-cover rounded-lg"
-                        />
+                        <img src={exp.imageUrl} alt={exp.title} className="w-24 h-24 object-cover rounded-lg" />
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {exp.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {exp.location}
-                          </p>
-                          {item.selectedDate && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              Date: {format(new Date(item.selectedDate), 'PPP')}
-                            </p>
-                          )}
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exp.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{exp.location}</p>
+                          {item.selectedDate && <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Date: {format(item.selectedDate, 'PPP')}</p>}
                           <div className="flex items-center gap-2 mb-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.experienceId, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
-                            >–</Button>
+                            <Button variant="outline" size="sm" disabled={item.quantity <= 1} onClick={() => updateQuantity(item.experienceId, item.quantity - 1)}>–</Button>
                             <span className="w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}
-                            >+</Button>
+                            <Button variant="outline" size="sm" onClick={() => updateQuantity(item.experienceId, item.quantity + 1)}>+</Button>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                              ₹{exp.price * item.quantity}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFromCart(item.experienceId)}
-                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            >
+                            <span className="text-lg font-semibold text-gray-900 dark:text-white">₹{exp.price * item.quantity}</span>
+                            <Button variant="ghost" size="sm" onClick={() => removeFromCart(item.experienceId)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -158,33 +170,17 @@ const Cart: React.FC = () => {
                 );
               })}
             </div>
-            {/* Order summary */}
             <div className="lg:col-span-1">
               <Card>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Order Summary
-                  </h2>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
                   <div className="space-y-4">
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                      <span>Subtotal</span>
-                      <span>₹{totalPrice}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                      <span>Taxes (18%)</span>
-                      <span>₹{Math.round(totalPrice * 0.18)}</span>
-                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{totalPrice}</span></div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Taxes (18%)</span><span>₹{Math.round(totalPrice * 0.18)}</span></div>
                     <div className="border-t pt-4">
-                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
-                        <span>Total</span>
-                        <span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span>
-                      </div>
+                      <div className="flex justify-between text-lg font-semibold text-gray-900 dark:text-white"><span>Total</span><span>₹{totalPrice + Math.round(totalPrice * 0.18)}</span></div>
                     </div>
-                    <Button
-                      onClick={handlePayment}
-                      disabled={isLoading}
-                      className="w-full mt-6"
-                    >
+                    <Button onClick={handlePayment} disabled={isLoading} className="w-full mt-6">
                       {isLoading ? 'Processing…' : 'Proceed to Payment'}
                     </Button>
                   </div>
