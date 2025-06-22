@@ -23,6 +23,7 @@ const GiftPersonalizer = () => {
     progress,
     formData,
     customInterests,
+    suggestedExperiences,
     handleInputChange,
     handleInterestToggle,
     handleCustomInterestsChange,
@@ -92,7 +93,7 @@ const GiftPersonalizer = () => {
         return (
           <StepResults
             formData={formData}
-            suggestions={[]} // We'll need to add suggestions state to the hook
+            suggestions={suggestedExperiences}
             onBack={handlePreviousStep}
             onStartOver={handleStartOver}
           />

@@ -120,22 +120,13 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
           
           <div>
             <Label htmlFor="city">City</Label>
-            <Select
+            <Input
+              id="city"
+              name="city"
               value={formData.city}
-              onValueChange={val => {
-                console.log('City selected:', val);
-                setFormData(prev => ({ ...prev, city: val }));
-              }}
-            >
-              <SelectTrigger id="city" className="w-full border-2 border-blue-500">
-                <SelectValue placeholder="Select a city" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Delhi">Delhi</SelectItem>
-                <SelectItem value="Bangalore">Bangalore</SelectItem>
-                <SelectItem value="Gurgaon">Gurgaon</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={handleInputChange}
+              placeholder="Enter the city"
+            />
           </div>
 
           <div>
