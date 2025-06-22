@@ -2,53 +2,45 @@
 // — no more sift import! 👇
 // @ts-nocheck
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import Razorpay   from "npm:razorpay";
+// supabase/functions/create-razorpay-order/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Razorpay from "npm:razorpay";
 
-const razorpay = new Razorpay({
-  key_id:    Deno.env.get("RAZORPAY_KEY_ID")!,
-  key_secret:Deno.env.get("RAZORPAY_KEY_SECRET")!
-});
+const razorpayKeyId     = Deno.env.get("RAZORPAY_KEY_ID")!;
+const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET")!;
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": [
-    "Content-Type",
-    "Authorization",
-    "X-Client-Info",
-    "apikey"
-  ].join(",")
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
 };
 
 serve(async (req: Request) => {
+  // 1) CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: CORS });
+    return new Response(null, { status: 204, headers: CORS });
   }
 
   try {
+    // 2) Read amount+currency from POST body
     const { amount, currency } = await req.json();
-    const order = await razorpay.orders.create({
-      amount, currency, receipt: `rcpt_${Date.now()}`, payment_capture: 1
+
+    const razorpay = new Razorpay({
+      key_id: razorpayKeyId,
+      key_secret: razorpayKeySecret,
     });
+
+    const order = await razorpay.orders.create({ amount, currency });
 
     return new Response(JSON.stringify(order), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...CORS
-      }
+      headers: { "Content-Type": "application/json", ...CORS },
     });
-
   } catch (err: any) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        ...CORS
-      }
-    });
+    console.error("Order creation error:", err);
+    return new Response(
+      JSON.stringify({ error: err.message || "Unknown error" }),
+      { status: 500, headers: { "Content-Type": "application/json", ...CORS } }
+    );
   }
 });
-

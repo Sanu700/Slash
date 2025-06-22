@@ -14,7 +14,7 @@ interface CartContextType {
   addToCart: (experienceId: string, selectedDate: Date, quantity?: number) => Promise<void>;
   removeFromCart: (experienceId: string) => Promise<void>;
   updateQuantity: (experienceId: string, quantity: number) => Promise<void>;
-  clearCart: () => Promise<void>;
+  clearCart: (opts?: { silent?: boolean }) => Promise<void>;
   checkout: () => Promise<boolean>;
 }
 
@@ -42,7 +42,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const loaded: CartItem[] = data.map((row) => ({
             experienceId: row.experience_id,
             quantity: row.quantity,
-            selectedDate: row.date ? new Date(row.date) : undefined
+            selectedDate: row.date ? new Date(row.date) : undefined,
           }));
           setItems(loaded);
         }
@@ -55,7 +55,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 2) Persist to localStorage
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    if (items.length > 0) {
+      localStorage.setItem('cart', JSON.stringify(items));
+    }
   }, [items]);
 
   // 3) Cache experiences & compute total
@@ -78,7 +80,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     })();
   }, [items]);
 
-  // 4) Add (or upsert) an item — now includes required `date` column
+  // 4) Add (or upsert) an item
   const addToCart = async (experienceId: string, selectedDate: Date, quantity = 1) => {
     if (!user?.id) {
       setShowLoginModal(true);
@@ -93,13 +95,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { error } = await supabase
       .from('cart_items')
       .upsert(
-        [{
-          user_id:       user.id,
-          experience_id: experienceId,
-          quantity,
-          date:           selectedDate.toISOString(),
-          updated_at:    new Date().toISOString(),
-        }],
+        [
+          {
+            user_id: user.id,
+            experience_id: experienceId,
+            quantity,
+            date: selectedDate.toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ],
         { onConflict: 'user_id,experience_id' }
       );
 
@@ -109,15 +113,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
-    setItems(prev => {
-      const exists = prev.find(i => i.experienceId === experienceId);
+    setItems((prev) => {
+      const exists = prev.find((i) => i.experienceId === experienceId);
       if (exists) {
-        return prev.map(i =>
-          i.experienceId === experienceId ? { ...i, quantity, selectedDate } : i
+        return prev.map((i) =>
+          i.experienceId === experienceId
+            ? { ...i, quantity, selectedDate }
+            : i
         );
       }
       return [...prev, { experienceId, quantity, selectedDate }];
     });
+
     toast.success('Added to cart');
   };
 
@@ -137,19 +144,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
 
-    setItems(prev => prev.filter(i => i.experienceId !== experienceId));
+    setItems((prev) => prev.filter((i) => i.experienceId !== experienceId));
     toast.success('Removed from cart');
   };
 
-  // 6) Update quantity (preserves the existing date column)
+  // 6) Update quantity
   const updateQuantity = async (experienceId: string, quantity: number) => {
     if (user?.id) {
       const { error } = await supabase
         .from('cart_items')
-        .update({
-          quantity,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ quantity, updated_at: new Date().toISOString() })
         .eq('user_id', user.id)
         .eq('experience_id', experienceId);
 
@@ -159,32 +163,42 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
     }
-    setItems(prev =>
-      prev.map(i =>
+    setItems((prev) =>
+      prev.map((i) =>
         i.experienceId === experienceId ? { ...i, quantity } : i
       )
     );
   };
 
   // 7) Clear
-  const clearCart = async () => {
-    if (user?.id) {
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Clear cart error:', error);
-        toast.error('Failed to clear cart');
-        return;
+  const clearCart = async (opts: { silent?: boolean } = {}) => {
+    try {
+      // If the user is logged in, delete from Supabase
+      if (user?.id) {
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', user.id);
+        if (error) throw error;
       }
+
+      // 1) clear React state
+      setItems([]);
+
+      // 2) clear any saved cart in localStorage
+      localStorage.removeItem('cart');
+
+      // only show toast if not silenced
+      if (!opts.silent) {
+        toast.success('Cart cleared');
+      }
+    } catch (err: any) {
+      console.error('Error in clearCart:', err);
+      toast.error('Failed to clear cart');
     }
-    setItems([]);
-    toast.success('Cart cleared');
   };
 
-  // 8) Dummy checkout
+  // 8) Checkout (dummy)
   const checkout = async (): Promise<boolean> => {
     if (!user) {
       toast.error('Please log in to checkout');
@@ -199,17 +213,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <CartContext.Provider value={{
-      items,
-      itemCount,
-      totalPrice,
-      cachedExperiences: experienceCache,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      checkout,
-    }}>
+    <CartContext.Provider
+      value={{
+        items,
+        itemCount,
+        totalPrice,
+        cachedExperiences: experienceCache,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        checkout,
+      }}
+    >
       {children}
       <LoginModal
         isOpen={showLoginModal}
@@ -219,7 +235,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-// Hook to use the cart
 export const useCart = (): CartContextType => {
   const context = useContext(CartContext);
   if (!context) throw new Error('useCart must be used within CartProvider');
