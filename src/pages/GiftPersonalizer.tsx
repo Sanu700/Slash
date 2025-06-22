@@ -1,188 +1,150 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePersonalizer } from '@/hooks/usePersonalizer';
-import BasicsForm from '@/components/gift-personalizer/BasicsForm';
-import InterestsForm from '@/components/gift-personalizer/InterestsForm';
-import PreferencesForm from '@/components/gift-personalizer/PreferencesForm';
-import ResultsSection from '@/components/gift-personalizer/ResultsSection';
 import { Progress } from '@/components/ui/progress';
-import NavButtons from '@/components/gift-personalizer/NavButtons';
 import { Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
+import { useToast } from '@/components/ui/use-toast';
+import { resetSession } from '@/lib/aiPersonalizer';
 
-type Step = 'basics' | 'interests' | 'preferences' | 'results';
+// Import separate step components
+import StepBasics from '@/components/gift-personalizer/StepBasics';
+import StepInterests from '@/components/gift-personalizer/StepInterests';
+import StepPreferences from '@/components/gift-personalizer/StepPreferences';
+import StepResults from '@/components/gift-personalizer/StepResults';
 
-export default function GiftPersonalizer() {
-  const formRef = useRef<HTMLDivElement>(null);
-  const [currentStep, setCurrentStep] = useState<Step>('basics');
-  const [contentRef, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
-
+const GiftPersonalizer = () => {
+  const [ref, isInView] = useInView<HTMLDivElement>();
+  const { toast } = useToast();
+  
   const {
+    currentStep,
+    progress,
     formData,
+    customInterests,
     handleInputChange,
     handleInterestToggle,
-    suggestedExperiences,
+    handleCustomInterestsChange,
+    handleNextStep,
+    handlePreviousStep,
     isGenerating,
-    handleNextStep: hookNextStep,
-    handlePreviousStep: hookPrevStep,
     setFormData
   } = usePersonalizer();
 
-  const handleNextStep = () => {
+  // Reset AI session when component mounts (page reload)
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        console.log('=== PAGE RELOAD - RESETTING AI SESSION ===');
+        await resetSession();
+        console.log('AI session reset successfully on page load');
+      } catch (error) {
+        console.error('Failed to reset AI session on page load:', error);
+        // Don't show toast error for reset failure as it might be expected
+        // if the backend doesn't support reset endpoint
+      }
+    };
+
+    initializeSession();
+  }, []);
+
+  const handleStartOver = () => {
+    // Reset form data and go back to basics
+    window.location.reload();
+  };
+
+  const renderCurrentStep = () => {
     switch (currentStep) {
       case 'basics':
-        setCurrentStep('interests');
-        break;
+        return (
+          <StepBasics
+            formData={formData}
+            handleInputChange={handleInputChange}
+            setFormData={setFormData}
+            onNext={handleNextStep}
+            isGenerating={isGenerating}
+          />
+        );
+      
       case 'interests':
-        setCurrentStep('preferences');
-        break;
+        return (
+          <StepInterests
+            formData={formData}
+            handleInterestToggle={handleInterestToggle}
+            onCustomInterestsChange={handleCustomInterestsChange}
+            onNext={handleNextStep}
+            onBack={handlePreviousStep}
+            isGenerating={isGenerating}
+          />
+        );
+      
       case 'preferences':
-        setCurrentStep('results');
-        break;
-      default:
-        setCurrentStep('basics');
-    }
-    formRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handlePreviousStep = () => {
-    switch (currentStep) {
+        return (
+          <StepPreferences
+            formData={formData}
+            onBack={handlePreviousStep}
+            isGenerating={isGenerating}
+          />
+        );
+      
       case 'results':
-        setCurrentStep('preferences');
-        break;
-      case 'preferences':
-        setCurrentStep('interests');
-        break;
-      case 'interests':
-        setCurrentStep('basics');
-        break;
+        return (
+          <StepResults
+            formData={formData}
+            suggestions={[]} // We'll need to add suggestions state to the hook
+            onBack={handlePreviousStep}
+            onStartOver={handleStartOver}
+          />
+        );
+      
       default:
-        setCurrentStep('basics');
+        return null;
     }
-    formRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const getStepProgress = () => {
-    switch (currentStep) {
-      case 'basics':
-        return 25;
-      case 'interests':
-        return 50;
-      case 'preferences':
-        return 75;
-      case 'results':
-        return 100;
-      default:
-        return 0;
-    }
-  };
-
-  const isStepValid = () => {
-    if (currentStep === 'basics') {
-      const isRelationshipOther = formData.relationship === 'other';
-      const isOccasionOther = formData.occasion === 'other';
-      return (
-        !!formData.recipient &&
-        !!formData.city &&
-        !!formData.relationship &&
-        (!isRelationshipOther || !!formData.customRelationship) &&
-        !!formData.occasion &&
-        (!isOccasionOther || !!formData.customOccasion)
-      );
-    }
-    if (currentStep === 'interests') {
-      return formData.interests.length > 0;
-    }
-    if (currentStep === 'preferences') {
-      return (
-        !!formData.preferences.personality &&
-        !!formData.preferences.lifestyle &&
-        !!formData.preferences.specific
-      );
-    }
-    return true;
   };
 
   return (
-    <div className="bg-gradient-to-b from-background to-muted/20">
-      {/* Hero Section */}
-      <div className="relative h-[527.4px] flex items-center justify-center overflow-hidden mt-[72px]">
-        <img 
-          src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2574&auto=format&fit=crop" 
-          alt="Gift Personalizer"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-          <div className="bg-white/10 backdrop-blur-sm p-3 rounded-full mb-4">
-            <Wand2 className="h-8 w-8" />
-          </div>
-          <h1 className="text-3xl md:text-5xl font-medium mb-4">Gift Personalizer</h1>
-          <p className="max-w-2xl text-white/80 text-lg mb-8">
-            Answer a few questions to find the perfect experience gift for your special someone
-          </p>
-        </div>
-      </div>
-
-      {/* Form Section */}
-      <div
-        ref={formRef}
-        className="container max-w-3xl mx-auto px-6 md:px-10 py-16 md:py-24"
-      >
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-4 py-8">
         <motion.div
-          ref={contentRef}
+          ref={ref}
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="bg-card rounded-lg shadow-lg p-6"
+          className="max-w-4xl mx-auto"
         >
-          <div className="mb-6">
-            <Progress value={getStepProgress()} className="h-2" />
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <Wand2 className="h-8 w-8 text-primary mr-2" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                AI Gift Personalizer
+              </h1>
+            </div>
+            <p className="text-lg text-muted-foreground">
+              Let our AI help you find the perfect gift
+            </p>
           </div>
 
-          {currentStep === 'basics' && (
-            <BasicsForm
-              formData={formData}
-              handleInputChange={handleInputChange}
-              setFormData={setFormData}
-            />
-          )}
-
-          {currentStep === 'interests' && (
-            <InterestsForm
-              formData={formData}
-              handleInterestToggle={handleInterestToggle}
-            />
-          )}
-
-          {currentStep === 'preferences' && (
-            <PreferencesForm
-              formData={formData}
-              handleInputChange={handleInputChange}
-            />
-          )}
-
-          {currentStep === 'results' && (
-            <ResultsSection
-              suggestedExperiences={suggestedExperiences}
-              formData={formData}
-              onBack={handlePreviousStep}
-            />
-          )}
-
-          {/* Nav Buttons */}
+          {/* Progress Bar */}
           {currentStep !== 'results' && (
-            <NavButtons
-              currentStep={currentStep}
-              handlePreviousStep={handlePreviousStep}
-              handleNextStep={handleNextStep}
-              isGenerating={isGenerating}
-              disabled={!isStepValid()}
-            />
+            <div className="mb-8">
+              <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                <span>Step {currentStep === 'basics' ? 1 : currentStep === 'interests' ? 2 : 3} of 3</span>
+                <span>{Math.round(progress)}% Complete</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+            </div>
           )}
+
+          {/* Step Content */}
+          <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+            {renderCurrentStep()}
+          </div>
         </motion.div>
       </div>
     </div>
   );
-}
+};
+
+export default GiftPersonalizer;
