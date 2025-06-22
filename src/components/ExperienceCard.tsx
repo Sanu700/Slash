@@ -79,13 +79,13 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
     <div
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden rounded-xl hover-lift transition-all duration-300",
+        "group relative overflow-hidden rounded-xl hover-lift transition-all duration-300 h-full w-full",
         featured ? "md:col-span-2" : ""
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl">
+      <div className="relative h-full w-full overflow-hidden rounded-xl">
         {/* Image */}
         <img
           src={experience.imageUrl}
@@ -127,12 +127,12 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             "transition-transform duration-300",
             isHovered ? "translate-y-0" : "translate-y-4"
           )}>
-            <h3 className="text-xl font-medium mb-2">{experience.title}</h3>
+            <h3 className="text-lg font-medium mb-2 line-clamp-2">{experience.title}</h3>
             
             <div className="flex items-center space-x-4 mb-3">
               <div className="flex items-center text-sm text-white/80">
-                <MapPin className="h-3.5 w-3.5 mr-1" />
-                <span>{experience.location}</span>
+                <MapPin className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                <span className="truncate">{experience.location}</span>
               </div>
               <div className="text-lg font-medium">{formatRupees(experience.price)}</div>
             </div>
@@ -143,11 +143,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             )}>
               <div className="flex items-center text-xs text-white/70">
                 <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span>{experience.duration}</span>
+                <span className="truncate">{experience.duration}</span>
               </div>
               <div className="flex items-center text-xs text-white/70">
                 <Users className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span>{experience.participants}</span>
+                <span className="truncate">{experience.participants}</span>
               </div>
               <div className="flex items-center text-xs text-white/70">
                 <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -161,7 +161,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             )}>
               <div>
                 <Link to={`/experience/${experience.id}`}>
-                  <Button size="lg" className="w-full bg-white text-black hover:bg-white/90 font-semibold py-3 text-base">
+                  <Button size="sm" className="w-full bg-white text-black hover:bg-white/90 font-semibold py-2 text-sm">
                     View Experience
                   </Button>
                 </Link>

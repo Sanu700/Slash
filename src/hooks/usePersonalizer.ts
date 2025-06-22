@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { FormData } from '@/types/personalizerTypes';
+import { submitAnswer, goBackOneStep } from '@/lib/aiPersonalizer';
 
 export const usePersonalizer = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<'basics' | 'interests' | 'preferences' | 'results'>('basics');
-  const [progress, setProgress] = useState(25);
+  const [progress, setProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestedExperiences, setSuggestedExperiences] = useState([]);
+  const [customInterests, setCustomInterests] = useState('');
 
   const [formData, setFormData] = useState<FormData>({
     recipient: '',
@@ -17,7 +19,7 @@ export const usePersonalizer = () => {
     occasion: '',
     customOccasion: '',
     budget: '',
-    budgetRange: [10000, 50000],
+    budgetRange: [0, 100000],
     interests: [],
     preferences: {
       personality: '',
@@ -64,57 +66,71 @@ export const usePersonalizer = () => {
     });
   };
 
-  const handleNextStep = () => {
+  const handleCustomInterestsChange = (customInterests: string) => {
+    setCustomInterests(customInterests);
+  };
+
+  const handleNextStep = async () => {
     if (currentStep === 'basics') {
-      const isRelationshipOther = formData.relationship === 'other';
-      const isOccasionOther = formData.occasion === 'other';
-      if (
-        !formData.recipient ||
-        !formData.relationship ||
-        (isRelationshipOther && !formData.customRelationship) ||
-        !formData.occasion ||
-        (isOccasionOther && !formData.customOccasion)
-      ) {
-        toast({
-          title: "Please complete all fields",
-          description: "All fields are required to provide personalized recommendations.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Basics step now handles its own validation and AI submission
+      // Just move to the next step
       setCurrentStep('interests');
-      setProgress(50);
+      setProgress(33);
     } else if (currentStep === 'interests') {
-      if (formData.interests.length === 0) {
-        toast({
-          title: "Please select at least one interest",
-          description: "Interests help us find the perfect gift for your recipient.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Interests step now handles its own validation and AI submission
+      // Just move to the next step
       setCurrentStep('preferences');
-      setProgress(75);
+      setProgress(66);
     } else if (currentStep === 'preferences') {
-      if (!formData.preferences.personality || !formData.preferences.lifestyle) {
-        toast({
-          title: "Please complete personality profile",
-          description: "The personality profile helps us provide better recommendations.",
-          variant: "destructive",
-        });
-        return;
-      }
-      generateRecommendations();
+      // The preferences step now handles its own validation and AI integration
+      // We don't need to validate here since it's handled in the component
+      setCurrentStep('results');
+      setProgress(100);
     }
   };
 
-  const handlePreviousStep = () => {
-    if (currentStep === 'interests') {
-      setCurrentStep('basics');
-      setProgress(25);
-    } else if (currentStep === 'preferences') {
-      setCurrentStep('interests');
-      setProgress(50);
+  const handlePreviousStep = async () => {
+    try {
+      setIsGenerating(true);
+      
+      // Call the /back API to undo the last submission
+      console.log('=== GOING BACK - CALLING /back API ===');
+      await goBackOneStep();
+      console.log('Successfully went back one step in AI context');
+      
+      // Update local state
+      if (currentStep === 'interests') {
+        setCurrentStep('basics');
+        setProgress(0);
+      } else if (currentStep === 'preferences') {
+        setCurrentStep('interests');
+        setProgress(33);
+      } else if (currentStep === 'results') {
+        setCurrentStep('preferences');
+        setProgress(66);
+      }
+      
+    } catch (error) {
+      console.error('Error going back:', error);
+      toast({
+        title: "Error going back",
+        description: "Failed to go back. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Fallback to local navigation if API fails
+      if (currentStep === 'interests') {
+        setCurrentStep('basics');
+        setProgress(0);
+      } else if (currentStep === 'preferences') {
+        setCurrentStep('interests');
+        setProgress(33);
+      } else if (currentStep === 'results') {
+        setCurrentStep('preferences');
+        setProgress(66);
+      }
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -141,8 +157,10 @@ export const usePersonalizer = () => {
     formData,
     suggestedExperiences,
     isGenerating,
+    customInterests,
     handleInputChange,
     handleInterestToggle,
+    handleCustomInterestsChange,
     handleNextStep,
     handlePreviousStep,
     setFormData
