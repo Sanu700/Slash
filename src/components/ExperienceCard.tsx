@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MapPin, Clock, Users, Calendar, Heart } from 'lucide-react';
 import { formatRupees } from '@/lib/formatters';
-import { useCart } from '@/contexts/CartContext';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -21,7 +20,6 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
   const [isHovered, setIsHovered] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const { addToCart } = useCart();
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
 
@@ -61,15 +59,6 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       setIsInWishlist(newWishlistState);
       onWishlistChange?.(experience.id, newWishlistState);
     });
-  };
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) {
-      toast.error('Please log in to add items to cart');
-      return;
-    }
-    await addToCart(experience.id, new Date(), 1);
   };
 
   return (
@@ -156,20 +145,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               "transition-all duration-300 transform",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
-              <div className="grid grid-cols-2 gap-1.5 md:gap-2">
-                <Link to={`/experience/${experience.id}`}>
-                  <Button size="sm" className="w-full bg-white text-black hover:bg-white/90 text-xs md:text-sm">
-                    View Experience
-                  </Button>
-                </Link>
-                <Button 
-                  size="sm" 
-                  className="w-full bg-primary text-white hover:bg-primary/90 text-xs md:text-sm"
-                  onClick={handleAddToCart}
-                >
-                  Add to Cart
+              <Link to={`/experience/${experience.id}`}>
+                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90 text-xs md:text-sm">
+                  View Experience
                 </Button>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
