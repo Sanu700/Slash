@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { LoginModal } from '@/components/LoginModal';
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { supabase } from '@/lib/supabase';
 
 const categories = [
   "Adventure",
@@ -82,6 +83,18 @@ const HostExperience = () => {
     setIsSubmitting(true);
 
     try {
+      let imageUrl = '';
+      if (formData.image) {
+        // Upload image to Supabase Storage
+        const fileExt = formData.image.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const { data, error } = await supabase.storage.from('experience-images').upload(fileName, formData.image);
+        if (error) throw error;
+        // Get public URL
+        const { publicURL } = supabase.storage.from('experience-images').getPublicUrl(fileName).data;
+        imageUrl = publicURL;
+      }
+
       const result = await submitProviderApplication({
         companyName: formData.companyName,
         email: formData.email,
@@ -90,7 +103,7 @@ const HostExperience = () => {
         experienceDetails: {
           name: formData.experienceName,
           description: formData.description,
-          image: formData.image ? URL.createObjectURL(formData.image) : '',
+          image: imageUrl,
           price: formData.price,
           location: formData.location,
           duration: formData.duration,

@@ -133,8 +133,7 @@ const Careers = () => {
                   <img
                     src={`${src}?w=600&auto=format&fit=crop`}
                     alt="Team activity"
-                    className="w-full h-full object-cover"
-                    style={{ width: '248px', height: '165.33px' }}
+                    className="w-full h-full object-cover aspect-[3/2]"
                   />
                 </div>
               ))}
