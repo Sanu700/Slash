@@ -4,10 +4,18 @@ import { toast } from 'sonner';
 
 export async function submitProviderApplication(formData: Omit<Provider, 'id' | 'status' | 'experiences' | 'rating' | 'joinDate'>) {
   try {
-    // Create a new provider record
+    // Get the authenticated user's UID
+    let userId = undefined;
+    if (supabase.auth.getUser) {
+      const { data: userData } = await supabase.auth.getUser();
+      userId = userData?.user?.id;
+    }
+    // Upsert provider record with the user's UID as the ID
+    console.log('DEBUG: userId for provider:', userId);
     const { data: providerData, error: providerError } = await supabase
       .from('providers')
-      .insert({
+      .upsert({
+        id: userId, // Set provider ID to auth UID
         company_name: formData.companyName,
         email: formData.email,
         contact_no: formData.contactNo,
@@ -16,30 +24,34 @@ export async function submitProviderApplication(formData: Omit<Provider, 'id' | 
         join_date: new Date().toISOString(),
         experiences: 0,
         rating: 0,
-      })
+      }, { onConflict: 'id' })
       .select()
       .single();
+    console.log('DEBUG: providerData:', providerData, 'providerError:', providerError);
 
     if (providerError) throw providerError;
 
     // If there are experience details, create an experience record
     if (formData.experienceDetails) {
-      const { error: experienceError } = await supabase
+      const providerId = userId || providerData.id;
+      const experienceInsert = {
+        provider_id: providerId,
+        title: formData.experienceDetails.name,
+        description: formData.experienceDetails.description,
+        image_url: formData.experienceDetails.image,
+        price: parseFloat(formData.experienceDetails.price),
+        location: formData.experienceDetails.location,
+        duration: formData.experienceDetails.duration,
+        participants: formData.experienceDetails.participants,
+        date: formData.experienceDetails.date,
+        category: formData.experienceDetails.category,
+        status: 'pending'
+      };
+      console.log('DEBUG: experienceInsert:', experienceInsert);
+      const { error: experienceError, data: experienceData } = await supabase
         .from('experiences')
-        .insert({
-          provider_id: providerData.id,
-          title: formData.experienceDetails.name,
-          description: formData.experienceDetails.description,
-          image_url: formData.experienceDetails.image,
-          price: parseFloat(formData.experienceDetails.price),
-          location: formData.experienceDetails.location,
-          duration: formData.experienceDetails.duration,
-          participants: formData.experienceDetails.participants,
-          date: formData.experienceDetails.date,
-          category: formData.experienceDetails.category,
-          status: 'pending'
-        });
-
+        .insert(experienceInsert);
+      console.log('DEBUG: experienceInsert result:', experienceData, experienceError);
       if (experienceError) throw experienceError;
     }
 

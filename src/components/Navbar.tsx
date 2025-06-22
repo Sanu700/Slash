@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -39,7 +40,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
   const { itemCount, items } = useCart();
-  const [wishlistCount, setWishlistCount] = useState(0);
+  const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout, signInWithGoogle, login } = useAuth();
@@ -217,30 +218,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     }
   };
 
-  // Update wishlist count
-  useEffect(() => {
-    const fetchWishlistCount = async () => {
-      if (!user) {
-        setWishlistCount(0);
-        return;
-      }
-
-      try {
-        const { count, error } = await supabase
-          .from('wishlists')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        setWishlistCount(count || 0);
-      } catch (error) {
-        console.error('Error fetching wishlist count:', error);
-      }
-    };
-
-    fetchWishlistCount();
-  }, [user]);
-
   return (
     <>
       <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4', navbarBgClass)}>
@@ -264,8 +241,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-[400px] p-4">
-                <div className="grid grid-cols-2 gap-3">
+              <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Link to="/about-us" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">About Us</div>
                     <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
@@ -296,8 +273,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-[400px] p-4">
-                <div className="grid grid-cols-2 gap-3">
+              <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Link to="/contact" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">Contact Us</div>
                     <p className="text-sm text-muted-foreground">Get in touch with our support team</p>
@@ -365,19 +342,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 {isAuthenticated ? (
                   <>
                     <DropdownMenuItem onClick={() => navigate('/cart')}>
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       View Cart
                     </DropdownMenuItem>
-                    {itemCount > 0 && (
-                      <DropdownMenuItem onClick={() => navigate('/checkout')}>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Checkout
-                      </DropdownMenuItem>
-                    )}
                   </>
                 ) : (
                   <div className="p-4 text-center">
@@ -406,7 +377,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
@@ -444,7 +415,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
                   <DropdownMenuItem onClick={handleSignIn}>
                     <User className="mr-2 h-4 w-4" />
                     Sign in with Google

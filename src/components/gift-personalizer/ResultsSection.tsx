@@ -63,11 +63,13 @@ const ResultsSection = ({ suggestedExperiences, formData, onBack }: ResultsSecti
         className="min-h-[120px] text-lg"
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
         {suggestedExperiences.map(id => {
           const experience = experiences.find(exp => exp.id === id);
           return experience ? (
-            <ExperienceCard key={id} experience={experience} />
+            <div key={id} className="w-[341.34px] h-[256px]">
+              <ExperienceCard experience={experience} />
+            </div>
           ) : null;
         })}
       </div>

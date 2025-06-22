@@ -167,10 +167,10 @@ const GiftingGuide = () => {
               </div>
             ) : (
               <div className="flex justify-center">
-                <div className="w-[1134px] h-[288px] backdrop-blur-sm bg-white/20 rounded-lg p-4">
-                  <div className="flex gap-6 h-full">
+                <div className="w-full max-w-6xl backdrop-blur-sm bg-white/20 rounded-lg p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                     {featuredExperiences.map(experience => (
-                      <div key={experience.id} className="w-[341.34px] h-[256px]">
+                      <div key={experience.id} className="w-full h-[200px] sm:h-[220px] md:h-[256px]">
                         <ExperienceCard experience={experience} />
                       </div>
                     ))}

@@ -1,4 +1,3 @@
-// src/contexts/CartContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getExperienceById, CartItem, Experience } from '@/lib/data';
 import { useAuth } from '@/lib/auth';
@@ -29,7 +28,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  // 1) Load from Supabase or localStorage
   useEffect(() => {
     (async () => {
       if (user?.id) {
@@ -53,14 +51,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     })();
   }, [user]);
 
-  // 2) Persist to localStorage
   useEffect(() => {
-    if (items.length > 0) {
-      localStorage.setItem('cart', JSON.stringify(items));
+    if (!user?.id) {
+      if (items.length > 0) {
+        localStorage.setItem('cart', JSON.stringify(items));
+      } else {
+        localStorage.removeItem('cart');
+      }
     }
-  }, [items]);
+  }, [items, user]);
 
-  // 3) Cache experiences & compute total
   useEffect(() => {
     (async () => {
       const cache = { ...experienceCache };
@@ -80,12 +80,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     })();
   }, [items]);
 
-  // 4) Add (or upsert) an item
   const addToCart = async (experienceId: string, selectedDate: Date, quantity = 1) => {
     if (!user?.id) {
       setShowLoginModal(true);
       return;
     }
+
     const exp = await getExperienceById(experienceId);
     if (!exp) {
       toast.error('Unable to add to cart');
@@ -128,29 +128,52 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Added to cart');
   };
 
-  // 5) Remove
   const removeFromCart = async (experienceId: string) => {
-    if (user?.id) {
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('experience_id', experienceId);
+    try {
+      if (user) {
+        const { error } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('experience_id', experienceId);
 
-      if (error) {
-        console.error('Remove from cart error:', error);
-        toast.error('Failed to remove from cart');
-        return;
+        if (error) {
+          console.error('Error removing item from cart:', error);
+          toast.error('Failed to remove item from cart');
+          return;
+        }
       }
-    }
 
-    setItems((prev) => prev.filter((i) => i.experienceId !== experienceId));
-    toast.success('Removed from cart');
+      setItems(prevItems => {
+        const updatedItems = prevItems.filter(item => item.experienceId !== experienceId);
+        if (!user) {
+          if (updatedItems.length > 0) {
+            localStorage.setItem('cart', JSON.stringify(updatedItems));
+          } else {
+            localStorage.removeItem('cart');
+          }
+        }
+        return updatedItems;
+      });
+
+      toast.success('Item removed from cart');
+    } catch (error) {
+      console.error('Error in removeFromCart:', error);
+      toast.error('Failed to remove item from cart');
+    }
   };
 
-  // 6) Update quantity
   const updateQuantity = async (experienceId: string, quantity: number) => {
-    if (user?.id) {
+    try {
+      if (!user?.id) {
+        const updatedItems = items.map(item =>
+          item.experienceId === experienceId ? { ...item, quantity } : item
+        );
+        setItems(updatedItems);
+        localStorage.setItem('cart', JSON.stringify(updatedItems));
+        return;
+      }
+
       const { error } = await supabase
         .from('cart_items')
         .update({ quantity, updated_at: new Date().toISOString() })
@@ -162,18 +185,20 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast.error('Failed to update quantity');
         return;
       }
+
+      setItems((prev) =>
+        prev.map((i) =>
+          i.experienceId === experienceId ? { ...i, quantity } : i
+        )
+      );
+    } catch (err) {
+      console.error('Error updating quantity:', err);
+      toast.error('Error updating quantity');
     }
-    setItems((prev) =>
-      prev.map((i) =>
-        i.experienceId === experienceId ? { ...i, quantity } : i
-      )
-    );
   };
 
-  // 7) Clear
   const clearCart = async (opts: { silent?: boolean } = {}) => {
     try {
-      // If the user is logged in, delete from Supabase
       if (user?.id) {
         const { error } = await supabase
           .from('cart_items')
@@ -182,23 +207,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error) throw error;
       }
 
-      // 1) clear React state
       setItems([]);
-
-      // 2) clear any saved cart in localStorage
       localStorage.removeItem('cart');
 
-      // only show toast if not silenced
       if (!opts.silent) {
         toast.success('Cart cleared');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error in clearCart:', err);
       toast.error('Failed to clear cart');
     }
   };
 
-  // 8) Checkout (dummy)
   const checkout = async (): Promise<boolean> => {
     if (!user) {
       toast.error('Please log in to checkout');
