@@ -13,6 +13,7 @@ interface CartContextType {
   addToCart: (experienceId: string, selectedDate: Date, quantity?: number) => Promise<void>;
   removeFromCart: (experienceId: string) => Promise<void>;
   updateQuantity: (experienceId: string, quantity: number) => Promise<void>;
+  updateDate: (experienceId: string, selectedDate: Date) => Promise<void>;
   clearCart: (opts?: { silent?: boolean }) => Promise<void>;
   checkout: () => Promise<boolean>;
 }
@@ -249,6 +250,39 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateDate = async (experienceId: string, selectedDate: Date) => {
+    try {
+      if (!user?.id) {
+        // Guest user: update localStorage
+        const updatedItems = items.map(item =>
+          item.experienceId === experienceId ? { ...item, selectedDate } : item
+        );
+        setItems(updatedItems);
+        localStorage.setItem('cart', JSON.stringify(updatedItems));
+        return;
+      }
+      // Logged-in user: update Supabase
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ date: selectedDate.toISOString(), updated_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('experience_id', experienceId);
+      if (error) {
+        console.error('Update date error:', error);
+        toast.error('Failed to update date');
+        return;
+      }
+      setItems((prev) =>
+        prev.map((i) =>
+          i.experienceId === experienceId ? { ...i, selectedDate } : i
+        )
+      );
+    } catch (err) {
+      console.error('Error updating date:', err);
+      toast.error('Error updating date');
+    }
+  };
+
   const clearCart = async (opts: { silent?: boolean } = {}) => {
     try {
       if (user?.id) {
@@ -294,6 +328,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addToCart,
         removeFromCart,
         updateQuantity,
+        updateDate,
         clearCart,
         checkout,
       }}
