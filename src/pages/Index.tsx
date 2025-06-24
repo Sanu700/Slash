@@ -3,7 +3,6 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import TrendingSection from '@/components/TrendingSection';
 import Newsletter from '@/components/Newsletter';
-import Footer from '@/components/Footer';
 import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data/types';
@@ -122,8 +121,6 @@ const Index = () => {
         <TrendingSection />
         <Newsletter />
       </main>
-
-      <Footer />
     </div>
   );
 };
