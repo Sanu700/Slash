@@ -89,12 +89,12 @@ const Footer = () => {
     {
       name: 'Instagram',
       icon: Instagram,
-      url: '#'
+      url: 'https://www.instagram.com/slashsocials'
     },
     {
       name: 'Facebook',
       icon: Facebook,
-      url: '#'
+      url: 'https://facebook.com/social_slashexp'
     },
     {
       name: 'Twitter',
@@ -109,7 +109,7 @@ const Footer = () => {
     {
       name: 'YouTube',
       icon: Youtube,
-      url: '#'
+      url: 'https://youtube.com/@social_slashexp'
     }
   ];
 
@@ -227,3 +227,5 @@ const Footer = () => {
 };
 
 export default Footer;
+// test commit for insta scraper PR
+
