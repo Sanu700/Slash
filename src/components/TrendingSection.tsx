@@ -7,6 +7,13 @@ import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import ExperienceCard from './ExperienceCard';
 import { Link } from 'react-router-dom';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext
+} from '@/components/ui/carousel';
 
 const TrendingSection = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
@@ -69,12 +76,25 @@ const TrendingSection = () => {
           </div>
         ) : trendingExperiences.length > 0 ? (
           <div className={cn(
-            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
+            "relative overflow-visible",
             isInView ? "opacity-100" : "opacity-0"
           )}>
-            {trendingExperiences.map((experience) => (
-              <ExperienceCard key={experience.id} experience={experience} />
-            ))}
+            <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
+              <CarouselContent className="-ml-2">
+                {trendingExperiences.map((experience) => (
+                  <CarouselItem
+                    key={experience.id}
+                    className="basis-full sm:basis-1/2 md:basis-1/3 pl-2"
+                  >
+                    <div className="w-[346.66px] h-[240px]">
+                      <ExperienceCard experience={experience} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="bg-black hover:bg-black/90 text-white -left-8 lg:-left-12" />
+              <CarouselNext className="bg-black hover:bg-black/90 text-white -right-8 lg:-right-12" />
+            </Carousel>
           </div>
         ) : (
           <div className="text-center py-12">
