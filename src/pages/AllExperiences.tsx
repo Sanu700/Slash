@@ -300,13 +300,11 @@ const AllExperiences = () => {
               {/* Experiences Grid */}
               {currentExperiences.length > 0 ? (
                 <div className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center stagger-children",
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
                   {currentExperiences.map((experience) => (
-                    <div key={experience.id} className="flex justify-center">
-                      <ExperienceCard experience={experience} />
-                    </div>
+                    <ExperienceCard key={experience.id} experience={experience} />
                   ))}
                 </div>
               ) : (
