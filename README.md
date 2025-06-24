@@ -1,5 +1,7 @@
 # Slash Experiences
 
+Welcome to Slash Experiences - Your Gateway to Memorable Moments!
+
 Curated experience gifts that create lasting memories. We believe in the power of experiences over material possessions.
 
 ## Recent Updates
