@@ -131,7 +131,6 @@ const ExperienceView = () => {
     try {
       // Add to cart with the selected quantity
       await addToCart(experience.id, selectedDate, quantityInCart);
-      toast.success('Added to cart');
     } catch (e) {
       toast.error('Failed to add to cart');
     } finally {

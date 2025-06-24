@@ -69,22 +69,22 @@ const SuggestedExperiences = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : allExperiences.length > 0 ? (
-              <div className="relative overflow-hidden">
+              <div className="relative overflow-visible">
                 <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
-                  <CarouselContent>
+                  <CarouselContent className="-ml-2">
                     {allExperiences.map((experience) => (
                       <CarouselItem
                         key={experience.id}
-                        className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2"
+                        className="basis-full sm:basis-1/2 md:basis-1/3 pl-2"
                       >
-                        <div className="w-full max-w-[200px] lg:max-w-[280px] xl:max-w-[320px] mx-auto h-[120px] sm:h-[140px] md:h-[160px] lg:h-[200px] xl:h-[240px]">
+                        <div className="w-[346.66px] h-[240px] mx-auto">
                           <ExperienceCard experience={experience} />
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="bg-white/80 hover:bg-white text-black left-0.5 lg:left-4" />
-                  <CarouselNext className="bg-white/80 hover:bg-white text-black right-0.5 lg:right-4" />
+                  <CarouselPrevious className="bg-white/80 hover:bg-white text-black -left-12 lg:-left-16" />
+                  <CarouselNext className="bg-white/80 hover:bg-white text-black -right-12 lg:-right-16" />
                 </Carousel>
               </div>
             ) : (
