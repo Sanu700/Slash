@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, Sparkles, Heart, MapPin } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   fetchInitQuestion, 
@@ -14,6 +14,8 @@ import {
   fetchNextQuestion, 
   fetchSuggestions 
 } from '@/lib/aiPersonalizer';
+import { useNavigate } from 'react-router-dom';
+import { formatRupees } from '@/lib/formatters';
 
 interface Suggestion {
   id: string;
@@ -22,6 +24,10 @@ interface Suggestion {
   price: number;
   category: string;
   image?: string;
+  imageUrl?: string;
+  img?: string;
+  photo?: string;
+  thumbnail?: string;
 }
 
 interface AIFormData {
@@ -33,6 +39,63 @@ interface AIFormData {
   interests: string[];
   preferences: string;
 }
+
+const AISuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
+  const navigate = useNavigate();
+  const imageUrl = suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
+  
+  // Debug logging
+  console.log('AISuggestionCard image data:', {
+    title: suggestion.title,
+    imageUrl,
+    originalFields: {
+      image: suggestion.image,
+      imageUrl: suggestion.imageUrl,
+      img: suggestion.img,
+      photo: suggestion.photo,
+      thumbnail: suggestion.thumbnail
+    }
+  });
+  
+  return (
+    <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+        <img
+          src={imageUrl}
+          alt={suggestion.title}
+          className="w-full h-full object-cover object-center"
+          style={{ minHeight: '200px', minWidth: '100%' }}
+          onError={(e) => {
+            console.log(`Image failed to load for ${suggestion.title}:`, imageUrl);
+            const target = e.target as HTMLImageElement;
+            target.src = '/placeholder.svg';
+          }}
+        />
+      </div>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg line-clamp-2">{suggestion.title}</CardTitle>
+        <CardDescription className="text-sm">{suggestion.category}</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+          {suggestion.description}
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-primary">
+            {formatRupees(suggestion.price)}
+          </span>
+          <Button 
+            size="sm" 
+            onClick={() => navigate(`/experience/${suggestion.id}`)}
+            className="flex items-center gap-1"
+          >
+            View Details
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function AIPersonalizerForm() {
   const { toast } = useToast();
@@ -53,6 +116,7 @@ export default function AIPersonalizerForm() {
 
   const [currentInput, setCurrentInput] = useState('');
   const [currentTags, setCurrentTags] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     initializeForm();
@@ -276,35 +340,9 @@ export default function AIPersonalizerForm() {
             </div>
             
             {suggestions.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {suggestions.map((suggestion, index) => (
-                  <div key={index} className="w-[341.34px] h-[256px]">
-                    <Card className="h-full w-full hover:shadow-lg transition-shadow overflow-hidden">
-                      {suggestion.image && (
-                        <div className="h-full w-full overflow-hidden">
-                          <img
-                            src={suggestion.image}
-                            alt={suggestion.title}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/placeholder.svg';
-                            }}
-                          />
-                        </div>
-                      )}
-                      <CardHeader className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-4">
-                        <CardTitle className="text-sm line-clamp-2">{suggestion.title}</CardTitle>
-                        <CardDescription className="text-white/80">{suggestion.category}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="absolute bottom-0 left-0 right-0 p-4">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-white">₹{suggestion.price}</span>
-                          <Button size="sm" className="bg-white text-black hover:bg-white/90">View Details</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <AISuggestionCard key={suggestion.id || index} suggestion={suggestion} />
                 ))}
               </div>
             ) : (
@@ -336,6 +374,19 @@ export default function AIPersonalizerForm() {
     }
     return true;
   };
+
+  const mapSuggestionToExperience = (suggestion: Suggestion) => ({
+    id: suggestion.id,
+    title: suggestion.title,
+    description: suggestion.description,
+    imageUrl: suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg',
+    price: suggestion.price,
+    location: 'Unknown',
+    duration: 'N/A',
+    participants: 'N/A',
+    date: 'N/A',
+    category: suggestion.category || 'General',
+  });
 
   return (
     <div className="max-w-2xl mx-auto">

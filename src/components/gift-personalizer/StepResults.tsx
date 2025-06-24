@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { FormData } from '@/types/personalizerTypes';
+import { useNavigate } from 'react-router-dom';
+import { formatRupees } from '@/lib/formatters';
 
 interface Suggestion {
   id: string;
@@ -24,10 +26,81 @@ interface StepResultsProps {
   onStartOver: () => void;
 }
 
+const AISuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
+  const navigate = useNavigate();
+  const imageUrl = suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
+  
+  // Debug logging
+  console.log('AISuggestionCard image data:', {
+    title: suggestion.title,
+    imageUrl,
+    originalFields: {
+      image: suggestion.image,
+      imageUrl: suggestion.imageUrl,
+      img: suggestion.img,
+      photo: suggestion.photo,
+      thumbnail: suggestion.thumbnail
+    }
+  });
+  
+  return (
+    <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+        <img
+          src={imageUrl}
+          alt={suggestion.title}
+          className="w-full h-full object-cover object-center"
+          style={{ minHeight: '200px', minWidth: '100%' }}
+          onError={(e) => {
+            console.log(`Image failed to load for ${suggestion.title}:`, imageUrl);
+            const target = e.target as HTMLImageElement;
+            target.src = '/placeholder.svg';
+          }}
+        />
+      </div>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg line-clamp-2">{suggestion.title}</CardTitle>
+        <CardDescription className="text-sm">{suggestion.category}</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+          {suggestion.description}
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-primary">
+            {formatRupees(suggestion.price)}
+          </span>
+          <Button 
+            size="sm" 
+            onClick={() => navigate(`/experience/${suggestion.id}`)}
+            className="flex items-center gap-1"
+          >
+            View Details
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const StepResults = ({ formData, suggestions, onBack, onStartOver }: StepResultsProps) => {
+  const navigate = useNavigate();
   console.log('StepResults received suggestions:', suggestions);
   console.log('Number of suggestions:', suggestions.length);
   
+  const mapSuggestionToExperience = (suggestion: Suggestion) => ({
+    id: suggestion.id,
+    title: suggestion.title,
+    description: suggestion.description,
+    imageUrl: suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg',
+    price: suggestion.price,
+    location: 'Unknown',
+    duration: 'N/A',
+    participants: 'N/A',
+    date: 'N/A',
+    category: suggestion.category || 'General',
+  });
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -46,40 +119,9 @@ const StepResults = ({ formData, suggestions, onBack, onStartOver }: StepResults
         <CardContent>
           {suggestions.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {suggestions.map((suggestion, index) => {
-                // Try to find image from multiple possible field names
-                const imageUrl = suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail;
-                
-                return (
-                  <Card key={index} className="hover:shadow-lg transition-shadow overflow-hidden">
-                    {imageUrl && (
-                      <div className="aspect-video overflow-hidden">
-                        <img
-                          src={imageUrl}
-                          alt={suggestion.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            // Fallback to a placeholder image if the image fails to load
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder.svg';
-                          }}
-                        />
-                      </div>
-                    )}
-                    <CardHeader>
-                      <CardTitle className="text-sm">{suggestion.title}</CardTitle>
-                      <CardDescription>{suggestion.category}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{suggestion.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold">₹{suggestion.price}</span>
-                        <Button size="sm">View Details</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {suggestions.map((suggestion, index) => (
+                <AISuggestionCard key={suggestion.id || index} suggestion={suggestion} />
+              ))}
             </div>
           ) : (
             <div className="text-center py-8">

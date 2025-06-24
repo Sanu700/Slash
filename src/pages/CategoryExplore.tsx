@@ -171,7 +171,7 @@ const CategoryExplore = () => {
         {/* Experiences Grid */}
         {filteredExperiences.length > 0 ? (
           <div className={cn(
-            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children",
+            "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children",
             isInView ? "opacity-100" : "opacity-0"
           )}>
             {filteredExperiences.map((experience) => (
