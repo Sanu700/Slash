@@ -57,7 +57,7 @@ const GiftingGuide = () => {
       </div>
       
       {/* Main Content */}
-      <section ref={ref} id="comparison" className="container max-w-4xl mx-auto px-4 md:px-10 py-8 md:py-24">
+      <section ref={ref} id="comparison" className="container max-w-[1152px] mx-auto px-4 md:px-10 py-8 md:py-24">
         <div className={cn(
           "space-y-16 transition-all duration-700",
           isInView ? "opacity-100" : "opacity-0 translate-y-8"
@@ -167,10 +167,10 @@ const GiftingGuide = () => {
               </div>
             ) : (
               <div className="flex justify-center">
-                <div className="w-full max-w-6xl backdrop-blur-sm bg-white/20 rounded-lg p-4">
+                <div className="w-full max-w-[1152px] backdrop-blur-sm bg-white/20 rounded-lg p-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                     {featuredExperiences.map(experience => (
-                      <div key={experience.id} className="w-full h-[200px] sm:h-[220px] md:h-[256px]">
+                      <div key={experience.id} className="w-[346.65px] h-[240px] mx-auto">
                         <ExperienceCard experience={experience} />
                       </div>
                     ))}

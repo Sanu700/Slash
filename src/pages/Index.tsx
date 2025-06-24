@@ -3,7 +3,6 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import TrendingSection from '@/components/TrendingSection';
 import Newsletter from '@/components/Newsletter';
-import Footer from '@/components/Footer';
 import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data/types';
@@ -91,22 +90,22 @@ const Index = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : featuredExperiences.length > 0 ? (
-              <div className="relative overflow-hidden">
-                <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
-                  <CarouselContent>
+              <div className="relative overflow-visible">
+                <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
+                  <CarouselContent className="-ml-2">
                     {featuredExperiences.map((experience) => (
                       <CarouselItem
                         key={experience.id}
-                        className="basis-full sm:basis-1/2 md:basis-1/3 px-0.5 lg:px-2"
+                        className="basis-full sm:basis-1/2 md:basis-1/3 pl-2"
                       >
-                        <div className="w-full max-w-[200px] lg:max-w-[280px] xl:max-w-[320px] mx-auto h-[120px] sm:h-[140px] md:h-[160px] lg:h-[200px] xl:h-[240px]">
+                        <div className="w-[346.66px] h-[240px]">
                           <ExperienceCard experience={experience} />
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white left-0.5 lg:left-4" />
-                  <CarouselNext className="bg-black hover:bg-black/90 text-white right-0.5 lg:right-4" />
+                  <CarouselPrevious className="bg-black hover:bg-black/90 text-white -left-8 lg:-left-12" />
+                  <CarouselNext className="bg-black hover:bg-black/90 text-white -right-8 lg:-right-12" />
                 </Carousel>
               </div>
             ) : (
@@ -122,8 +121,6 @@ const Index = () => {
         <TrendingSection />
         <Newsletter />
       </main>
-
-      <Footer />
     </div>
   );
 };
