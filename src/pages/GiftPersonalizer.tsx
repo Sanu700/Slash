@@ -37,6 +37,10 @@ const GiftPersonalizer = () => {
 
   // Reset AI session when component mounts (page reload) - only once
   useEffect(() => {
+    // Always scroll to top smoothly on mount
+    setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }, 100);
     const initializeSession = async () => {
       if (hasInitializedRef.current) return; // Prevent multiple resets
       
@@ -55,6 +59,13 @@ const GiftPersonalizer = () => {
 
     initializeSession();
   }, []); // Empty dependency array - only runs once on mount
+
+  // Also scroll to top on every step change
+  useEffect(() => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }, 100);
+  }, [currentStep]);
 
   const handleStartOver = () => {
     // Reset form data and go back to basics
@@ -113,7 +124,7 @@ const GiftPersonalizer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-24">
       <div className="container mx-auto px-4 py-8">
         <motion.div
           ref={ref}
