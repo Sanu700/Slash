@@ -58,7 +58,28 @@ const AllExperiences = () => {
     if (location.state?.initialFilters === null) {
       clearFilters();
     } else if (location.state?.initialFilters) {
-      setActiveFilters(location.state.initialFilters);
+      // Ensure locations is always an array
+      const filters = { ...location.state.initialFilters };
+      if (filters.location && !filters.locations) {
+        filters.locations = filters.location !== 'any' ? [filters.location] : [];
+        delete filters.location;
+      }
+      // Ensure duration is always a [number, number] array
+      if (typeof filters.duration === 'string') {
+        if (filters.duration === 'any') {
+          filters.duration = [1, 24];
+        } else if (filters.duration.endsWith('+')) {
+          const min = parseInt(filters.duration);
+          filters.duration = [min, 24];
+        } else if (filters.duration.includes('-')) {
+          const [min, max] = filters.duration.split('-').map(Number);
+          filters.duration = [min, max];
+        } else {
+          const val = parseInt(filters.duration);
+          filters.duration = [val, val];
+        }
+      }
+      setActiveFilters(filters);
     }
   }, [location]);
 
@@ -90,9 +111,11 @@ const AllExperiences = () => {
       }
 
       // Location filter
-      if (activeFilters.location && activeFilters.location !== 'any') {
-        filtered = filtered.filter(exp => 
-          exp.location.toLowerCase() === activeFilters.location.toLowerCase()
+      if (activeFilters.locations && activeFilters.locations.length > 0) {
+        filtered = filtered.filter(exp =>
+          activeFilters.locations.some(loc =>
+            exp.location.toLowerCase() === loc.toLowerCase()
+          )
         );
       }
 
@@ -105,14 +128,11 @@ const AllExperiences = () => {
       }
 
       // Duration filter
-      if (activeFilters.duration && activeFilters.duration !== 'any') {
+      if (Array.isArray(activeFilters.duration)) {
         filtered = filtered.filter(exp => {
-          const [min, max] = activeFilters.duration.split('-').map(Number);
-          
           // Parse duration string to handle different formats
           const durationStr = exp.duration.toLowerCase();
           let expDuration: number;
-          
           if (durationStr.includes('day') || durationStr.includes('days')) {
             // Convert days to hours (1 day = 24 hours)
             const days = parseInt(durationStr);
@@ -123,13 +143,7 @@ const AllExperiences = () => {
             // Extract hours from string like "2 hours" or "3-4 hours"
             expDuration = parseInt(durationStr);
           }
-          
-          if (activeFilters.duration === '12+') {
-            // Include experiences that are 12+ hours, including full day and multi-day experiences
-            return expDuration >= 12 || durationStr.includes('full day');
-          }
-          
-          return expDuration >= min && expDuration <= max;
+          return expDuration >= activeFilters.duration[0] && expDuration <= activeFilters.duration[1];
         });
       }
 
@@ -207,10 +221,10 @@ const AllExperiences = () => {
 
   const activeFiltersCount =
     (activeFilters?.categories?.length || 0) +
-    (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
+    (activeFilters?.locations?.length || 0) +
     (activeFilters?.priceRange && 
      (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) ? 1 : 0) +
-    (activeFilters?.duration && activeFilters.duration !== 'any' ? 1 : 0) +
+    (activeFilters?.duration && Array.isArray(activeFilters.duration) && (activeFilters.duration[0] !== 1 || activeFilters.duration[1] !== 24) ? 1 : 0) +
     (activeFilters?.experienceTypes && 
      Object.values(activeFilters.experienceTypes).filter(Boolean).length);
 
@@ -345,7 +359,10 @@ const AllExperiences = () => {
       <FilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApply={setActiveFilters}
+        onApply={(filters) => {
+          setActiveFilters(filters);
+          setCurrentPage(1);
+        }}
         initialFilters={activeFilters}
       />
     </div>
