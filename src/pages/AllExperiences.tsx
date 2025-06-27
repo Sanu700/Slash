@@ -11,6 +11,13 @@ import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
 import Navbar from '@/components/Navbar';
 import { Filter } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui/dropdown-menu';
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const toRad = (x) => (x * Math.PI) / 180;
@@ -30,7 +37,9 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 const AllExperiences = () => {
   const { experiences, isLoading } = useExperiencesManager();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
+  const [sortOrder, setSortOrder] = useState<
+    'default' | 'price-low' | 'price-high' | 'duration-low' | 'duration-high'
+  >('default');
   const [currentPage, setCurrentPage] = useState(1);
   const experiencesPerPage = 6;
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
@@ -165,6 +174,27 @@ const AllExperiences = () => {
       filtered.sort((a, b) => a.price - b.price);
     } else if (sortOrder === 'price-high') {
       filtered.sort((a, b) => b.price - a.price);
+    } else if (sortOrder === 'duration-low' || sortOrder === 'duration-high') {
+      const getDurationHours = (exp: Experience) => {
+        const durationStr = exp.duration?.toLowerCase?.() || '';
+        if (durationStr.includes('day') && !durationStr.includes('hour')) {
+          const days = parseInt(durationStr);
+          return days * 24;
+        } else if (durationStr.includes('full day')) {
+          return 24;
+        } else {
+          const match = durationStr.match(/(\d+)(-(\d+))?/);
+          if (match) {
+            return parseInt(match[1]);
+          }
+          return 0;
+        }
+      };
+      filtered.sort((a, b) => {
+        const aDur = getDurationHours(a);
+        const bDur = getDurationHours(b);
+        return sortOrder === 'duration-low' ? aDur - bDur : bDur - aDur;
+      });
     }
     
     return filtered;
@@ -176,7 +206,7 @@ const AllExperiences = () => {
   const currentExperiences = filteredExperiences.slice(indexOfFirstExperience, indexOfLastExperience);
   const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
 
-  const handleSortChange = (order: 'default' | 'price-low' | 'price-high') => {
+  const handleSortChange = (order: 'default' | 'price-low' | 'price-high' | 'duration-low' | 'duration-high') => {
     setSortOrder(order);
   };
 
@@ -278,35 +308,28 @@ const AllExperiences = () => {
                   "flex items-center space-x-4 transition-all duration-700 delay-100",
                   isInView ? "opacity-100" : "opacity-0 translate-y-8"
                 )}>
-                  <div className="flex items-center bg-secondary/50 rounded-lg p-1">
-                    <button 
-                      onClick={() => handleSortChange('default')}
-                      className={cn(
-                        "px-3 py-1.5 text-sm rounded-md transition-colors",
-                        sortOrder === 'default' ? "bg-white text-black" : "text-muted-foreground"
-                      )}
-                    >
-                      Featured
-                    </button>
-                    <button 
-                      onClick={() => handleSortChange('price-low')}
-                      className={cn(
-                        "px-3 py-1.5 text-sm rounded-md transition-colors",
-                        sortOrder === 'price-low' ? "bg-white text-black" : "text-muted-foreground"
-                      )}
-                    >
-                      Price: Low to High
-                    </button>
-                    <button 
-                      onClick={() => handleSortChange('price-high')}
-                      className={cn(
-                        "px-3 py-1.5 text-sm rounded-md transition-colors",
-                        sortOrder === 'price-high' ? "bg-white text-black" : "text-muted-foreground"
-                      )}
-                    >
-                      Price: High to Low
-                    </button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="min-w-[120px]">
+                        Sort by: {
+                          sortOrder === 'default' ? 'Featured'
+                          : sortOrder === 'price-low' ? 'Price (Low to High)'
+                          : sortOrder === 'price-high' ? 'Price (High to Low)'
+                          : sortOrder === 'duration-low' ? 'Duration (Low to High)'
+                          : 'Duration (High to Low)'
+                        }
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuRadioGroup value={sortOrder} onValueChange={v => setSortOrder(v as typeof sortOrder)}>
+                        <DropdownMenuRadioItem value="default">Featured</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="price-low">Price (Low to High)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="price-high">Price (High to Low)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="duration-low">Duration (Low to High)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="duration-high">Duration (High to Low)</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button 
                     variant="outline" 
                     size="sm"
