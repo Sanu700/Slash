@@ -9,6 +9,8 @@ import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import ExperienceMap from './ExperienceMap';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -19,6 +21,7 @@ interface ExperienceCardProps {
 const ExperienceCard = ({ experience, featured = false, onWishlistChange }: ExperienceCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
@@ -123,10 +126,24 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
 
             {/* Location + Price */}
             <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
-              <div className="flex items-center text-xs md:text-sm text-white/80">
-                <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.location}</span>
-              </div>
+              <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center text-xs md:text-sm text-white/80 cursor-pointer hover:underline bg-transparent border-none p-0 m-0"
+                    style={{ background: 'none', border: 'none' }}
+                  >
+                    <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
+                    <span className="truncate">{experience.location}</span>
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[625px]">
+                  <DialogHeader>
+                    <DialogTitle>{experience.title}</DialogTitle>
+                  </DialogHeader>
+                  <ExperienceMap locationName={experience.location} />
+                </DialogContent>
+              </Dialog>
               <div className="text-base md:text-lg font-medium">{formatRupees(experience.price)}</div>
             </div>
 
