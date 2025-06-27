@@ -74,6 +74,11 @@ const ProtectedExperiences = requireAuth(Experiences, true);
 const ProtectedAdminProfile = requireAuth(AdminProfile, true);
 const ProtectedPaymentDetails = requireAuth(PaymentDetails, true);
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState, useRef } from "react";
+import LocationAccessModal from "@/components/LocationAccessModal";
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -85,6 +90,7 @@ function App() {
             <WishlistProvider>
               <BrowserRouter>
                 <ScrollToTop />
+                <LocationAccessModal />
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Layout><Index /></Layout>} />
