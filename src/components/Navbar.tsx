@@ -19,7 +19,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useWishlist } from '@/contexts/WishlistContext';
+
+import { useSearchHistory } from '@/hooks/useSearchHistory';
+
 import CitySelector from './CitySelector';
+
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -53,6 +57,15 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  
+  // Use search history hook
+  const { recentSearches, addToSearchHistory, reloadSearchHistory, clearSearchHistory, removeFromSearchHistory } = useSearchHistory();
+
+  useEffect(() => {
+    if (searchOpen) {
+      reloadSearchHistory();
+    }
+  }, [searchOpen, reloadSearchHistory]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,12 +77,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   useEffect(() => {
     if (searchOpen) {
-      document.body.classList.add('search-overlay-active');
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.classList.remove('search-overlay-active');
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.classList.remove('search-overlay-active');
+      document.body.style.overflow = '';
     };
   }, [searchOpen]);
 
@@ -174,7 +187,20 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // If a suggestion is highlighted, add its title to history
+    if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+      const selected = searchResults[selectedResultIndex];
+      if (selected && selected.title) {
+        addToSearchHistory(selected.title);
+        setSearchOpen(false);
+        navigate(`/experience/${selected.id}`);
+        document.body.style.overflow = '';
+        return;
+      }
+    }
+    // Otherwise, add the typed query
     if (searchQuery.trim()) {
+      addToSearchHistory(searchQuery.trim());
       navigate(`/experiences?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       document.body.style.overflow = '';
@@ -182,6 +208,11 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   };
 
   const handleSearchResultClick = (id: string) => {
+    // Only add the experience title to history
+    const experience = searchResults.find(exp => exp.id === id);
+    if (experience && experience.title) {
+      addToSearchHistory(experience.title);
+    }
     setSearchOpen(false);
     navigate(`/experience/${id}`);
   };
@@ -299,6 +330,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePopularSearchClick = (term: string) => {
+    setSearchQuery(term);
+    addToSearchHistory(term);
+    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
+  };
+
+  const handleRecentSearchClick = (term: string) => {
+    setSearchQuery(term);
+    addToSearchHistory(term);
+    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
   };
 
   return (
@@ -597,7 +640,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
         <div className="container max-w-2xl mx-auto pt-28 px-4">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Input
-              type="search"
+              type="text"
               placeholder="Search for experiences..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -620,10 +663,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               {['Hot Air Balloon', 'Dining', 'Yacht', 'Spa Day', 'Adventure'].map((term) => (
                 <button
                   key={term}
-                  onClick={() => {
-                    setSearchQuery(term);
-                    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
-                  }}
+                  onClick={() => handlePopularSearchClick(term)}
                   className="px-3 py-1.5 bg-gray-100/80 backdrop-blur-sm rounded-full text-sm hover:bg-gray-200/80 cursor-pointer text-gray-700"
                 >
                   {term}
@@ -632,24 +672,44 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </div>
           </div>
 
-          {/* Recent Searches - Only show when search query is empty */}
-          {!searchQuery && (
+          {/* Recent Searches - Always show when search bar is open and empty */}
+          {searchOpen && !searchQuery && (
             <div className="mt-8">
-              <p className="text-sm text-gray-600 mb-3">Recent Searches</p>
-              <div className="space-y-2">
-                {['Adventure Tours', 'Luxury Dining', 'Spa Experiences'].map((term) => (
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-600">Recent Searches</p>
+                {recentSearches.length > 0 && (
                   <button
-                    key={term}
-                    onClick={() => {
-                      setSearchQuery(term);
-                      handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
-                    }}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
+                    onClick={clearSearchHistory}
+                    className="text-xs text-primary hover:underline px-2 py-1 rounded"
                   >
-                    <Clock className="h-4 w-4 mr-3 text-gray-400" />
-                    <span className="text-sm">{term}</span>
+                    Clear Search History
                   </button>
-                ))}
+                )}
+              </div>
+              <div className="space-y-2">
+                {recentSearches.length > 0 ? (
+                  recentSearches.map((term, index) => (
+                    <div key={index} className="flex items-center group">
+                      <button
+                        onClick={() => handleRecentSearchClick(term)}
+                        className="flex-1 text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
+                      >
+                        <Clock className="h-4 w-4 mr-3 text-gray-400" />
+                        <span className="text-sm">{term}</span>
+                      </button>
+                      <button
+                        onClick={() => removeFromSearchHistory(term)}
+                        className="ml-2 text-gray-400 hover:text-red-500 p-1 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                        aria-label={`Remove ${term} from search history`}
+                        tabIndex={0}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-400 px-4 py-3 text-sm">No recent searches yet.</div>
+                )}
               </div>
             </div>
           )}
