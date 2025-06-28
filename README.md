@@ -104,3 +104,42 @@ Slash-13/
 
 ### Test: Added Instagram scraper functionality
 
+## 🎯 **New Feature: Location Scroll Menu**
+
+### **What's New:**
+- **Location Scroll Menu**: A horizontal scrollable menu on the homepage with all major Indian cities
+- **Predefined Locations**: Contains 200+ major Indian cities including Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad, Jaipur, and many more
+- **Interactive Selection**: Click on any location to select it and see feedback
+- **Responsive Design**: Works perfectly on all screen sizes with smooth horizontal scrolling
+
+### **How to Test:**
+
+1. **Start the Development Server:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Test the Location Menu:**
+   - Visit the homepage
+   - Scroll down to the "Explore by Location" section
+   - Click on different location buttons to select them
+   - Try clicking "All India" to deselect any location
+   - See the feedback message when you select a location
+   - Test the horizontal scrolling on mobile devices
+
+### **Features:**
+- ✅ Horizontal scrollable location menu with 200+ Indian cities
+- ✅ "All India" option to deselect location
+- ✅ Interactive location selection with visual feedback
+- ✅ Responsive design with smooth scrolling
+- ✅ Hidden scrollbars for better UX
+- ✅ Visual feedback for selected location
+- ✅ Gradient overlay for better scrolling experience
+
+### **Included Cities:**
+Major cities like Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad, Jaipur, Surat, Lucknow, Kanpur, Nagpur, Indore, Thane, Bhopal, Visakhapatnam, Patna, Vadodara, Ghaziabad, Ludhiana, Agra, Nashik, Faridabad, Meerut, Rajkot, Varanasi, Srinagar, Aurangabad, Dhanbad, Amritsar, Allahabad, Ranchi, Howrah, Coimbatore, Jabalpur, Gwalior, Vijayawada, Jodhpur, Madurai, Raipur, Kota, Guwahati, Chandigarh, and many more!
+
+---
+
+## Getting Started
+

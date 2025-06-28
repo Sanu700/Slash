@@ -10,7 +10,7 @@ import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
 import Navbar from '@/components/Navbar';
 import { Filter } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -46,6 +46,11 @@ const AllExperiences = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get location from query param
+  const query = new URLSearchParams(location.search);
+  const locationParam = query.get('location');
 
   const clearFilters = () => {
     setActiveFilters(null);
@@ -98,6 +103,16 @@ const AllExperiences = () => {
     
     let filtered = [...experiences];
     
+    // Filter by location query param if present
+    if (locationParam && locationParam !== 'All India') {
+      const normalizedParam = locationParam.trim().toLowerCase();
+      filtered = filtered.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        // Exact match or partial match
+        return expLoc === normalizedParam || expLoc.includes(normalizedParam) || normalizedParam.includes(expLoc);
+      });
+    }
+
     // Apply search filtering
     if (searchTerm.trim()) {
       const lowercasedSearch = searchTerm.toLowerCase();
@@ -198,7 +213,7 @@ const AllExperiences = () => {
     }
     
     return filtered;
-  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters]);
+  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters, locationParam]);
 
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
@@ -350,7 +365,7 @@ const AllExperiences = () => {
               </div>
 
               {/* Experiences Grid */}
-              {currentExperiences.length > 0 ? (
+              {filteredExperiences.length > 0 ? (
                 <div className={cn(
                   "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children",
                   isInView ? "opacity-100" : "opacity-0"
@@ -361,11 +376,18 @@ const AllExperiences = () => {
                 </div>
               ) : (
                 <div className="text-center py-16">
-                  <h3 className="text-xl mb-2">No matching experiences found</h3>
-                  <p className="text-muted-foreground mb-6">Try adjusting your search criteria</p>
+                  <h3 className="text-xl mb-2">
+                    {locationParam ? `No experiences found in ${locationParam}` : 'No matching experiences found'}
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    {locationParam
+                      ? `We don't have any experiences available in ${locationParam} yet. Try selecting a different location or check back later!`
+                      : 'Try adjusting your search criteria'}
+                  </p>
                   <Button onClick={() => {
                     setSearchTerm('');
                     setActiveFilters(null);
+                    navigate('/experiences');
                   }}>
                     Clear All Filters
                   </Button>
