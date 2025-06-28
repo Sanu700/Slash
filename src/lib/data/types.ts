@@ -7,6 +7,8 @@ export interface Experience {
   imageUrl: string;
   price: number;
   location: string;
+  latitude?: number;
+  longitude?: number;
   duration: string;
   participants: string;
   date: string;

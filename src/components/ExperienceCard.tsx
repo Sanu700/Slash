@@ -4,13 +4,14 @@ import { Experience } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MapPin, Clock, Users, Calendar, Heart } from 'lucide-react';
-import { formatRupees } from '@/lib/formatters';
+import { formatRupees, getTravelTimeMinutes } from '@/lib/formatters';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { CITY_COORDINATES } from './CitySelector';
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -25,6 +26,44 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
   const cardRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
+  const [travelTime, setTravelTime] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
+
+  // Debug log to check values at render time
+  console.log('RENDER ExperienceCard:', experience.title, experience.latitude, experience.longitude, selectedCity);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setSelectedCity(localStorage.getItem('selected_city'));
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  useEffect(() => {
+    console.log('TravelTime useEffect triggered for', experience.title, {
+      lat: experience.latitude,
+      lng: experience.longitude,
+      selectedCity,
+      cityCoords: selectedCity ? CITY_COORDINATES[selectedCity] : null
+    });
+    const cityCoords = selectedCity ? CITY_COORDINATES[selectedCity] : null;
+    if (
+      experience.latitude && experience.longitude &&
+      cityCoords
+    ) {
+      getTravelTimeMinutes(
+        cityCoords.latitude,
+        cityCoords.longitude,
+        experience.latitude,
+        experience.longitude
+      ).then(mins => {
+        if (mins !== null) setTravelTime(`~${mins} min drive`);
+      });
+    } else {
+      setTravelTime(null);
+    }
+  }, [experience.latitude, experience.longitude, experience.id, selectedCity]);
 
   useEffect(() => {
     const checkWishlist = async () => {
@@ -145,6 +184,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
                 </DialogContent>
               </Dialog>
               <div className="text-base md:text-lg font-medium">{formatRupees(experience.price)}</div>
+            </div>
+            {/* Travel time display */}
+            <div className="flex items-center text-xs text-white/80 mb-1" style={{background:'#ffe066', border:'2px solid #ff8800', borderRadius:'4px', padding:'2px 6px'}}>
+              <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
+              <span><strong>Time Proximity:</strong> {travelTime ? travelTime : 'N/A'}</span>
             </div>
 
             {/* Duration, Participants, Date */}
