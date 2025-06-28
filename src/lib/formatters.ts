@@ -1,4 +1,3 @@
-
 /**
  * Format a price in rupees
  * @param price Price in rupees (without decimals)
@@ -21,3 +20,40 @@ export const formatRupees = (price: number): string => {
   
   return `₹${formattedOtherNumbers ? formattedOtherNumbers + ',' : ''}${lastThree}`;
 };
+
+/**
+ * Fetches travel time in minutes between two coordinates using OpenRouteService Directions API.
+ * @param {number} fromLat - User latitude
+ * @param {number} fromLng - User longitude
+ * @param {number} toLat - Experience latitude
+ * @param {number} toLng - Experience longitude
+ * @returns {Promise<number|null>} Travel time in minutes, or null if error
+ */
+export async function getTravelTimeMinutes(fromLat, fromLng, toLat, toLng) {
+  const apiKey = '5b3ce3597851110001cf6248a8b5672fb44148a89cc73498624eae7b';
+  const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}`;
+  const body = {
+    coordinates: [
+      [fromLng, fromLat],
+      [toLng, toLat]
+    ]
+  };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiKey
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const seconds = data.routes?.[0]?.summary?.duration;
+    if (!seconds) return null;
+    return Math.round(seconds / 60);
+  } catch (e) {
+    console.error('Error fetching travel time:', e);
+    return null;
+  }
+}

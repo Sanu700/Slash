@@ -21,7 +21,7 @@ export const getSimilarExperiences = async (
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('*')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
       .eq('category', categoryName)
       .neq('id', currentExperienceId)
       .limit(limit);
@@ -35,7 +35,7 @@ export const getSimilarExperiences = async (
       // If no experiences in same category, just get other experiences
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('experiences')
-        .select('*')
+        .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
         .neq('id', currentExperienceId)
         .limit(limit);
         
@@ -61,6 +61,8 @@ const mapDbExperienceToModel = (item: any): Experience => ({
   imageUrl: item.image_url,
   price: item.price,
   location: item.location,
+  latitude: item.latitude,
+  longitude: item.longitude,
   duration: item.duration,
   participants: item.participants.toString(),
   date: item.date,
@@ -89,15 +91,17 @@ export const getAllExperiences = async (): Promise<Experience[]> => {
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('*');
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity');
     
     if (error) throw error;
     
     const experiences = data.map(mapDbExperienceToModel);
+    // Always update localStorage with the latest data
     localStorage.setItem('experiences', JSON.stringify(experiences));
     return experiences;
   } catch (error) {
     console.error('Error fetching experiences:', error);
+    // Only use localStorage as a fallback if Supabase fetch fails
     return getSavedExperiences();
   }
 };
@@ -107,7 +111,7 @@ export const getTrendingExperiences = async (): Promise<Experience[]> => {
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('*')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
       .eq('trending', true)
       .limit(3);
     
@@ -125,7 +129,7 @@ export const getFeaturedExperiences = async (): Promise<Experience[]> => {
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('*')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
       .eq('featured', true)
       .limit(3);
     
@@ -143,7 +147,7 @@ export const getExperienceById = async (id: string): Promise<Experience | null> 
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('*')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
       .eq('id', id)
       .single();
     
@@ -161,7 +165,7 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('*')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
       .eq('category', categoryId);
     
     if (error) throw error;

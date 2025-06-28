@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getExperienceById, getSimilarExperiences } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { formatRupees } from '@/lib/formatters';
+import { formatRupees, getTravelTimeMinutes } from '@/lib/formatters';
 import { MapPin, Clock, Users, Calendar, ArrowLeft, Heart, ShoppingCart, Bookmark, Plus, Minus } from 'lucide-react';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
@@ -19,6 +19,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { format } from 'date-fns';
 import ExperienceMap from '@/components/ExperienceMap';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CITY_COORDINATES } from '../components/CitySelector';
 
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +41,8 @@ const ExperienceView = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [travelTime, setTravelTime] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -100,6 +103,25 @@ const ExperienceView = () => {
       setIsInWishlist(wishlistLocal.includes(experience.id));
     }
   }, [user, experience, wishlistLocal]);
+  
+  // Debug log to check values at render time
+  console.log('RENDER ExperienceView:', experience?.title, experience?.latitude, experience?.longitude, selectedCity);
+
+  useEffect(() => {
+    const cityCoords = selectedCity ? CITY_COORDINATES[selectedCity] : null;
+    if (experience && experience.latitude && experience.longitude && cityCoords) {
+      getTravelTimeMinutes(
+        cityCoords.latitude,
+        cityCoords.longitude,
+        experience.latitude,
+        experience.longitude
+      ).then(mins => {
+        if (mins !== null) setTravelTime(`~${mins} min drive`);
+      });
+    } else {
+      setTravelTime(null);
+    }
+  }, [experience, selectedCity]);
   
   const isGuest = !user || !user.id || typeof user.id !== 'string' || user.id.length < 10;
   
@@ -336,20 +358,12 @@ const ExperienceView = () => {
               <h1 className="text-3xl md:text-4xl font-medium mb-4">{experience.title}</h1>
               
               <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center text-muted-foreground gap-2">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  {experience.location}
+                <div className="flex items-center gap-2 text-muted-foreground text-base">
+                  <MapPin className="h-5 w-5" />
+                  <span>{experience.location}</span>
                   <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
                     <DialogTrigger asChild>
-                      <button
-                        type="button"
-                        className="ml-2 flex items-center text-primary hover:underline bg-transparent border-none p-0 m-0"
-                        style={{ background: 'none', border: 'none' }}
-                        aria-label="Show location on map"
-                      >
-                        <MapPin className="h-4 w-4 mr-1" />
-                        <span>Show Map</span>
-                      </button>
+                      <button className="underline text-sm ml-2" type="button">Show Map</button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[625px]">
                       <DialogHeader>
