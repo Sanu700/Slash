@@ -17,6 +17,8 @@ import { LoginModal } from '@/components/LoginModal';
 import { Calendar as DatePicker } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { format } from 'date-fns';
+import ExperienceMap from '@/components/ExperienceMap';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +39,7 @@ const ExperienceView = () => {
     const saved = localStorage.getItem('wishlist');
     return saved ? JSON.parse(saved) : [];
   });
+  const [isMapOpen, setIsMapOpen] = useState(false);
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -333,9 +336,28 @@ const ExperienceView = () => {
               <h1 className="text-3xl md:text-4xl font-medium mb-4">{experience.title}</h1>
               
               <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center text-muted-foreground">
+                <div className="flex items-center text-muted-foreground gap-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   {experience.location}
+                  <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="ml-2 flex items-center text-primary hover:underline bg-transparent border-none p-0 m-0"
+                        style={{ background: 'none', border: 'none' }}
+                        aria-label="Show location on map"
+                      >
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span>Show Map</span>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[625px]">
+                      <DialogHeader>
+                        <DialogTitle>{experience.title} - Location</DialogTitle>
+                      </DialogHeader>
+                      <ExperienceMap locationName={experience.location} />
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <Clock className="h-4 w-4 mr-2" />
