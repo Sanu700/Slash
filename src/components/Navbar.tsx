@@ -398,7 +398,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <DropdownMenuContent align="center" className="w-[300px] p-4">
                 <div className="mb-2">
                   <h4 className="font-medium mb-2">Choose your city for experiences:</h4>
-                  <CitySelector />
+                  <CitySelector onChange={(city) => console.log('Selected city:', city)} />
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
