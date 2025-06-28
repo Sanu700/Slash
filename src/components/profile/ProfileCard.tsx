@@ -106,6 +106,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
 
   // Handle profile save
   const handleSaveProfile = async () => {
+    console.log("Save button clicked");
     if (!user || !user.id) return;
     
     try {
@@ -165,6 +166,26 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
       });
     }
     setEditMode(false);
+  };
+
+  const handleAccountOverviewSave = async () => {
+    if (!user || !user.id) return;
+    try {
+      await updateUserProfile(user.id, {
+        full_name: profileData.full_name,
+        avatar_url: profileData.avatar_url,
+      });
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isAuthenticated || !user) {

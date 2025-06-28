@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import OrdersTab from '@/components/OrdersTab';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/lib/auth';
@@ -10,15 +10,38 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart, LogOut, User, ShoppingCart } from 'lucide-react';
-import GiftingHistoryContent from '@/components/profile/GiftHistoryContent';
-import { GiftHistory } from '@/lib/data/types';
+import { updateUserProfile } from '@/lib/profileService';
+import { toast } from '@/components/ui/use-toast';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // which top-level tab is active?
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'orders' || tab === 'profile') {
+      setActiveTab(tab as 'profile' | 'orders');
+    } else {
+      setActiveTab('profile');
+    }
+  }, [location.search]);
+
+  // When the tab changes, update the URL
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'profile' | 'orders');
+    const params = new URLSearchParams(location.search);
+    if (value === 'profile') {
+      params.delete('tab');
+    } else {
+      params.set('tab', value);
+    }
+    navigate({ pathname: '/profile', search: params.toString() }, { replace: true });
+  };
 
   // local form state for editing
   const [showModal, setShowModal] = useState(false);
@@ -27,47 +50,25 @@ const Profile: React.FC = () => {
     user?.user_metadata?.avatar_url || '/default-avatar.png'
   );
 
-  // Mock data for demonstration
-  const mockGiftHistory: GiftHistory[] = [
-    {
-      id: 'gift1',
-      giftedAt: '2024-06-15T10:30:00Z',
-      recipientName: 'Priya Sharma',
-      recipientEmail: 'priya@example.com',
-      experience: {
-        id: 'exp1',
-        title: 'Hot Air Balloon Ride',
-        description: 'A magical sunrise ride above the city.',
-        imageUrl: 'https://images.unsplash.com/photo-1464983953574-0892a716854b',
-        price: 5000,
-        location: 'Jaipur',
-        duration: '2 hours',
-        participants: '2',
-        date: '2024-07-01',
-        category: 'adventure',
-      },
-      message: 'Happy Birthday! Enjoy the skies!'
-    },
-    {
-      id: 'gift2',
-      giftedAt: '2024-05-10T15:00:00Z',
-      recipientName: 'Rahul Verma',
-      recipientEmail: 'rahul@example.com',
-      experience: {
-        id: 'exp2',
-        title: 'Wine Tasting Tour',
-        description: 'Explore the best vineyards and taste premium wines.',
-        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
-        price: 3500,
-        location: 'Nashik',
-        duration: '4 hours',
-        participants: '1',
-        date: '2024-06-20',
-        category: 'food',
-      },
-      message: 'Congratulations on your new job!'
+  const handleAccountOverviewSave = async () => {
+    if (!user || !user.id) return;
+    try {
+      await updateUserProfile(user.id, {
+        full_name: name,
+        avatar_url: avatarUrl,
+      });
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update profile',
+        variant: 'destructive',
+      });
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,9 +135,7 @@ const Profile: React.FC = () => {
             <Card className="p-6">
               <Tabs
                 value={activeTab}
-                onValueChange={(value: string) =>
-                  setActiveTab(value as 'profile' | 'orders')
-                }
+                onValueChange={handleTabChange}
               >
                 <TabsList className="mb-6">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -186,7 +185,7 @@ const Profile: React.FC = () => {
                             onChange={(e) => setAvatarUrl(e.target.value)}
                           />
                         </div>
-                        <Button className="w-full">Save Changes</Button>
+                        <Button className="w-full" onClick={handleAccountOverviewSave}>Save Changes</Button>
                       </CardContent>
                     </Card>
                   </div>
@@ -236,15 +235,6 @@ const Profile: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Gifting History Section */}
-      <section className="mt-10 px-4 max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold mb-1">Gifting History</h2>
-        <p className="text-muted-foreground mb-4 text-base">
-          A record of all the experiences you have gifted, including recipient details, date, and your personal message.
-        </p>
-        <GiftingHistoryContent giftHistory={mockGiftHistory} />
-      </section>
     </div>
   );
 };
