@@ -8,7 +8,9 @@ import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
+
 import { SearchInput } from '@/components/ui/search-input';
+
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import Navbar from '@/components/Navbar';
 import { Filter } from 'lucide-react';
