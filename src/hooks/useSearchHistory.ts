@@ -1,24 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const SEARCH_HISTORY_KEY = 'searchHistory';
+const SEARCH_HISTORY_KEY = 'slash_search_history';
 const MAX_HISTORY_ITEMS = 10;
 
 export const useSearchHistory = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  const loadSearchHistory = useCallback(() => {
+  // Load search history from localStorage
+  const reloadSearchHistory = useCallback(() => {
     try {
-      const saved = localStorage.getItem(SEARCH_HISTORY_KEY);
-      if (saved) {
-        const history = JSON.parse(saved);
-        return Array.isArray(history) ? history : [];
+      const savedHistory = localStorage.getItem(SEARCH_HISTORY_KEY);
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setRecentSearches(parsedHistory);
+        }
+      } else {
+        setRecentSearches([]);
       }
     } catch (error) {
       console.error('Error loading search history:', error);
     }
-    return [];
   }, []);
 
+  // Load on mount
+  useEffect(() => {
+    reloadSearchHistory();
+  }, [reloadSearchHistory]);
+
+  // Save search history to localStorage
   const saveSearchHistory = useCallback((history: string[]) => {
     try {
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
@@ -27,48 +37,39 @@ export const useSearchHistory = () => {
     }
   }, []);
 
-  const reloadSearchHistory = useCallback(() => {
-    const history = loadSearchHistory();
-    setRecentSearches(history);
-  }, [loadSearchHistory]);
+  // Add a new search to history
+  const addToSearchHistory = useCallback((searchQuery: string) => {
+    if (!searchQuery.trim()) return;
 
-  const addToSearchHistory = useCallback((term: string) => {
-    if (!term.trim()) return;
-    
-    const trimmedTerm = term.trim();
-    setRecentSearches(prev => {
-      // Remove the term if it already exists
-      const filtered = prev.filter(item => item !== trimmedTerm);
-      // Add to the beginning and limit to max items
-      const newHistory = [trimmedTerm, ...filtered].slice(0, MAX_HISTORY_ITEMS);
+    const trimmedQuery = searchQuery.trim();
+    setRecentSearches(prevHistory => {
+      const filteredHistory = prevHistory.filter(item => item.toLowerCase() !== trimmedQuery.toLowerCase());
+      const newHistory = [trimmedQuery, ...filteredHistory].slice(0, MAX_HISTORY_ITEMS);
       saveSearchHistory(newHistory);
       return newHistory;
     });
   }, [saveSearchHistory]);
 
-  const removeFromSearchHistory = useCallback((term: string) => {
-    setRecentSearches(prev => {
-      const newHistory = prev.filter(item => item !== term);
-      saveSearchHistory(newHistory);
-      return newHistory;
-    });
-  }, [saveSearchHistory]);
-
+  // Clear search history
   const clearSearchHistory = useCallback(() => {
     setRecentSearches([]);
     localStorage.removeItem(SEARCH_HISTORY_KEY);
   }, []);
 
-  // Load search history on mount
-  useEffect(() => {
-    reloadSearchHistory();
-  }, [reloadSearchHistory]);
+  // Remove a specific search from history
+  const removeFromSearchHistory = useCallback((searchQuery: string) => {
+    setRecentSearches(prevHistory => {
+      const newHistory = prevHistory.filter(item => item !== searchQuery);
+      saveSearchHistory(newHistory);
+      return newHistory;
+    });
+  }, [saveSearchHistory]);
 
   return {
     recentSearches,
     addToSearchHistory,
-    reloadSearchHistory,
     clearSearchHistory,
     removeFromSearchHistory,
+    reloadSearchHistory,
   };
 }; 
