@@ -51,6 +51,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [adminCredentials, setAdminCredentials] = useState({ id: '', password: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,20 +75,70 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([]);
+      setSelectedResultIndex(-1);
       return;
     }
 
     const experiences = getSavedExperiences();
     const lowercaseQuery = searchQuery.toLowerCase();
+    
+    // Enhanced search with better matching logic
     const results = experiences
-      .filter(exp => 
-        exp.title.toLowerCase().includes(lowercaseQuery) || 
-        exp.description.toLowerCase().includes(lowercaseQuery) ||
-        exp.location.toLowerCase().includes(lowercaseQuery)
-      )
-      .slice(0, 5);
+      .filter(exp => {
+        const searchableText = [
+          exp.title,
+          exp.description,
+          exp.location,
+          exp.category,
+          exp.nicheCategory || '',
+          exp.duration,
+          exp.participants
+        ].join(' ').toLowerCase();
+        
+        // Check for exact matches first
+        const exactMatch = exp.title.toLowerCase().includes(lowercaseQuery) ||
+                          exp.location.toLowerCase().includes(lowercaseQuery) ||
+                          exp.category.toLowerCase().includes(lowercaseQuery);
+        
+        // Check for partial matches in any field
+        const partialMatch = searchableText.includes(lowercaseQuery);
+        
+        // Check for word boundary matches (better for multi-word queries)
+        const words = lowercaseQuery.split(' ').filter(word => word.length > 0);
+        const wordMatch = words.some(word => 
+          exp.title.toLowerCase().includes(word) ||
+          exp.location.toLowerCase().includes(word) ||
+          exp.category.toLowerCase().includes(word)
+        );
+        
+        return exactMatch || partialMatch || wordMatch;
+      })
+      .sort((a, b) => {
+        // Sort by relevance: exact title matches first, then location, then category
+        const aTitleMatch = a.title.toLowerCase().includes(lowercaseQuery);
+        const bTitleMatch = b.title.toLowerCase().includes(lowercaseQuery);
+        
+        if (aTitleMatch && !bTitleMatch) return -1;
+        if (!aTitleMatch && bTitleMatch) return 1;
+        
+        const aLocationMatch = a.location.toLowerCase().includes(lowercaseQuery);
+        const bLocationMatch = b.location.toLowerCase().includes(lowercaseQuery);
+        
+        if (aLocationMatch && !bLocationMatch) return -1;
+        if (!aLocationMatch && bLocationMatch) return 1;
+        
+        // If relevance is the same, sort by trending/featured status
+        if (a.trending && !b.trending) return -1;
+        if (!a.trending && b.trending) return 1;
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        
+        return 0;
+      })
+      .slice(0, 8); // Show more results for better UX
     
     setSearchResults(results);
+    setSelectedResultIndex(-1); // Reset selection when results change
   }, [searchQuery]);
 
   useEffect(() => {
@@ -132,6 +183,37 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const handleSearchResultClick = (id: string) => {
     setSearchOpen(false);
     navigate(`/experience/${id}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!searchResults.length) return;
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedResultIndex(prev => 
+          prev < searchResults.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedResultIndex(prev => 
+          prev > 0 ? prev - 1 : searchResults.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+          handleSearchResultClick(searchResults[selectedResultIndex].id);
+        } else if (searchQuery.trim()) {
+          handleSearchSubmit(e as any);
+        }
+        break;
+      case 'Escape':
+        setSearchOpen(false);
+        document.body.style.overflow = '';
+        break;
+    }
   };
 
   const handleSignIn = () => {
@@ -503,6 +585,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               placeholder="Search for experiences..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="flex h-12 w-full border border-input bg-white/90 backdrop-blur-sm px-3 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10 pr-4 py-6 text-lg rounded-xl"
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -533,7 +616,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </div>
           </div>
 
-          {searchQuery && (
+          {/* Recent Searches - Only show when search query is empty */}
+          {!searchQuery && (
             <div className="mt-8">
               <p className="text-sm text-gray-600 mb-3">Recent Searches</p>
               <div className="space-y-2">
@@ -544,12 +628,71 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                       setSearchQuery(term);
                       handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
                     }}
-                    className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center"
+                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
                   >
-                    <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                    {term}
+                    <Clock className="h-4 w-4 mr-3 text-gray-400" />
+                    <span className="text-sm">{term}</span>
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Search Results Suggestions */}
+          {searchResults.length > 0 && (
+            <div className="mt-6">
+              <p className="text-sm text-gray-600 mb-3">Search Results</p>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {searchResults.map((experience, index) => (
+                  <button
+                    key={experience.id}
+                    onClick={() => handleSearchResultClick(experience.id)}
+                    className={cn(
+                      "w-full text-left p-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center justify-between group transition-colors",
+                      selectedResultIndex === index && "bg-gray-200/80"
+                    )}
+                    onMouseEnter={() => setSelectedResultIndex(index)}
+                    onMouseLeave={() => setSelectedResultIndex(-1)}
+                  >
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden">
+                        {experience.imageUrl && (
+                          <img 
+                            src={experience.imageUrl} 
+                            alt={experience.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 truncate group-hover:text-primary transition-colors">
+                          {experience.title}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate">
+                          {experience.location}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-900 flex-shrink-0">
+                      ₹{experience.price.toLocaleString()}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No Results Message */}
+          {searchQuery.length >= 2 && searchResults.length === 0 && (
+            <div className="mt-6">
+              <p className="text-sm text-gray-600 mb-3">No results found</p>
+              <div className="text-center py-6 text-gray-500">
+                <p className="text-base">No experiences match "{searchQuery}"</p>
+                <p className="text-sm mt-2">Try different keywords or browse our popular experiences</p>
               </div>
             </div>
           )}
