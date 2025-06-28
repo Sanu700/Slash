@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 
-const LocationAccessModal = () => {
+const LocationAccessModal = ({ onClose }) => {
   const { isAuthenticated } = useAuth();
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationError, setLocationError] = useState("");
@@ -50,15 +50,23 @@ const LocationAccessModal = () => {
     } else {
       setLocationError("Geolocation is not supported by this browser.");
     }
+    if (onClose) onClose();
   };
 
   const handleDenyLocation = () => {
     sessionStorage.setItem("location_modal_asked", "true");
     setShowLocationModal(false);
+    if (onClose) onClose();
+  };
+
+  // Call onClose if modal is closed by clicking outside or pressing ESC
+  const handleOpenChange = (open) => {
+    setShowLocationModal(open);
+    if (!open && onClose) onClose();
   };
 
   return (
-    <Dialog open={showLocationModal} onOpenChange={setShowLocationModal}>
+    <Dialog open={showLocationModal} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Allow Location Access?</DialogTitle>

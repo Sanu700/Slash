@@ -79,10 +79,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import LocationAccessModal from "@/components/LocationAccessModal";
+import CitySelectorModal from "@/components/CitySelectorModal";
 
 const queryClient = new QueryClient();
 
 function App() {
+  const [showCityModal, setShowCityModal] = useState(false);
+
+  const handleLocationModalClose = () => {
+    setShowCityModal(true);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -91,7 +98,8 @@ function App() {
             <WishlistProvider>
               <BrowserRouter>
                 <ScrollToTop />
-                <LocationAccessModal />
+                <LocationAccessModal onClose={handleLocationModalClose} />
+                <CitySelectorModal open={showCityModal} onClose={() => setShowCityModal(false)} />
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Layout><Index /></Layout>} />
