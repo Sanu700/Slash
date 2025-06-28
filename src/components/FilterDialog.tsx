@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
+import { Badge } from '@/components/ui/badge';
 
 interface FilterDialogProps {
   isOpen: boolean;
@@ -24,8 +25,8 @@ export interface FilterOptions {
     trending: boolean;
     featured: boolean;
   };
-  duration: string;
-  location: string;
+  duration: [number, number]; // range in hours
+  locations: string[];
 }
 
 const defaultFilters: FilterOptions = {
@@ -38,16 +39,9 @@ const defaultFilters: FilterOptions = {
     trending: false,
     featured: false,
   },
-  duration: 'any',
-  location: 'any'
+  duration: [0, 24],
+  locations: []
 };
-
-const durations = [
-  { value: '1-3', label: '1-3 hours' },
-  { value: '3-6', label: '3-6 hours' },
-  { value: '6-12', label: '6-12 hours' },
-  { value: '12+', label: '12+ hours', dataValue: 'Full Day' },
-];
 
 const defaultLocations = [
   'Mumbai',
@@ -184,20 +178,24 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
     }
   };
 
-  const handleDurationChange = (duration: string) => {
-    setFilters(prev => ({
-      ...prev,
-      duration
-    }));
+  const handleDurationChange = (value: number[]) => {
+    // Ensure value is always a tuple of two numbers
+    const tuple: [number, number] = [value[0] ?? 0, value[1] ?? 24];
+    setFilters(prev => ({ ...prev, duration: tuple }));
   };
 
-  const handleLocationChange = (value: string) => {
-    try {
-      setFilters(prev => ({ ...prev, location: value }));
-    } catch (err) {
-      console.error('Error in handleLocationChange:', err);
-      setError('Error updating location');
-    }
+  const handleLocationChange = (location: string) => {
+    setFilters(prev => {
+      const currentLocations = prev.locations || [];
+      const exists = currentLocations.some(l => l.toLowerCase() === location.toLowerCase());
+      const newLocations = exists
+        ? currentLocations.filter(l => l.toLowerCase() !== location.toLowerCase())
+        : [...currentLocations, location];
+      return {
+        ...prev,
+        locations: newLocations
+      };
+    });
   };
 
   const handleReset = () => {
@@ -209,8 +207,9 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
     const hasActiveFilters = 
       filters.categories.length > 0 ||
       Object.values(filters.experienceTypes).some(Boolean) ||
-      filters.duration !== 'any' ||
-      filters.location !== 'any' ||
+      filters.duration[0] !== 0 ||
+      filters.duration[1] !== 24 ||
+      filters.locations.length > 0 ||
       filters.priceRange[0] !== minPrice ||
       filters.priceRange[1] !== maxPrice;
 
@@ -335,62 +334,19 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
 
             {/* Duration */}
             <div className="space-y-4">
-              <Label>Duration</Label>
-              <div className="relative">
-                <button
-                  onClick={() => setIsDurationOpen(!isDurationOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border rounded-md text-sm"
-                >
-                  <span>
-                    {filters.duration === 'any' 
-                      ? 'Any duration'
-                      : durations.find(d => d.value === filters.duration)?.label || 'Select duration'
-                    }
-                  </span>
-                  <svg
-                    className={`h-4 w-4 transition-transform ${isDurationOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isDurationOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg">
-                    <div className="p-2 space-y-1">
-                      <button
-                        onClick={() => {
-                          handleDurationChange('any');
-                          setIsDurationOpen(false);
-                        }}
-                        className={`w-full text-left px-2 py-1.5 rounded-sm text-sm transition-colors ${
-                          filters.duration === 'any' 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'hover:bg-secondary'
-                        }`}
-                      >
-                        Any duration
-                      </button>
-                      {durations.map((duration) => (
-                        <button
-                          key={duration.value}
-                          onClick={() => {
-                            handleDurationChange(duration.value);
-                            setIsDurationOpen(false);
-                          }}
-                          className={`w-full text-left px-2 py-1.5 rounded-sm text-sm transition-colors ${
-                            filters.duration === duration.value 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'hover:bg-secondary'
-                          }`}
-                        >
-                          {duration.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <Label>Duration (hours)</Label>
+              <Slider
+                value={Array.isArray(filters.duration) ? filters.duration : [0, 24]}
+                min={0}
+                max={24}
+                step={1}
+                onValueChange={handleDurationChange}
+                className="w-full"
+                minStepsBetweenThumbs={1}
+              />
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{Array.isArray(filters.duration) ? filters.duration[0] : 0} hr</span>
+                <span>{Array.isArray(filters.duration) ? filters.duration[1] : 24} hr</span>
               </div>
             </div>
 
@@ -399,14 +355,14 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
               <Label>Location</Label>
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setIsLocationOpen(!isLocationOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border rounded-md text-sm"
+                  className="w-full flex items-center justify-between px-3 py-2 border rounded-md text-sm bg-white"
                 >
                   <span>
-                    {filters.location 
-                      ? filters.location.charAt(0).toUpperCase() + filters.location.slice(1)
-                      : 'Select location'
-                    }
+                    {filters.locations.length === 0
+                      ? 'Select locations'
+                      : `${filters.locations.length} selected`}
                   </span>
                   <svg
                     className={`h-4 w-4 transition-transform ${isLocationOpen ? 'rotate-180' : ''}`}
@@ -418,43 +374,42 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
                   </svg>
                 </button>
                 {isLocationOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg">
-                    <div className="h-[144px] overflow-y-auto">
-                      <div className="p-2 space-y-1">
-                        <button
-                          onClick={() => {
-                            handleLocationChange('any');
-                            setIsLocationOpen(false);
-                          }}
-                          className={`w-full text-left px-2 py-1.5 rounded-sm text-sm transition-colors ${
-                            filters.location === 'any' 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'hover:bg-secondary'
-                          }`}
-                        >
-                          Any location
-                        </button>
-                        {locations.map((location) => (
-                          <button
-                            key={location}
-                            onClick={() => {
-                              handleLocationChange(location);
-                              setIsLocationOpen(false);
-                            }}
-                            className={`w-full text-left px-2 py-1.5 rounded-sm text-sm transition-colors ${
-                              filters.location === location 
-                                ? 'bg-primary text-primary-foreground' 
-                                : 'hover:bg-secondary'
-                            }`}
-                          >
-                            {location.charAt(0).toUpperCase() + location.slice(1)}
-                          </button>
-                        ))}
-                      </div>
+                  <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-56 overflow-y-auto">
+                    <div className="p-2 space-y-1">
+                      {locations.map((location) => (
+                        <div key={location} className="flex items-center space-x-2 py-1">
+                          <Checkbox
+                            id={`loc-${location}`}
+                            checked={filters.locations.some(l => l.toLowerCase() === location.toLowerCase())}
+                            onCheckedChange={() => handleLocationChange(location)}
+                          />
+                          <Label htmlFor={`loc-${location}`} className="text-sm cursor-pointer">
+                            {location}
+                          </Label>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
               </div>
+              {/* Selected locations as badges */}
+              {filters.locations.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {filters.locations.map((location) => (
+                    <Badge key={location} variant="secondary" className="flex items-center gap-1 pr-1">
+                      <span>{location}</span>
+                      <button
+                        type="button"
+                        className="ml-1 text-xs text-gray-500 hover:text-red-500 focus:outline-none"
+                        onClick={() => handleLocationChange(location)}
+                        aria-label={`Remove ${location}`}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

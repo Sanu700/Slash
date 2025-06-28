@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Mail, Phone, MapPin, DollarSign, MoreVertical, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Mail, Phone, MapPin, DollarSign, MoreVertical, Plus, Edit, Trash2, Eye, Database } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import {
@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { addSampleExperiences } from '@/lib/data/sampleData';
 
 interface Experience {
   id: string;
@@ -83,7 +84,6 @@ export default function Experiences() {
     provider_id: '',
     image_url: ''
   });
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchExperiences();
@@ -118,11 +118,7 @@ export default function Experiences() {
       setExperiences(experiencesWithBookings);
     } catch (error) {
       console.error('Error fetching experiences:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch experiences",
-        variant: "destructive",
-      });
+      toast.error('Failed to fetch experiences');
     } finally {
       setIsLoading(false);
     }
@@ -137,11 +133,7 @@ export default function Experiences() {
       setProviders(providerUsers);
     } catch (error) {
       console.error('Error fetching providers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch providers",
-        variant: "destructive",
-      });
+      toast.error('Failed to fetch providers');
     }
   };
 
@@ -163,10 +155,7 @@ export default function Experiences() {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Experience created successfully",
-      });
+      toast.success('Experience created successfully');
 
       setIsAddDialogOpen(false);
       setNewExperience({
@@ -181,11 +170,7 @@ export default function Experiences() {
       fetchExperiences();
     } catch (error) {
       console.error('Error creating experience:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create experience",
-        variant: "destructive",
-      });
+      toast.error('Failed to create experience');
     }
   };
 
@@ -208,21 +193,14 @@ export default function Experiences() {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Experience updated successfully",
-      });
+      toast.success('Experience updated successfully');
 
       setIsEditDialogOpen(false);
       setSelectedExperience(null);
       fetchExperiences();
     } catch (error) {
       console.error('Error updating experience:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update experience",
-        variant: "destructive",
-      });
+      toast.error('Failed to update experience');
     }
   };
 
@@ -235,19 +213,12 @@ export default function Experiences() {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Experience deleted successfully",
-      });
+      toast.success('Experience deleted successfully');
 
       fetchExperiences();
     } catch (error) {
       console.error('Error deleting experience:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete experience",
-        variant: "destructive",
-      });
+      toast.error('Failed to delete experience');
     }
   };
 
@@ -266,98 +237,116 @@ export default function Experiences() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Experience Management</h1>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Add Experience
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Experience</DialogTitle>
-                <DialogDescription>
-                  Create a new experience with the following details.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={newExperience.title}
-                    onChange={(e) => setNewExperience(prev => ({ ...prev, title: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newExperience.description}
-                    onChange={(e) => setNewExperience(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={newExperience.price}
-                    onChange={(e) => setNewExperience(prev => ({ ...prev, price: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={newExperience.location}
-                    onChange={(e) => setNewExperience(prev => ({ ...prev, location: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={newExperience.category}
-                    onChange={(e) => setNewExperience(prev => ({ ...prev, category: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="provider">Provider</Label>
-                  <Select
-                    value={newExperience.provider_id}
-                    onValueChange={(value) => setNewExperience(prev => ({ ...prev, provider_id: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a provider" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {providers.map((provider) => (
-                        <SelectItem key={provider.id} value={provider.id}>
-                          {provider.user_metadata?.company_name || provider.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">Image URL</Label>
-                  <Input
-                    id="image_url"
-                    value={newExperience.image_url}
-                    onChange={(e) => setNewExperience(prev => ({ ...prev, image_url: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                const success = await addSampleExperiences();
+                if (success) {
+                  toast.success('Sample experiences added successfully!');
+                  fetchExperiences(); // Refresh the list
+                } else {
+                  toast.error('Failed to add sample experiences');
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <Database className="h-4 w-4" />
+              Add Sample Data
+            </Button>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" /> Add Experience
                 </Button>
-                <Button onClick={handleAddExperience}>
-                  Create Experience
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Experience</DialogTitle>
+                  <DialogDescription>
+                    Create a new experience with the following details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={newExperience.title}
+                      onChange={(e) => setNewExperience(prev => ({ ...prev, title: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newExperience.description}
+                      onChange={(e) => setNewExperience(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      value={newExperience.price}
+                      onChange={(e) => setNewExperience(prev => ({ ...prev, price: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={newExperience.location}
+                      onChange={(e) => setNewExperience(prev => ({ ...prev, location: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      value={newExperience.category}
+                      onChange={(e) => setNewExperience(prev => ({ ...prev, category: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="provider">Provider</Label>
+                    <Select
+                      value={newExperience.provider_id}
+                      onValueChange={(value) => setNewExperience(prev => ({ ...prev, provider_id: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {providers.map((provider) => (
+                          <SelectItem key={provider.id} value={provider.id}>
+                            {provider.user_metadata?.company_name || provider.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="image_url">Image URL</Label>
+                    <Input
+                      id="image_url"
+                      value={newExperience.image_url}
+                      onChange={(e) => setNewExperience(prev => ({ ...prev, image_url: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddExperience}>
+                    Create Experience
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card>

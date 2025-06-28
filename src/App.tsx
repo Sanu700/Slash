@@ -24,6 +24,7 @@ import AISuggestions from "./pages/AISuggestions";
 import Booking from "./pages/Booking";
 import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
+import TravelDemo from "./pages/TravelDemo";
 import { WishlistProvider } from './contexts/WishlistContext';
 import OrderDetails from './pages/OrderDetails';
 import OrderItemDetails from './pages/OrderItemDetails';
@@ -74,6 +75,11 @@ const ProtectedExperiences = requireAuth(Experiences, true);
 const ProtectedAdminProfile = requireAuth(AdminProfile, true);
 const ProtectedPaymentDetails = requireAuth(PaymentDetails, true);
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState, useRef } from "react";
+import LocationAccessModal from "@/components/LocationAccessModal";
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -85,6 +91,7 @@ function App() {
             <WishlistProvider>
               <BrowserRouter>
                 <ScrollToTop />
+                <LocationAccessModal />
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Layout><Index /></Layout>} />
@@ -97,6 +104,7 @@ function App() {
                   <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
                   <Route path="/ai-suggestions" element={<Layout><AISuggestions /></Layout>} />
                   <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />
+                  <Route path="/travel-demo" element={<Layout><TravelDemo /></Layout>} />
 
                   {/* Company Pages */}
                   <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
