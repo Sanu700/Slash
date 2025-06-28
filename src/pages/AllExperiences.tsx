@@ -8,9 +8,10 @@ import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
+import { SearchInput } from '@/components/ui/search-input';
 import Navbar from '@/components/Navbar';
 import { Filter } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const AllExperiences = () => {
   const { experiences, isLoading } = useExperiencesManager();
@@ -22,6 +23,7 @@ const AllExperiences = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
+  const navigate = useNavigate();
 
   const clearFilters = () => {
     setActiveFilters(null);
@@ -155,6 +157,21 @@ const AllExperiences = () => {
     setSearchTerm(e.target.value);
   };
 
+  const handleSearchSubmit = (query: string) => {
+    setSearchTerm(query);
+  };
+
+  const handleResultSelect = (experience: Experience) => {
+    navigate(`/experience/${experience.id}`);
+  };
+
+  // Mock recent searches - in a real app, this would come from localStorage or user preferences
+  const recentSearches = ['Adventure Tours', 'Luxury Dining', 'Spa Experiences', 'Mumbai Experiences'];
+
+  const handleRecentSearchClick = (search: string) => {
+    setSearchTerm(search);
+  };
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
@@ -220,18 +237,14 @@ const AllExperiences = () => {
                 "mb-8 mt-8 transition-all duration-500",
                 isInView ? "opacity-100" : "opacity-0 translate-y-8"
               )}>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search experiences by title, description or location..."
-                    value={searchTerm}
-                    onChange={handleSearch}
-                    className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                  </div>
-                </div>
+                <SearchInput
+                  placeholder="Search experiences by title, description or location..."
+                  onSearch={handleSearchSubmit}
+                  onResultSelect={handleResultSelect}
+                  className="w-full"
+                  recentSearches={recentSearches}
+                  onRecentSearchClick={handleRecentSearchClick}
+                />
               </div>
 
               {/* Filters and Sorting */}

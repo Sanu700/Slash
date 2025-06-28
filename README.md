@@ -104,3 +104,34 @@ Slash-13/
 
 ### Test: Added Instagram scraper functionality
 
+## Enhanced Search with Autocomplete
+- **Smart Search**: Search across experience titles, descriptions, locations, categories, and more
+- **Real-time Suggestions**: Get instant autocomplete suggestions as you type
+- **Keyboard Navigation**: Use arrow keys to navigate through suggestions and Enter to select
+- **Fuzzy Matching**: Intelligent search that matches partial words and phrases
+- **Relevance Sorting**: Results are sorted by relevance (title matches first, then location, then category)
+- **Visual Feedback**: Hover effects and selection highlighting for better UX
+
+#### Search Features:
+- Type at least 2 characters to see suggestions
+- Search works across multiple fields:
+  - Experience titles
+  - Descriptions
+  - Locations
+  - Categories
+  - Duration
+  - Participant information
+- Keyboard shortcuts:
+  - `↑/↓` Arrow keys to navigate suggestions
+  - `Enter` to select highlighted suggestion
+  - `Escape` to close suggestions
+  - `Enter` (when no suggestion selected) to perform search
+- Click outside to close suggestions
+- Clear button (X) to reset search
+
+#### Example Usage:
+- Type "Poe" → Shows "Poetry Workshop" if available
+- Type "Mumbai" → Shows all experiences in Mumbai
+- Type "Adventure" → Shows all adventure-related experiences
+- Type "Spa" → Shows spa and wellness experiences
+
