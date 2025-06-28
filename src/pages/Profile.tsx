@@ -10,6 +10,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart, LogOut, User, ShoppingCart } from 'lucide-react';
+import { updateUserProfile } from '@/lib/profileService';
+import { toast } from '@/components/ui/use-toast';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
@@ -47,6 +49,26 @@ const Profile: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState(
     user?.user_metadata?.avatar_url || '/default-avatar.png'
   );
+
+  const handleAccountOverviewSave = async () => {
+    if (!user || !user.id) return;
+    try {
+      await updateUserProfile(user.id, {
+        full_name: name,
+        avatar_url: avatarUrl,
+      });
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update profile',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,7 +185,7 @@ const Profile: React.FC = () => {
                             onChange={(e) => setAvatarUrl(e.target.value)}
                           />
                         </div>
-                        <Button className="w-full">Save Changes</Button>
+                        <Button className="w-full" onClick={handleAccountOverviewSave}>Save Changes</Button>
                       </CardContent>
                     </Card>
                   </div>
