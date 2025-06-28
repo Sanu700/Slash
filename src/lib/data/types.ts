@@ -20,6 +20,10 @@ export interface Experience {
   romantic?: boolean;
   adventurous?: boolean;
   group?: boolean;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   onClick?: () => void; // Add onClick property for ExperienceCard in Profile page
 }
 

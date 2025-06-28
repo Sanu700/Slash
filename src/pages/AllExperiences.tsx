@@ -8,9 +8,17 @@ import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
+import { SearchInput } from '@/components/ui/search-input';
 import Navbar from '@/components/Navbar';
 import { Filter } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui/dropdown-menu';
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const toRad = (x) => (x * Math.PI) / 180;
@@ -27,16 +35,26 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
+
 const AllExperiences = () => {
   const { experiences, isLoading } = useExperiencesManager();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'default' | 'price-low' | 'price-high'>('default');
+  const [sortOrder, setSortOrder] = useState<
+    'default' | 'price-low' | 'price-high' | 'duration-low' | 'duration-high'
+  >('default');
   const [currentPage, setCurrentPage] = useState(1);
   const experiencesPerPage = 6;
   const [activeFilters, setActiveFilters] = useState<FilterOptions | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
+  const navigate = useNavigate();
+
+
+  // Get location from query param
+  const query = new URLSearchParams(location.search);
+  const locationParam = query.get('location');
+
 
   const clearFilters = () => {
     setActiveFilters(null);
@@ -58,7 +76,28 @@ const AllExperiences = () => {
     if (location.state?.initialFilters === null) {
       clearFilters();
     } else if (location.state?.initialFilters) {
-      setActiveFilters(location.state.initialFilters);
+      // Ensure locations is always an array
+      const filters = { ...location.state.initialFilters };
+      if (filters.location && !filters.locations) {
+        filters.locations = filters.location !== 'any' ? [filters.location] : [];
+        delete filters.location;
+      }
+      // Ensure duration is always a [number, number] array
+      if (typeof filters.duration === 'string') {
+        if (filters.duration === 'any') {
+          filters.duration = [1, 24];
+        } else if (filters.duration.endsWith('+')) {
+          const min = parseInt(filters.duration);
+          filters.duration = [min, 24];
+        } else if (filters.duration.includes('-')) {
+          const [min, max] = filters.duration.split('-').map(Number);
+          filters.duration = [min, max];
+        } else {
+          const val = parseInt(filters.duration);
+          filters.duration = [val, val];
+        }
+      }
+      setActiveFilters(filters);
     }
   }, [location]);
 
@@ -68,6 +107,16 @@ const AllExperiences = () => {
     
     let filtered = [...experiences];
     
+    // Filter by location query param if present
+    if (locationParam && locationParam !== 'All India') {
+      const normalizedParam = locationParam.trim().toLowerCase();
+      filtered = filtered.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        // Exact match or partial match
+        return expLoc === normalizedParam || expLoc.includes(normalizedParam) || normalizedParam.includes(expLoc);
+      });
+    }
+
     // Apply search filtering
     if (searchTerm.trim()) {
       const lowercasedSearch = searchTerm.toLowerCase();
@@ -90,9 +139,11 @@ const AllExperiences = () => {
       }
 
       // Location filter
-      if (activeFilters.location && activeFilters.location !== 'any') {
-        filtered = filtered.filter(exp => 
-          exp.location.toLowerCase() === activeFilters.location.toLowerCase()
+      if (activeFilters.locations && activeFilters.locations.length > 0) {
+        filtered = filtered.filter(exp =>
+          activeFilters.locations.some(loc =>
+            exp.location.toLowerCase() === loc.toLowerCase()
+          )
         );
       }
 
@@ -105,14 +156,11 @@ const AllExperiences = () => {
       }
 
       // Duration filter
-      if (activeFilters.duration && activeFilters.duration !== 'any') {
+      if (Array.isArray(activeFilters.duration)) {
         filtered = filtered.filter(exp => {
-          const [min, max] = activeFilters.duration.split('-').map(Number);
-          
           // Parse duration string to handle different formats
           const durationStr = exp.duration.toLowerCase();
           let expDuration: number;
-          
           if (durationStr.includes('day') || durationStr.includes('days')) {
             // Convert days to hours (1 day = 24 hours)
             const days = parseInt(durationStr);
@@ -123,13 +171,7 @@ const AllExperiences = () => {
             // Extract hours from string like "2 hours" or "3-4 hours"
             expDuration = parseInt(durationStr);
           }
-          
-          if (activeFilters.duration === '12+') {
-            // Include experiences that are 12+ hours, including full day and multi-day experiences
-            return expDuration >= 12 || durationStr.includes('full day');
-          }
-          
-          return expDuration >= min && expDuration <= max;
+          return expDuration >= activeFilters.duration[0] && expDuration <= activeFilters.duration[1];
         });
       }
 
@@ -151,10 +193,31 @@ const AllExperiences = () => {
       filtered.sort((a, b) => a.price - b.price);
     } else if (sortOrder === 'price-high') {
       filtered.sort((a, b) => b.price - a.price);
+    } else if (sortOrder === 'duration-low' || sortOrder === 'duration-high') {
+      const getDurationHours = (exp: Experience) => {
+        const durationStr = exp.duration?.toLowerCase?.() || '';
+        if (durationStr.includes('day') && !durationStr.includes('hour')) {
+          const days = parseInt(durationStr);
+          return days * 24;
+        } else if (durationStr.includes('full day')) {
+          return 24;
+        } else {
+          const match = durationStr.match(/(\d+)(-(\d+))?/);
+          if (match) {
+            return parseInt(match[1]);
+          }
+          return 0;
+        }
+      };
+      filtered.sort((a, b) => {
+        const aDur = getDurationHours(a);
+        const bDur = getDurationHours(b);
+        return sortOrder === 'duration-low' ? aDur - bDur : bDur - aDur;
+      });
     }
     
     return filtered;
-  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters]);
+  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters, locationParam]);
 
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
@@ -162,12 +225,27 @@ const AllExperiences = () => {
   const currentExperiences = filteredExperiences.slice(indexOfFirstExperience, indexOfLastExperience);
   const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
 
-  const handleSortChange = (order: 'default' | 'price-low' | 'price-high') => {
+  const handleSortChange = (order: 'default' | 'price-low' | 'price-high' | 'duration-low' | 'duration-high') => {
     setSortOrder(order);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handleSearchSubmit = (query: string) => {
+    setSearchTerm(query);
+  };
+
+  const handleResultSelect = (experience: Experience) => {
+    navigate(`/experience/${experience.id}`);
+  };
+
+  // Mock recent searches - in a real app, this would come from localStorage or user preferences
+  const recentSearches = ['Adventure Tours', 'Luxury Dining', 'Spa Experiences', 'Mumbai Experiences'];
+
+  const handleRecentSearchClick = (search: string) => {
+    setSearchTerm(search);
   };
 
   const renderPagination = () => {
@@ -207,10 +285,10 @@ const AllExperiences = () => {
 
   const activeFiltersCount =
     (activeFilters?.categories?.length || 0) +
-    (activeFilters?.location && activeFilters.location !== 'any' ? 1 : 0) +
+    (activeFilters?.locations?.length || 0) +
     (activeFilters?.priceRange && 
      (activeFilters.priceRange[0] !== 0 || activeFilters.priceRange[1] !== 100000) ? 1 : 0) +
-    (activeFilters?.duration && activeFilters.duration !== 'any' ? 1 : 0) +
+    (activeFilters?.duration && Array.isArray(activeFilters.duration) && (activeFilters.duration[0] !== 1 || activeFilters.duration[1] !== 24) ? 1 : 0) +
     (activeFilters?.experienceTypes && 
      Object.values(activeFilters.experienceTypes).filter(Boolean).length);
 
@@ -235,18 +313,14 @@ const AllExperiences = () => {
                 "mb-8 mt-8 transition-all duration-500",
                 isInView ? "opacity-100" : "opacity-0 translate-y-8"
               )}>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search experiences by title, description or location..."
-                    value={searchTerm}
-                    onChange={handleSearch}
-                    className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-200 bg-white shadow-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                  </div>
-                </div>
+                <SearchInput
+                  placeholder="Search experiences by title, description or location..."
+                  onSearch={handleSearchSubmit}
+                  onResultSelect={handleResultSelect}
+                  className="w-full"
+                  recentSearches={recentSearches}
+                  onRecentSearchClick={handleRecentSearchClick}
+                />
               </div>
 
               {/* Filters and Sorting */}
@@ -264,35 +338,28 @@ const AllExperiences = () => {
                   "flex items-center space-x-4 transition-all duration-700 delay-100",
                   isInView ? "opacity-100" : "opacity-0 translate-y-8"
                 )}>
-                  <div className="flex items-center bg-secondary/50 rounded-lg p-1">
-                    <button 
-                      onClick={() => handleSortChange('default')}
-                      className={cn(
-                        "px-3 py-1.5 text-sm rounded-md transition-colors",
-                        sortOrder === 'default' ? "bg-white text-black" : "text-muted-foreground"
-                      )}
-                    >
-                      Featured
-                    </button>
-                    <button 
-                      onClick={() => handleSortChange('price-low')}
-                      className={cn(
-                        "px-3 py-1.5 text-sm rounded-md transition-colors",
-                        sortOrder === 'price-low' ? "bg-white text-black" : "text-muted-foreground"
-                      )}
-                    >
-                      Price: Low to High
-                    </button>
-                    <button 
-                      onClick={() => handleSortChange('price-high')}
-                      className={cn(
-                        "px-3 py-1.5 text-sm rounded-md transition-colors",
-                        sortOrder === 'price-high' ? "bg-white text-black" : "text-muted-foreground"
-                      )}
-                    >
-                      Price: High to Low
-                    </button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="min-w-[120px]">
+                        Sort by: {
+                          sortOrder === 'default' ? 'Featured'
+                          : sortOrder === 'price-low' ? 'Price (Low to High)'
+                          : sortOrder === 'price-high' ? 'Price (High to Low)'
+                          : sortOrder === 'duration-low' ? 'Duration (Low to High)'
+                          : 'Duration (High to Low)'
+                        }
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuRadioGroup value={sortOrder} onValueChange={v => setSortOrder(v as typeof sortOrder)}>
+                        <DropdownMenuRadioItem value="default">Featured</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="price-low">Price (Low to High)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="price-high">Price (High to Low)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="duration-low">Duration (Low to High)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="duration-high">Duration (High to Low)</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -313,7 +380,7 @@ const AllExperiences = () => {
               </div>
 
               {/* Experiences Grid */}
-              {currentExperiences.length > 0 ? (
+              {filteredExperiences.length > 0 ? (
                 <div className={cn(
                   "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children",
                   isInView ? "opacity-100" : "opacity-0"
@@ -324,11 +391,18 @@ const AllExperiences = () => {
                 </div>
               ) : (
                 <div className="text-center py-16">
-                  <h3 className="text-xl mb-2">No matching experiences found</h3>
-                  <p className="text-muted-foreground mb-6">Try adjusting your search criteria</p>
+                  <h3 className="text-xl mb-2">
+                    {locationParam ? `No experiences found in ${locationParam}` : 'No matching experiences found'}
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    {locationParam
+                      ? `We don't have any experiences available in ${locationParam} yet. Try selecting a different location or check back later!`
+                      : 'Try adjusting your search criteria'}
+                  </p>
                   <Button onClick={() => {
                     setSearchTerm('');
                     setActiveFilters(null);
+                    navigate('/experiences');
                   }}>
                     Clear All Filters
                   </Button>
@@ -345,7 +419,10 @@ const AllExperiences = () => {
       <FilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApply={setActiveFilters}
+        onApply={(filters) => {
+          setActiveFilters(filters);
+          setCurrentPage(1);
+        }}
         initialFilters={activeFilters}
       />
     </div>

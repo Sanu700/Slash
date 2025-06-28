@@ -72,7 +72,10 @@ const mapDbExperienceToModel = (item: any): Experience => ({
   featured: item.featured || false,
   romantic: item.romantic || false,
   adventurous: item.adventurous || false,
-  group: item.group_activity || false
+  group: item.group_activity || false,
+  coordinates: (item.latitude != null && item.longitude != null)
+    ? { lat: item.latitude, lng: item.longitude }
+    : undefined
 });
 
 // This function checks if there are saved experiences in localStorage for fallback

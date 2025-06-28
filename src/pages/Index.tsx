@@ -3,7 +3,8 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import TrendingSection from '@/components/TrendingSection';
 import Newsletter from '@/components/Newsletter';
-import { getFeaturedExperiences, getAllExperiences } from '@/lib/data';
+import LocationScrollMenu from '@/components/LocationScrollMenu';
+import { getFeaturedExperiences } from '@/lib/data';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data/types';
 import {
@@ -13,12 +14,13 @@ import {
   CarouselPrevious,
   CarouselNext
 } from '@/components/ui/carousel';
+import { Button } from '@/components/ui/button';
+import { MapPin, Search } from 'lucide-react';
 
 const Index = () => {
   const [featuredExperiences, setFeaturedExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
-  const [isAllLoading, setIsAllLoading] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   useEffect(() => {
     const loadFeaturedExperiences = async () => {
@@ -33,21 +35,6 @@ const Index = () => {
       }
     };
     loadFeaturedExperiences();
-  }, []);
-
-  useEffect(() => {
-    const loadAllExperiences = async () => {
-      setIsAllLoading(true);
-      try {
-        const experiences = await getAllExperiences();
-        setAllExperiences(experiences);
-      } catch (error) {
-        console.error('Error loading all experiences:', error);
-      } finally {
-        setIsAllLoading(false);
-      }
-    };
-    loadAllExperiences();
   }, []);
 
   useEffect(() => {

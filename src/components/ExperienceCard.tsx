@@ -11,7 +11,11 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
 import { CITY_COORDINATES } from './CitySelector';
+
+import { TravelInfoDisplay } from './TravelInfoDisplay';
+
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -209,6 +213,19 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
                 <span className="truncate">{experience.date}</span>
               </div>
             </div>
+
+            {/* Travel Information - Only show if coordinates are available */}
+            {experience.coordinates && (
+              <div className={cn(
+                "mb-3 md:mb-4 opacity-0 transition-opacity duration-300",
+                isHovered ? "opacity-100" : "opacity-0"
+              )}>
+                <TravelInfoDisplay 
+                  experienceLocation={experience.coordinates}
+                  className="bg-white/10 backdrop-blur-sm border-white/20"
+                />
+              </div>
+            )}
 
             {/* Button */}
             <div className={cn(
