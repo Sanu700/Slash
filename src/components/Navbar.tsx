@@ -55,16 +55,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   
   // Use search history hook
-  const { recentSearches, addToSearchHistory } = useSearchHistory();
+  const { recentSearches, addToSearchHistory, reloadSearchHistory, clearSearchHistory, removeFromSearchHistory } = useSearchHistory();
 
-  // Always reload search history when search overlay is opened
   useEffect(() => {
     if (searchOpen) {
-      // This will trigger the hook to reload from localStorage
-      addToSearchHistory(''); // No-op, but triggers a state update
+      reloadSearchHistory();
     }
-    // No cleanup needed
-  }, [searchOpen, addToSearchHistory]);
+  }, [searchOpen, reloadSearchHistory]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -186,25 +183,31 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // If a suggestion is highlighted, add its title to history
+    if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
+      const selected = searchResults[selectedResultIndex];
+      if (selected && selected.title) {
+        addToSearchHistory(selected.title);
+        setSearchOpen(false);
+        navigate(`/experience/${selected.id}`);
+        document.body.style.overflow = '';
+        return;
+      }
+    }
+    // Otherwise, add the typed query
     if (searchQuery.trim()) {
-      const trimmedQuery = searchQuery.trim();
-      addToSearchHistory(trimmedQuery);
-      navigate(`/experiences?search=${encodeURIComponent(trimmedQuery)}`);
+      addToSearchHistory(searchQuery.trim());
+      navigate(`/experiences?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       document.body.style.overflow = '';
     }
   };
 
   const handleSearchResultClick = (id: string) => {
-    // Add both the current search query and the experience title to history (if different)
+    // Only add the experience title to history
     const experience = searchResults.find(exp => exp.id === id);
-    if (searchQuery && experience && experience.title && searchQuery.trim().toLowerCase() !== experience.title.trim().toLowerCase()) {
-      addToSearchHistory(searchQuery.trim());
+    if (experience && experience.title) {
       addToSearchHistory(experience.title);
-    } else if (experience && experience.title) {
-      addToSearchHistory(experience.title);
-    } else if (searchQuery) {
-      addToSearchHistory(searchQuery.trim());
     }
     setSearchOpen(false);
     navigate(`/experience/${id}`);
@@ -653,18 +656,37 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           {/* Recent Searches - Always show when search bar is open and empty */}
           {searchOpen && !searchQuery && (
             <div className="mt-8">
-              <p className="text-sm text-gray-600 mb-3">Recent Searches</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-600">Recent Searches</p>
+                {recentSearches.length > 0 && (
+                  <button
+                    onClick={clearSearchHistory}
+                    className="text-xs text-primary hover:underline px-2 py-1 rounded"
+                  >
+                    Clear Search History
+                  </button>
+                )}
+              </div>
               <div className="space-y-2">
                 {recentSearches.length > 0 ? (
                   recentSearches.map((term, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleRecentSearchClick(term)}
-                      className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
-                    >
-                      <Clock className="h-4 w-4 mr-3 text-gray-400" />
-                      <span className="text-sm">{term}</span>
-                    </button>
+                    <div key={index} className="flex items-center group">
+                      <button
+                        onClick={() => handleRecentSearchClick(term)}
+                        className="flex-1 text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
+                      >
+                        <Clock className="h-4 w-4 mr-3 text-gray-400" />
+                        <span className="text-sm">{term}</span>
+                      </button>
+                      <button
+                        onClick={() => removeFromSearchHistory(term)}
+                        className="ml-2 text-gray-400 hover:text-red-500 p-1 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                        aria-label={`Remove ${term} from search history`}
+                        tabIndex={0}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   ))
                 ) : (
                   <div className="text-gray-400 px-4 py-3 text-sm">No recent searches yet.</div>
