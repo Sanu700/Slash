@@ -140,9 +140,9 @@ const Hero = () => {
                   label: "Satisfaction"
                 }].map((stat, index) => (
                   <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-5 flex flex-col items-center justify-center text-center">
-                    <p className="text-2xl md:text-3xl font-medium mb-1">
+                    <div className="text-2xl md:text-3xl font-medium mb-1">
                       <AnimatedCounter value={stat.value} />
-                    </p>
+                    </div>
                     <p className="text-sm text-white/90">{stat.label}</p>
                   </div>
                 ))}

@@ -23,6 +23,7 @@ const SuggestedExperiences = () => {
       setIsAllLoading(true);
       try {
         const experiences = await getAllExperiences();
+        console.log('Loaded experiences:', experiences);
         setAllExperiences(experiences);
       } catch (error) {
         console.error('Error loading all experiences:', error);
@@ -41,6 +42,28 @@ const SuggestedExperiences = () => {
       }, 100);
     }
   };
+
+  // Get selected city from localStorage
+  const selectedCity = typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null;
+
+  // Filter experiences by selected city
+  const filteredExperiences = selectedCity
+    ? allExperiences.filter(exp => {
+        if (!exp.location) return false;
+        const locationLower = exp.location.toLowerCase();
+        const cityLower = selectedCity.toLowerCase();
+        return locationLower.includes(cityLower) || locationLower === cityLower;
+      })
+    : allExperiences;
+
+  if (isAllLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <span className="ml-4 text-lg">Loading experiences...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">
@@ -64,15 +87,11 @@ const SuggestedExperiences = () => {
       {showCarousel && (
         <div className="w-full mt-6">
           <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto backdrop-blur-sm bg-white/20 rounded-lg p-2 lg:p-4">
-            {isAllLoading ? (
-              <div className="flex justify-center items-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : allExperiences.length > 0 ? (
+            {filteredExperiences.length > 0 ? (
               <div className="relative overflow-visible">
                 <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
                   <CarouselContent className="-ml-2">
-                    {allExperiences.map((experience) => (
+                    {filteredExperiences.map((experience) => (
                       <CarouselItem
                         key={experience.id}
                         className="basis-full sm:basis-1/2 md:basis-1/3 pl-2"
@@ -89,7 +108,7 @@ const SuggestedExperiences = () => {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-muted-foreground">No experiences available at the moment.</p>
+                <p className="text-muted-foreground">No experiences available for the selected city.</p>
               </div>
             )}
           </div>

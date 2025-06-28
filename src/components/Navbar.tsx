@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut, Calendar, Shield, Heart, Package, CreditCard, Clock } from 'lucide-react';
+import { Menu, X, Search, ShoppingCart, ChevronDown, ChevronLeft, User, Settings, LogOut, Calendar, Shield, Heart, Package, CreditCard, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useWishlist } from '@/contexts/WishlistContext';
+
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+
+import CitySelector from './CitySelector';
+
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -426,6 +430,21 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className={cn("text-sm font-medium flex items-center", textClass)}>
+                  <MapPin className="mr-1 h-4 w-4" />
+                  Select Location
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-[300px] p-4">
+                <div className="mb-2">
+                  <h4 className="font-medium mb-2">Choose your city for experiences:</h4>
+                  <CitySelector onChange={(city) => console.log('Selected city:', city)} />
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="flex items-center gap-4">
