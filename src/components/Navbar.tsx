@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -52,6 +53,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  
+  // Use search history hook
+  const { recentSearches, addToSearchHistory } = useSearchHistory();
+
+  // Always reload search history when search overlay is opened
+  useEffect(() => {
+    if (searchOpen) {
+      // This will trigger the hook to reload from localStorage
+      addToSearchHistory(''); // No-op, but triggers a state update
+    }
+    // No cleanup needed
+  }, [searchOpen, addToSearchHistory]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,12 +76,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   useEffect(() => {
     if (searchOpen) {
-      document.body.classList.add('search-overlay-active');
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.classList.remove('search-overlay-active');
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.classList.remove('search-overlay-active');
+      document.body.style.overflow = '';
     };
   }, [searchOpen]);
 
@@ -174,13 +187,25 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/experiences?search=${encodeURIComponent(searchQuery.trim())}`);
+      const trimmedQuery = searchQuery.trim();
+      addToSearchHistory(trimmedQuery);
+      navigate(`/experiences?search=${encodeURIComponent(trimmedQuery)}`);
       setSearchOpen(false);
       document.body.style.overflow = '';
     }
   };
 
   const handleSearchResultClick = (id: string) => {
+    // Add both the current search query and the experience title to history (if different)
+    const experience = searchResults.find(exp => exp.id === id);
+    if (searchQuery && experience && experience.title && searchQuery.trim().toLowerCase() !== experience.title.trim().toLowerCase()) {
+      addToSearchHistory(searchQuery.trim());
+      addToSearchHistory(experience.title);
+    } else if (experience && experience.title) {
+      addToSearchHistory(experience.title);
+    } else if (searchQuery) {
+      addToSearchHistory(searchQuery.trim());
+    }
     setSearchOpen(false);
     navigate(`/experience/${id}`);
   };
@@ -298,6 +323,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePopularSearchClick = (term: string) => {
+    setSearchQuery(term);
+    addToSearchHistory(term);
+    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
+  };
+
+  const handleRecentSearchClick = (term: string) => {
+    setSearchQuery(term);
+    addToSearchHistory(term);
+    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
   };
 
   return (
@@ -581,7 +618,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
         <div className="container max-w-2xl mx-auto pt-28 px-4">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Input
-              type="search"
+              type="text"
               placeholder="Search for experiences..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -604,10 +641,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               {['Hot Air Balloon', 'Dining', 'Yacht', 'Spa Day', 'Adventure'].map((term) => (
                 <button
                   key={term}
-                  onClick={() => {
-                    setSearchQuery(term);
-                    handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
-                  }}
+                  onClick={() => handlePopularSearchClick(term)}
                   className="px-3 py-1.5 bg-gray-100/80 backdrop-blur-sm rounded-full text-sm hover:bg-gray-200/80 cursor-pointer text-gray-700"
                 >
                   {term}
@@ -616,24 +650,25 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </div>
           </div>
 
-          {/* Recent Searches - Only show when search query is empty */}
-          {!searchQuery && (
+          {/* Recent Searches - Always show when search bar is open and empty */}
+          {searchOpen && !searchQuery && (
             <div className="mt-8">
               <p className="text-sm text-gray-600 mb-3">Recent Searches</p>
               <div className="space-y-2">
-                {['Adventure Tours', 'Luxury Dining', 'Spa Experiences'].map((term) => (
-                  <button
-                    key={term}
-                    onClick={() => {
-                      setSearchQuery(term);
-                      handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
-                    }}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
-                  >
-                    <Clock className="h-4 w-4 mr-3 text-gray-400" />
-                    <span className="text-sm">{term}</span>
-                  </button>
-                ))}
+                {recentSearches.length > 0 ? (
+                  recentSearches.map((term, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleRecentSearchClick(term)}
+                      className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 backdrop-blur-sm text-gray-700 flex items-center transition-colors"
+                    >
+                      <Clock className="h-4 w-4 mr-3 text-gray-400" />
+                      <span className="text-sm">{term}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-gray-400 px-4 py-3 text-sm">No recent searches yet.</div>
+                )}
               </div>
             </div>
           )}
