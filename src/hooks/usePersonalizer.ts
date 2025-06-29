@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { FormData } from '@/types/personalizerTypes';
-import { submitAnswer, goBackOneStep } from '@/lib/aiPersonalizer';
+import { submitAnswer } from '@/lib/aiPersonalizer';
 
 export const usePersonalizer = () => {
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<'basics' | 'interests' | 'preferences' | 'results'>('basics');
+  const [currentStep, setCurrentStep] = useState<'basics' | 'interests' | 'results'>('basics');
   const [progress, setProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestedExperiences, setSuggestedExperiences] = useState([]);
@@ -75,15 +75,10 @@ export const usePersonalizer = () => {
       // Basics step now handles its own validation and AI submission
       // Just move to the next step
       setCurrentStep('interests');
-      setProgress(33);
+      setProgress(50);
     } else if (currentStep === 'interests') {
       // Interests step now handles its own validation and AI submission
-      // Just move to the next step
-      setCurrentStep('preferences');
-      setProgress(66);
-    } else if (currentStep === 'preferences') {
-      // The preferences step now handles its own validation and AI integration
-      // We don't need to validate here since it's handled in the component
+      // Move directly to results
       setCurrentStep('results');
       setProgress(100);
     }
@@ -93,21 +88,18 @@ export const usePersonalizer = () => {
     try {
       setIsGenerating(true);
       
-      // Call the /back API to undo the last submission
-      console.log('=== GOING BACK - CALLING /back API ===');
-      await goBackOneStep();
-      console.log('Successfully went back one step in AI context');
+      // Note: Individual components now handle the /back API call
+      // This function only handles local state navigation
+      console.log('=== GOING BACK - LOCAL NAVIGATION ONLY ===');
+      console.log('✅ No API call here - components handle /back API calls');
       
       // Update local state
       if (currentStep === 'interests') {
         setCurrentStep('basics');
         setProgress(0);
-      } else if (currentStep === 'preferences') {
-        setCurrentStep('interests');
-        setProgress(33);
       } else if (currentStep === 'results') {
-        setCurrentStep('preferences');
-        setProgress(66);
+        setCurrentStep('interests');
+        setProgress(50);
       }
       
     } catch (error) {
@@ -122,12 +114,9 @@ export const usePersonalizer = () => {
       if (currentStep === 'interests') {
         setCurrentStep('basics');
         setProgress(0);
-      } else if (currentStep === 'preferences') {
-        setCurrentStep('interests');
-        setProgress(33);
       } else if (currentStep === 'results') {
-        setCurrentStep('preferences');
-        setProgress(66);
+        setCurrentStep('interests');
+        setProgress(50);
       }
     } finally {
       setIsGenerating(false);

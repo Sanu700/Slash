@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import { FormData } from '@/types/personalizerTypes';
-import { submitAnswer, fetchInitQuestion, fetchSuggestions, goBackOneStep } from '@/lib/aiPersonalizer';
+import { submitAnswer, fetchSuggestions, goBackOneStep } from '@/lib/aiPersonalizer';
 import { useToast } from '@/components/ui/use-toast';
 
 interface StepPreferencesProps {
@@ -39,12 +39,7 @@ const StepPreferences = ({ formData, onBack, onNext, isGenerating, setSuggestedE
     try {
       console.log('Starting AI recommendations process...');
       
-      // Step 1: Call /init first
-      console.log('=== INITIALIZING AI CONTEXT (PREFERENCES STEP) ===');
-      await fetchInitQuestion();
-      console.log('AI initialized successfully in preferences step');
-      
-      // Step 2: Call /submit with preferences data
+      // Step 1: Call /submit with preferences data (session already initialized)
       console.log('=== SUBMITTING PREFERENCES DATA ===');
       console.log('Preferences text:', specificPreferences);
       console.log('=== END PREFERENCES DATA ===');
