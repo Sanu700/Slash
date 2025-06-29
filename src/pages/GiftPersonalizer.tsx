@@ -6,18 +6,24 @@ import { Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import { useToast } from '@/components/ui/use-toast';
-import { resetSession } from '@/lib/aiPersonalizer';
+import { resetSession, fetchInitQuestion, fetchNextQuestion } from '@/lib/aiPersonalizer';
 
 // Import separate step components
 import StepBasics from '@/components/gift-personalizer/StepBasics';
 import StepInterests from '@/components/gift-personalizer/StepInterests';
-import StepPreferences from '@/components/gift-personalizer/StepPreferences';
 import StepResults from '@/components/gift-personalizer/StepResults';
 
 const GiftPersonalizer = () => {
   const [ref, isInView] = useInView<HTMLDivElement>();
   const { toast } = useToast();
   const hasInitializedRef = useRef(false);
+  const [aiPrompt, setAiPrompt] = useState<string>("");
+  const [interestsPrompt, setInterestsPrompt] = useState<string>("");
+  const [basicsInput, setBasicsInput] = useState("");
+  const [interestsInput, setInterestsInput] = useState("");
+  const [aiSessionId, setAiSessionId] = useState<string>("");
+  const [isInitialized, setIsInitialized] = useState(false);
+  const initializationInProgressRef = useRef(false);
   
   const {
     currentStep,
@@ -41,19 +47,43 @@ const GiftPersonalizer = () => {
     setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     }, 100);
+    setBasicsInput("");
+    setInterestsInput("");
+    
     const initializeSession = async () => {
-      if (hasInitializedRef.current) return; // Prevent multiple resets
+      // Multiple safety checks to prevent duplicate initialization
+      if (hasInitializedRef.current || isInitialized || initializationInProgressRef.current) {
+        console.log('=== SKIPPING INITIALIZATION - ALREADY INITIALIZED OR IN PROGRESS ===');
+        console.log('hasInitializedRef.current:', hasInitializedRef.current);
+        console.log('isInitialized:', isInitialized);
+        console.log('initializationInProgressRef.current:', initializationInProgressRef.current);
+        return;
+      }
       
       try {
-        console.log('=== PAGE RELOAD - RESETTING AI SESSION ===');
-        await resetSession();
-        console.log('AI session reset successfully on page load');
+        console.log('=== STARTING AI SESSION INITIALIZATION ===');
+        initializationInProgressRef.current = true;
         hasInitializedRef.current = true;
+        
+        const { question, session_id } = await fetchInitQuestion();
+        setAiPrompt(question);
+        setAiSessionId(session_id);
+        setIsInitialized(true);
+        
+        console.log('=== AI SESSION INITIALIZATION COMPLETED ===');
+        console.log('✅ /init response received:');
+        console.log('  - question:', question);
+        console.log('  - session_id:', session_id);
+        console.log('  - session_id type:', typeof session_id);
+        console.log('  - session_id length:', session_id ? session_id.length : 'undefined');
+        console.log('✅ session_id stored in aiSessionId state');
+        console.log('✅ This same session_id will be used for all subsequent API calls');
+        console.log('=== END INITIALIZATION ===');
       } catch (error) {
-        console.error('Failed to reset AI session on page load:', error);
-        // Don't show toast error for reset failure as it might be expected
-        // if the backend doesn't support reset endpoint
-        hasInitializedRef.current = true; // Mark as initialized even if reset fails
+        console.error('Failed to initialize AI session on page load:', error);
+        // Reset flags on error so user can retry
+        hasInitializedRef.current = false;
+        initializationInProgressRef.current = false;
       }
     };
 
@@ -68,7 +98,8 @@ const GiftPersonalizer = () => {
   }, [currentStep]);
 
   const handleStartOver = () => {
-    // Reset form data and go back to basics
+    setBasicsInput("");
+    setInterestsInput("");
     window.location.reload();
   };
 
@@ -82,10 +113,19 @@ const GiftPersonalizer = () => {
             setFormData={setFormData}
             onNext={handleNextStep}
             isGenerating={isGenerating}
+            aiPrompt={aiPrompt}
+            setBasicsInput={setBasicsInput}
+            aiSessionId={aiSessionId}
+            setInterestsPrompt={setInterestsPrompt}
           />
         );
       
       case 'interests':
+        console.log('=== RENDERING STEP INTERESTS ===');
+        console.log('Passing aiSessionId to StepInterests:', aiSessionId);
+        console.log('aiSessionId type:', typeof aiSessionId);
+        console.log('aiSessionId length:', aiSessionId ? aiSessionId.length : 'undefined');
+        console.log('This is the same session_id from /init');
         return (
           <StepInterests
             formData={formData}
@@ -94,17 +134,10 @@ const GiftPersonalizer = () => {
             onNext={handleNextStep}
             onBack={handlePreviousStep}
             isGenerating={isGenerating}
-          />
-        );
-      
-      case 'preferences':
-        return (
-          <StepPreferences
-            formData={formData}
-            onBack={handlePreviousStep}
-            onNext={handleNextStep}
-            isGenerating={isGenerating}
             setSuggestedExperiences={setSuggestedExperiences}
+            interestsPrompt={interestsPrompt}
+            setInterestsInput={setInterestsInput}
+            aiSessionId={aiSessionId}
           />
         );
       
@@ -115,6 +148,9 @@ const GiftPersonalizer = () => {
             suggestions={suggestedExperiences}
             onBack={handlePreviousStep}
             onStartOver={handleStartOver}
+            basicsInput={basicsInput}
+            interestsInput={interestsInput}
+            aiSessionId={aiSessionId}
           />
         );
       
