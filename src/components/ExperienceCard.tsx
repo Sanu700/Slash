@@ -51,7 +51,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       selectedCity,
       cityCoords: selectedCity ? CITY_COORDINATES[selectedCity] : null
     });
-    const cityCoords = selectedCity ? CITY_COORDINATES[selectedCity] : null;
+    
+    // Use selected city or default to Bangalore if no city is selected
+    const cityToUse = selectedCity || 'Bangalore';
+    const cityCoords = CITY_COORDINATES[cityToUse];
+    
     if (
       experience.latitude && experience.longitude &&
       cityCoords
@@ -62,7 +66,26 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
         experience.latitude,
         experience.longitude
       ).then(mins => {
-        if (mins !== null) setTravelTime(`~${mins} min drive`);
+        if (mins !== null) {
+          setTravelTime(`~${mins} min drive from ${cityToUse}`);
+        } else {
+          // Fallback: calculate approximate distance and time
+          const distance = Math.sqrt(
+            Math.pow((cityCoords.latitude - experience.latitude) * 111, 2) +
+            Math.pow((cityCoords.longitude - experience.longitude) * 111, 2)
+          );
+          const estimatedTime = Math.round(distance * 2); // Rough estimate: 2 min per km
+          setTravelTime(`~${estimatedTime} min drive from ${cityToUse} (est.)`);
+        }
+      }).catch(error => {
+        console.error('Error calculating travel time:', error);
+        // Fallback calculation
+        const distance = Math.sqrt(
+          Math.pow((cityCoords.latitude - experience.latitude) * 111, 2) +
+          Math.pow((cityCoords.longitude - experience.longitude) * 111, 2)
+        );
+        const estimatedTime = Math.round(distance * 2);
+        setTravelTime(`~${estimatedTime} min drive from ${cityToUse} (est.)`);
       });
     } else {
       setTravelTime(null);
@@ -192,7 +215,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             {/* Travel time display */}
             <div className="flex items-center text-xs text-white/80 mb-1" style={{background:'#ffe066', border:'2px solid #ff8800', borderRadius:'4px', padding:'2px 6px'}}>
               <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-              <span><strong>Time Proximity:</strong> {travelTime ? travelTime : 'N/A'}</span>
+              <span><strong>Time Proximity:</strong> {travelTime ? travelTime : 'Select a city to see travel time'}</span>
             </div>
 
             {/* Duration, Participants, Date */}

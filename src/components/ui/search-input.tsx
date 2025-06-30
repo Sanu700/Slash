@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Input } from './input';
 import { Experience } from '@/lib/data/types';
 import { getSavedExperiences } from '@/lib/data';
+import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -32,6 +33,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Use search history hook
+  const { recentSearches: userRecentSearches, addToSearchHistory, removeFromSearchHistory } = useSearchHistory();
+  
+  // Use user's recent searches if provided, otherwise use the hook's recent searches
+  const displayRecentSearches = recentSearches.length > 0 ? recentSearches : userRecentSearches;
 
   useEffect(() => {
     if (query.length < 2) {
@@ -106,12 +113,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   // Handle focus state for recent searches
   useEffect(() => {
-    if (isFocused && !query && recentSearches.length > 0) {
+    if (isFocused && !query && displayRecentSearches.length > 0) {
       setIsOpen(true);
     } else if (!isFocused) {
       setIsOpen(false);
     }
-  }, [isFocused, query, recentSearches.length]);
+  }, [isFocused, query, displayRecentSearches.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,7 +163,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const handleSearch = () => {
     if (onSearch && query.trim()) {
-      onSearch(query.trim());
+      const trimmedQuery = query.trim();
+      addToSearchHistory(trimmedQuery);
+      onSearch(trimmedQuery);
     }
   };
 
@@ -177,11 +186,20 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     setIsOpen(false);
   };
 
+  const handleRecentSearchClick = (search: string) => {
+    if (onRecentSearchClick) {
+      onRecentSearchClick(search);
+    } else {
+      setQuery(search);
+      addToSearchHistory(search);
+    }
+  };
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
         <Input
-          type="search"
+          type="text"
           placeholder={placeholder}
           value={query}
           onChange={handleInputChange}
@@ -266,21 +284,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       )}
 
       {/* Recent Searches - Only show when query is empty */}
-      {isFocused && !query && recentSearches.length > 0 && (
+      {isFocused && !query && displayRecentSearches.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
           <div className="p-3 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-700">Recent Searches</p>
           </div>
-          {recentSearches.map((search, index) => (
+          {displayRecentSearches.map((search, index) => (
             <button
               key={index}
-              onClick={() => {
-                if (onRecentSearchClick) {
-                  onRecentSearchClick(search);
-                } else {
-                  setQuery(search);
-                }
-              }}
+              onClick={() => handleRecentSearchClick(search)}
               className="w-full text-left p-3 hover:bg-gray-50 flex items-center text-gray-700"
             >
               <div className="w-4 h-4 mr-3 text-gray-400">
