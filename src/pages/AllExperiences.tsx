@@ -8,7 +8,9 @@ import { cn } from '@/lib/utils';
 import { useInView } from '@/lib/animations';
 import { useExperiencesManager } from '@/lib/data';
 import { FilterDialog, FilterOptions } from '@/components/FilterDialog';
-import { SearchInput } from '@/components/SearchInput';
+
+import { SearchInput } from '@/components/ui/search-input';
+
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import Navbar from '@/components/Navbar';
 import { Filter } from 'lucide-react';
@@ -242,13 +244,6 @@ const AllExperiences = () => {
     navigate(`/experience/${experience.id}`);
   };
 
-  // Mock recent searches - in a real app, this would come from localStorage or user preferences
-  const recentSearches = ['Adventure Tours', 'Luxury Dining', 'Spa Experiences', 'Mumbai Experiences'];
-
-  const handleRecentSearchClick = (search: string) => {
-    setSearchTerm(search);
-  };
-
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
@@ -319,8 +314,7 @@ const AllExperiences = () => {
                   onSearch={handleSearchSubmit}
                   onResultSelect={handleResultSelect}
                   className="w-full"
-                  recentSearches={recentSearches}
-                  onRecentSearchClick={handleRecentSearchClick}
+                  recentSearches={[]}
                 />
               </div>
 
