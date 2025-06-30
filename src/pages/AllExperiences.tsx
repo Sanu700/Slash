@@ -13,7 +13,7 @@ import { SearchInput } from '@/components/ui/search-input';
 
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import Navbar from '@/components/Navbar';
-import { Filter } from 'lucide-react';
+import { Filter, MapPin, ChevronDown } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -22,6 +22,15 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+
+// Add distance filter options
+const DISTANCE_FILTERS = [
+  { label: 'All distances', value: 'all' },
+  { label: 'Within 2 km', value: '2' },
+  { label: 'Within 5 km', value: '5' },
+  { label: 'Within 10 km', value: '10' },
+  { label: 'Within 20 km', value: '20' }
+];
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const toRad = (x) => (x * Math.PI) / 180;
@@ -38,6 +47,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
+const DEFAULT_RADIUS_KM = 10;
 
 const AllExperiences = () => {
   const { experiences, isLoading } = useExperiencesManager();
@@ -52,18 +62,22 @@ const AllExperiences = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const location = useLocation();
   const navigate = useNavigate();
-
+  const [locationClearedCount, setLocationClearedCount] = useState(0);
 
   // Get location from query param
   const query = new URLSearchParams(location.search);
   const locationParam = query.get('location');
-
 
   const clearFilters = () => {
     setActiveFilters(null);
     setSearchTerm('');
     setSortOrder('default');
     setCurrentPage(1);
+    localStorage.removeItem('selected_address');
+    localStorage.removeItem('selected_city');
+    sessionStorage.setItem('location_modal_asked', 'true');
+    window.dispatchEvent(new Event('locationCleared'));
+    setLocationClearedCount(c => c + 1);
   };
 
   // Handle initial filters from location state
@@ -104,13 +118,49 @@ const AllExperiences = () => {
     }
   }, [location]);
 
+  useEffect(() => {
+    const handler = () => setLocationClearedCount(c => c + 1);
+    window.addEventListener('locationCleared', handler);
+    return () => window.removeEventListener('locationCleared', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setLocationClearedCount(c => c + 1);
+    window.addEventListener('locationChanged', handler);
+    return () => window.removeEventListener('locationChanged', handler);
+  }, []);
+
   // Memoize filtered and sorted experiences
   const filteredExperiences = useMemo(() => {
     if (isLoading) return [];
     
     let filtered = [...experiences];
     
-    // Filter by location query param if present
+    // Proximity filtering logic
+    const selectedAddressRaw = localStorage.getItem('selected_address');
+    let selectedAddress = null;
+    try {
+      selectedAddress = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      selectedAddress = selectedAddressRaw;
+    }
+
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon) {
+      const lat = parseFloat(selectedAddress.lat);
+      const lon = parseFloat(selectedAddress.lon);
+      filtered = filtered
+        .map(exp => {
+          if (typeof exp.latitude === 'number' && typeof exp.longitude === 'number') {
+            const distance = haversineDistance(lat, lon, exp.latitude, exp.longitude);
+            return { ...exp, _distance: distance };
+          }
+          return { ...exp, _distance: Infinity };
+        })
+        .filter(exp => exp._distance <= DEFAULT_RADIUS_KM)
+        .sort((a, b) => (a._distance || 0) - (b._distance || 0));
+    }
+
+    // Filter by location query param if present (fallback)
     if (locationParam && locationParam !== 'All India') {
       const normalizedParam = locationParam.trim().toLowerCase();
       filtered = filtered.filter(exp => {
@@ -220,7 +270,7 @@ const AllExperiences = () => {
     }
     
     return filtered;
-  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters, locationParam]);
+  }, [sortOrder, searchTerm, experiences, isLoading, activeFilters, locationParam, locationClearedCount]);
 
   // Calculate pagination
   const indexOfLastExperience = currentPage * experiencesPerPage;
@@ -287,7 +337,6 @@ const AllExperiences = () => {
     (activeFilters?.duration && Array.isArray(activeFilters.duration) && (activeFilters.duration[0] !== 1 || activeFilters.duration[1] !== 24) ? 1 : 0) +
     (activeFilters?.experienceTypes && 
      Object.values(activeFilters.experienceTypes).filter(Boolean).length);
-
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -371,6 +420,16 @@ const AllExperiences = () => {
                       </span>
                     )}
                   </Button>
+                  {activeFiltersCount > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Clear All Filters
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -387,16 +446,18 @@ const AllExperiences = () => {
               ) : (
                 <div className="text-center py-16">
                   <h3 className="text-xl mb-2">
-                    {locationParam ? `No experiences found in ${locationParam}` : 'No matching experiences found'}
+                    No experiences found in {locationParam || 'the selected location'}
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    {locationParam
-                      ? `We don't have any experiences available in ${locationParam} yet. Try selecting a different location or check back later!`
-                      : 'Try adjusting your search criteria'}
+                    Try selecting a different location or clear your filters.
                   </p>
                   <Button onClick={() => {
                     setSearchTerm('');
                     setActiveFilters(null);
+                    localStorage.removeItem('selected_address');
+                    localStorage.removeItem('selected_city');
+                    sessionStorage.setItem('location_modal_asked', 'true');
+                    window.dispatchEvent(new Event('locationCleared'));
                     navigate('/experiences');
                   }}>
                     Clear All Filters

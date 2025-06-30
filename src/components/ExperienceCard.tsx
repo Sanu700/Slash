@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { calculateHaversineDistance } from '@/lib/distanceUtils';
 
 import { CITY_COORDINATES } from './CitySelector';
 
@@ -31,7 +32,19 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
   const [travelTime, setTravelTime] = useState<string | null>(null);
+  const [distance, setDistance] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
+  const [selectedAddress, setSelectedAddress] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('selected_address');
+      try {
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   // Debug log to check values at render time
   console.log('RENDER ExperienceCard:', experience.title, experience.latitude, experience.longitude, selectedCity);
@@ -39,6 +52,13 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
   useEffect(() => {
     const handleStorage = () => {
       setSelectedCity(localStorage.getItem('selected_city'));
+      // Also update address if changed
+      const raw = localStorage.getItem('selected_address');
+      try {
+        setSelectedAddress(raw ? JSON.parse(raw) : null);
+      } catch {
+        setSelectedAddress(null);
+      }
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
@@ -51,46 +71,46 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       selectedCity,
       cityCoords: selectedCity ? CITY_COORDINATES[selectedCity] : null
     });
-    
+
     // Use selected city or default to Bangalore if no city is selected
     const cityToUse = selectedCity || 'Bangalore';
     const cityCoords = CITY_COORDINATES[cityToUse];
-    
+
+    // Prefer address coordinates if available
+    let fromLat: number | null = null;
+    let fromLng: number | null = null;
+    if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
+      fromLat = parseFloat(selectedAddress.lat);
+      fromLng = parseFloat(selectedAddress.lon);
+    } else if (selectedCity && CITY_COORDINATES[selectedCity]) {
+      fromLat = CITY_COORDINATES[selectedCity].latitude;
+      fromLng = CITY_COORDINATES[selectedCity].longitude;
+    }
+
     if (
       experience.latitude && experience.longitude &&
-      cityCoords
+      fromLat !== null && fromLng !== null
     ) {
       getTravelTimeMinutes(
-        cityCoords.latitude,
-        cityCoords.longitude,
+        fromLat,
+        fromLng,
         experience.latitude,
         experience.longitude
       ).then(mins => {
-        if (mins !== null) {
-          setTravelTime(`~${mins} min drive from ${cityToUse}`);
-        } else {
-          // Fallback: calculate approximate distance and time
-          const distance = Math.sqrt(
-            Math.pow((cityCoords.latitude - experience.latitude) * 111, 2) +
-            Math.pow((cityCoords.longitude - experience.longitude) * 111, 2)
-          );
-          const estimatedTime = Math.round(distance * 2); // Rough estimate: 2 min per km
-          setTravelTime(`~${estimatedTime} min drive from ${cityToUse} (est.)`);
-        }
-      }).catch(error => {
-        console.error('Error calculating travel time:', error);
-        // Fallback calculation
-        const distance = Math.sqrt(
-          Math.pow((cityCoords.latitude - experience.latitude) * 111, 2) +
-          Math.pow((cityCoords.longitude - experience.longitude) * 111, 2)
-        );
-        const estimatedTime = Math.round(distance * 2);
-        setTravelTime(`~${estimatedTime} min drive from ${cityToUse} (est.)`);
+        if (mins !== null) setTravelTime(`~${mins} min`);
       });
+      // Also calculate and set distance if address is selected
+      if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
+        const dist = calculateHaversineDistance(fromLat, fromLng, experience.latitude, experience.longitude);
+        setDistance(`${dist.toFixed(1)} km away`);
+      } else {
+        setDistance(null);
+      }
     } else {
       setTravelTime(null);
+      setDistance(null);
     }
-  }, [experience.latitude, experience.longitude, experience.id, selectedCity]);
+  }, [experience.latitude, experience.longitude, experience.id, selectedCity, selectedAddress]);
 
   useEffect(() => {
     const checkWishlist = async () => {
@@ -212,11 +232,23 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               </Dialog>
               <div className="text-base md:text-lg font-medium">{formatRupees(experience.price)}</div>
             </div>
-            {/* Travel time display */}
-            <div className="flex items-center text-xs text-white/80 mb-1" style={{background:'#ffe066', border:'2px solid #ff8800', borderRadius:'4px', padding:'2px 6px'}}>
-              <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-              <span><strong>Time Proximity:</strong> {travelTime ? travelTime : 'Select a city to see travel time'}</span>
-            </div>
+
+            {/* Professional Info Bar for Time and Distance */}
+            {(travelTime || distance) && (
+              <div className="experience-info-bar mt-2 mb-3">
+                <div className="flex items-center justify-center w-full gap-4">
+                  <span className="flex items-center gap-1 text-white">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">{travelTime ? travelTime : 'N/A'}</span>
+                  </span>
+                  <span className="h-5 w-px bg-gray-300 mx-2" />
+                  <span className="flex items-center gap-1 text-white">
+                    <MapPin className="h-4 w-4" />
+                    <span className="font-medium">{distance ? distance : 'N/A'}</span>
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Duration, Participants, Date */}
             <div className={cn(
@@ -238,17 +270,19 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             </div>
 
             {/* Travel Information - Only show if coordinates are available */}
-            {experience.coordinates && (
-              <div className={cn(
-                "mb-3 md:mb-4 opacity-0 transition-opacity duration-300",
-                isHovered ? "opacity-100" : "opacity-0"
-              )}>
-                <TravelInfoDisplay 
-                  experienceLocation={experience.coordinates}
-                  className="bg-white/10 backdrop-blur-sm border-white/20"
-                />
-              </div>
-            )}
+            {
+              experience.coordinates && (
+                <div className={cn(
+                  "mb-3 md:mb-4 opacity-0 transition-opacity duration-300",
+                  isHovered ? "opacity-100" : "opacity-0"
+                )}>
+                  <TravelInfoDisplay
+                    experienceLocation={experience.coordinates}
+                    className="bg-white/10 backdrop-blur-sm border-white/20"
+                  />
+                </div>
+              )
+            }
 
             {/* Button */}
             <div className={cn(
