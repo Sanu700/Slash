@@ -20,6 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useWishlist } from '@/contexts/WishlistContext';
 import CitySelector from './CitySelector';
+import LocationDropdown from './LocationDropdown';
 
 interface NavbarProps {
   isDarkPageProp?: boolean;
@@ -53,6 +54,20 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('selected_address');
+      if (raw) {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return raw;
+        }
+      }
+      return null;
+    }
+    return null;
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -301,6 +316,29 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     }
   };
 
+  // Add a function to get the display label for the location button
+  const getLocationLabel = () => {
+    if (selectedLocation) {
+      // If it's an object with address property
+      if (typeof selectedLocation === 'object' && selectedLocation.address) {
+        return selectedLocation.address.split(',')[0];
+      }
+      // If it's a string
+      if (typeof selectedLocation === 'string') {
+        return selectedLocation.split(',')[0];
+      }
+    }
+    const city = localStorage.getItem('selected_city');
+    if (city) return city;
+    return 'Select Location';
+  };
+
+  useEffect(() => {
+    const handleLocationCleared = () => setSelectedLocation(null);
+    window.addEventListener('locationCleared', handleLocationCleared);
+    return () => window.removeEventListener('locationCleared', handleLocationCleared);
+  }, []);
+
   return (
     <>
       <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-0 py-4', navbarBgClass)}>
@@ -387,21 +425,44 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium flex items-center", textClass)}>
-                  <MapPin className="mr-1 h-4 w-4" />
-                  Select Location
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-[300px] p-4">
-                <div className="mb-2">
-                  <h4 className="font-medium mb-2">Choose your city for experiences:</h4>
-                  <CitySelector onChange={(city) => console.log('Selected city:', city)} />
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="relative">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)}>
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    <span
+                      className="max-w-[120px] truncate inline-block align-middle"
+                      title={
+                        selectedLocation && typeof selectedLocation === 'object' && selectedLocation.address
+                          ? selectedLocation.address
+                          : typeof selectedLocation === 'string'
+                            ? selectedLocation
+                            : getLocationLabel()
+                      }
+                    >
+                      {getLocationLabel()}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
+                  <LocationDropdown
+                    value={
+                      selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                        ? selectedLocation.address
+                        : typeof selectedLocation === 'string'
+                          ? selectedLocation
+                          : ''
+                    }
+                    onChange={(val) => {
+                      setSelectedLocation(val);
+                      navigate('/experiences');
+                    }}
+                    standalone
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
