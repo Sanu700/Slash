@@ -7,7 +7,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { scrollToTop } from '@/lib/animations';
 import AnimatedCounter from './AnimatedCounter';
 import SuggestedExperiences from './SuggestedExperiences';
-import LocationDropdown from '@/components/LocationDropdown';
 
 const Hero = () => {
   const [ref, isInView] = useInView<HTMLDivElement>({
@@ -16,8 +15,6 @@ const Hero = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false]);
   const imageUrls = ['https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2670&auto=format&fit=crop&h=1200', 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=2670&auto=format&fit=crop&h=1200', 'https://images.unsplash.com/photo-1566849787933-0bab0fafa2a4?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?q=80&w=2670&auto=format&fit=crop&h=1200'];
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   // Preload images - improved version with state tracking
   useEffect(() => {
@@ -104,21 +101,6 @@ const Hero = () => {
             <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl text-shadow">
               92% of all people prefer an Experience over a Material gift and 63% forget what they recieved a year back.
             </p>
-            
-            <div className="flex justify-center mt-2 mb-2">
-              <LocationDropdown value={selectedLocation} onChange={setSelectedLocation} />
-            </div>
-            {selectedLocation && (
-              <div className="flex justify-center mb-6">
-                <Button
-                  size="lg"
-                  className="bg-primary text-white px-8 py-2 rounded-full shadow-md hover:bg-primary/90 transition"
-                  onClick={() => navigate(`/experiences?location=${encodeURIComponent(selectedLocation)}`)}
-                >
-                  Find Experiences <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </div>
-            )}
             
             <div className="flex flex-col items-start space-y-6">
               <div className="flex items-center space-x-4 -ml-[-0.5px]">

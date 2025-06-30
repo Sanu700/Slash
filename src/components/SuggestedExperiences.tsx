@@ -10,20 +10,23 @@ import {
   CarouselNext
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { scrollToTop } from '@/lib/animations';
+import { calculateHaversineDistance } from '@/lib/distanceUtils';
 
 const SuggestedExperiences = () => {
   const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
   const [isAllLoading, setIsAllLoading] = useState(true);
   const [showCarousel, setShowCarousel] = useState(false);
 
+  const routerLocation = useLocation();
+  const [selectedAddress, setSelectedAddress] = useState<{ address?: string, lat?: string, lon?: string } | string | null>(null);
+
   useEffect(() => {
     const loadAllExperiences = async () => {
       setIsAllLoading(true);
       try {
         const experiences = await getAllExperiences();
-        console.log('Loaded experiences:', experiences);
         setAllExperiences(experiences);
       } catch (error) {
         console.error('Error loading all experiences:', error);
@@ -34,6 +37,19 @@ const SuggestedExperiences = () => {
     loadAllExperiences();
   }, []);
 
+  useEffect(() => {
+    // Get selected address from localStorage
+    const selectedAddressRaw = localStorage.getItem('selected_address');
+    let parsed = null;
+    try {
+      parsed = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      parsed = selectedAddressRaw;
+    }
+    setSelectedAddress(parsed);
+    // Do NOT auto-show carousel here
+  }, [routerLocation, allExperiences]);
+
   const handleButtonClick = () => {
     setShowCarousel(!showCarousel);
     if (!showCarousel) {
@@ -43,18 +59,37 @@ const SuggestedExperiences = () => {
     }
   };
 
-  // Get selected city from localStorage
-  const selectedCity = typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null;
+  let filteredExperiences: Experience[] = allExperiences;
 
-  // Filter experiences by selected city
-  const filteredExperiences = selectedCity
-    ? allExperiences.filter(exp => {
-        if (!exp.location) return false;
-        const locationLower = exp.location.toLowerCase();
-        const cityLower = selectedCity.toLowerCase();
-        return locationLower.includes(cityLower) || locationLower === cityLower;
+  if (
+    selectedAddress &&
+    typeof selectedAddress === 'object' &&
+    selectedAddress.lat &&
+    selectedAddress.lon
+  ) {
+    // Filter and sort by proximity (within 10km, sorted by distance)
+    const lat = parseFloat(selectedAddress.lat);
+    const lon = parseFloat(selectedAddress.lon);
+    
+    filteredExperiences = allExperiences
+      .map(exp => {
+        if (typeof exp.latitude === 'number' && typeof exp.longitude === 'number') {
+          const distance = calculateHaversineDistance(lat, lon, exp.latitude, exp.longitude);
+          return { ...exp, _distance: distance };
+        }
+        return { ...exp, _distance: Infinity };
       })
-    : allExperiences;
+      .filter(exp => exp._distance <= 10)
+      .sort((a, b) => (a._distance || 0) - (b._distance || 0));
+  } else if (selectedAddress && typeof selectedAddress === 'string') {
+    // Filter by city name
+    filteredExperiences = allExperiences.filter(exp => {
+      if (!exp.location) return false;
+      const locationLower = exp.location.toLowerCase();
+      const cityLower = selectedAddress.toLowerCase();
+      return locationLower.includes(cityLower) || locationLower === cityLower;
+    });
+  }
 
   if (isAllLoading) {
     return (
@@ -87,6 +122,22 @@ const SuggestedExperiences = () => {
       {showCarousel && (
         <div className="w-full mt-6">
           <div className="w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto backdrop-blur-sm bg-white/20 rounded-lg p-2 lg:p-4">
+            {/* Location indicator */}
+            {selectedAddress && (
+              <div className="mb-4 text-center">
+                <p className="text-sm text-gray-600">
+                  Showing experiences near: <span className="font-semibold text-primary">
+                    {typeof selectedAddress === 'object' ? selectedAddress.address : selectedAddress}
+                  </span>
+                </p>
+                {typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Within 10km radius
+                  </p>
+                )}
+              </div>
+            )}
+            
             {filteredExperiences.length > 0 ? (
               <div className="relative overflow-visible">
                 <Carousel opts={{ align: 'center', slidesToScroll: 1 }}>
