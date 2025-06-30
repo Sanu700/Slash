@@ -1,6 +1,4 @@
-const BASE_URL = import.meta.env.DEV 
-  ? "/api/ai" 
-  : "https://slash-rag-agent.onrender.com";
+const BASE_URL = "/api/ai" 
 
 // Add retry logic for failed requests
 const fetchWithRetry = async (url: string, options: RequestInit, retries = 3) => {

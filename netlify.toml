@@ -11,8 +11,18 @@
   status = 200
 
 [[redirects]]
+  from = "/api/ai/followup"
+  to = "/.netlify/functions/followup"
+  status = 200
+
+[[redirects]]
   from = "/api/ai/suggestion"
   to = "/.netlify/functions/suggestion"
+  status = 200
+
+[[redirects]]
+  from = "/api/ai/init"
+  to = "/.netlify/functions/init"
   status = 200
 
 [[redirects]]
