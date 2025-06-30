@@ -467,9 +467,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gifting-guide" className={cn("text-sm font-medium", textClass)}>
-              Gifting Guide
-            </Link>
             <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
@@ -487,6 +484,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                             ? selectedLocation
                             : getLocationLabel()
                       }
+                      style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
                     >
                       {getLocationLabel()}
                     </span>
@@ -651,7 +649,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
             <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">All Experiences</Link>
-            <Link to="/gifting-guide" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gifting Guide</Link>
             <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gift Personalizer</Link>
             <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Host an Experience</Link>
             {/* Company Section */}
