@@ -126,32 +126,17 @@ const ExperienceView = () => {
   const isGuest = !user || !user.id || typeof user.id !== 'string' || user.id.length < 10;
   
   const handleAddToCart = async () => {
+    if (isGuest) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (!selectedDate) {
       setShowDatePopover(true);
       toast.error('Please select a date before adding to cart.');
       return;
     }
-    if (isGuest) {
-      // LocalStorage fallback ONLY, do not call CartContext or Supabase
-      if (!experience) return;
-      let cart = localStorage.getItem('cart');
-      let cartArr = cart ? JSON.parse(cart) : [];
-      const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
-      if (idx > -1) {
-        cartArr[idx].quantity = quantityInCart;
-        setQuantityInCart(cartArr[idx].quantity);
-      } else {
-        cartArr.push({ 
-          experienceId: experience.id, 
-          quantity: quantityInCart,
-          selectedDate: selectedDate.toISOString()
-        });
-        setQuantityInCart(quantityInCart);
-      }
-      localStorage.setItem('cart', JSON.stringify(cartArr));
-      toast.success('Added to cart');
-      return;
-    }
+
     setIsCartLoading(true);
     try {
       // Add to cart with the selected quantity

@@ -60,22 +60,28 @@ export const fetchInitQuestion = async () => {
       console.error('API Error Response:', errorText);
       throw new Error(`Failed to fetch initial question: ${res.status} ${res.statusText}`);
     }
-    const data = await res.json();
-    console.log('Init response:', data);
+    const responseText = await res.text();
+    try {
+      const data = JSON.parse(responseText);
+      console.log('Init response:', data);
     
-    // Debug logging to see what fields the AI is returning
-    console.log('=== INIT RESPONSE FIELDS DEBUG ===');
-    console.log('Full response data:', data);
-    console.log('Data type:', typeof data);
-    console.log('All keys in response:', data && typeof data === 'object' ? Object.keys(data) : 'N/A');
-    console.log('Question field:', data.question);
-    console.log('Session ID field:', data.session_id);
-    console.log('Has question field:', 'question' in data);
-    console.log('Has session_id field:', 'session_id' in data);
-    console.log('=== END INIT RESPONSE FIELDS DEBUG ===');
+      // Debug logging to see what fields the AI is returning
+      console.log('=== INIT RESPONSE FIELDS DEBUG ===');
+      console.log('Full response data:', data);
+      console.log('Data type:', typeof data);
+      console.log('All keys in response:', data && typeof data === 'object' ? Object.keys(data) : 'N/A');
+      console.log('Question field:', data.question);
+      console.log('Session ID field:', data.session_id);
+      console.log('Has question field:', 'question' in data);
+      console.log('Has session_id field:', 'session_id' in data);
+      console.log('=== END INIT RESPONSE FIELDS DEBUG ===');
     
-    // Return both question and session_id
-    return { question: data.question, session_id: data.session_id };
+      // Return both question and session_id
+      return { question: data.question, session_id: data.session_id };
+    } catch (e) {
+      console.error('Failed to parse JSON from response:', responseText);
+      throw new Error('Invalid JSON response from server.');
+    }
   } catch (error) {
     console.error('Error fetching initial question:', error);
     throw error;
@@ -114,6 +120,7 @@ export const submitAnswer = async (session_id: string, ans: string) => {
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
+      console.error("Failed to parse JSON from response:", responseText);
       throw new Error('Invalid JSON response from API');
     }
     if (data.status === 'error') {
@@ -145,9 +152,15 @@ export const fetchNextQuestion = async (session_id?: string) => {
       console.error('Next Error Response:', errorText);
       throw new Error(`Failed to fetch next question: ${res.status} ${res.statusText}`);
     }
-    const data = await res.json();
-    console.log('Next response:', data);
-    return data.question;
+    const responseText = await res.text();
+    try {
+      const data = JSON.parse(responseText);
+      console.log('Next response:', data);
+      return data.question;
+    } catch (e) {
+        console.error('Failed to parse JSON from response:', responseText);
+        throw new Error('Invalid JSON response from server.');
+    }
   } catch (error) {
     console.error('Error fetching next question:', error);
     throw error;
@@ -200,7 +213,7 @@ export const fetchSuggestions = async (query = "", k = 5, session_id?: string) =
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('Failed to parse JSON:', parseError);
+      console.error('Failed to parse JSON:', parseError, 'Raw text:', responseText);
       throw new Error('Invalid JSON response from API');
     }
     
