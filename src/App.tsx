@@ -78,8 +78,8 @@ const ProtectedPaymentDetails = requireAuth(PaymentDetails, true);
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
-import LocationAccessModal from "@/components/LocationAccessModal";
 import CitySelectorModal from "@/components/CitySelectorModal";
+import LocationAccessModal from "@/components/LocationAccessModal";
 
 const queryClient = new QueryClient();
 
