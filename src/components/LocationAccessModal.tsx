@@ -11,8 +11,13 @@ const LocationAccessModal = ({ onClose }) => {
 
   // Only show modal once per login session
   useEffect(() => {
+    const asked = sessionStorage.getItem("location_modal_asked");
+    console.log("location_modal_asked flag:", asked);
     if (isAuthenticated) {
-      const asked = sessionStorage.getItem("location_modal_asked");
+      if (asked === 'true') {
+        setShowLocationModal(false);
+        return;
+      }
       if (!asked) {
         setShowLocationModal(true);
       }
@@ -36,10 +41,10 @@ const LocationAccessModal = ({ onClose }) => {
     if (navigator.geolocation) {
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
-          const { latitude, longitude, accuracy, timestamp } = position.coords;
+          const { latitude, longitude, accuracy } = position.coords;
           localStorage.setItem(
             "user_location",
-            JSON.stringify({ latitude, longitude, accuracy, timestamp })
+            JSON.stringify({ latitude, longitude, accuracy })
           );
         },
         (error) => {

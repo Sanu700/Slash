@@ -28,6 +28,8 @@ const mapDbExperienceToModel = (item: any): Experience => ({
   imageUrl: item.image_url,
   price: item.price,
   location: item.location,
+  latitude: item.latitude ? Number(item.latitude) : undefined,
+  longitude: item.longitude ? Number(item.longitude) : undefined,
   duration: item.duration,
   participants: item.participants,
   date: item.date,

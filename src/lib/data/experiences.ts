@@ -61,8 +61,8 @@ const mapDbExperienceToModel = (item: any): Experience => ({
   imageUrl: item.image_url,
   price: item.price,
   location: item.location,
-  latitude: item.latitude,
-  longitude: item.longitude,
+  latitude: Number(item.latitude),
+  longitude: Number(item.longitude),
   duration: item.duration,
   participants: item.participants.toString(),
   date: item.date,
@@ -74,7 +74,7 @@ const mapDbExperienceToModel = (item: any): Experience => ({
   adventurous: item.adventurous || false,
   group: item.group_activity || false,
   coordinates: (item.latitude != null && item.longitude != null)
-    ? { lat: item.latitude, lng: item.longitude }
+    ? { lat: Number(item.latitude), lng: Number(item.longitude) }
     : undefined
 });
 

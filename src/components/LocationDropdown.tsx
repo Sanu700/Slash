@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, ChevronDown, MapPin } from 'lucide-react';
+import { Check, ChevronDown, MapPin, Search, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CITY_COORDINATES } from './CitySelector';
+import { useLocation } from 'react-router-dom';
 
 const INDIAN_LOCATIONS = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
@@ -41,19 +43,342 @@ const INDIAN_LOCATIONS = [
 const SORTED_LOCATIONS = [...INDIAN_LOCATIONS].sort((a, b) => a.localeCompare(b));
 
 interface LocationDropdownProps {
-  value: string | null;
+  value: string | { address: string } | null;
   onChange: (value: string | null) => void;
   placeholder?: string;
+  standalone?: boolean;
 }
 
-const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location' }) => {
+const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location', standalone = false }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [address, setAddress] = useState('');
+  const [addressResults, setAddressResults] = useState<any[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [showCities, setShowCities] = useState(false);
+  const location = useLocation();
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredLocations = SORTED_LOCATIONS.filter(city =>
-    city.toLowerCase().includes(search.toLowerCase())
-  );
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Add filteredCities state
+  const [filteredCities, setFilteredCities] = useState(SORTED_LOCATIONS);
+
+  useEffect(() => {
+    // Always read the latest value from localStorage when the route changes
+    const selectedAddressRaw = localStorage.getItem('selected_address');
+    let parsed = null;
+    try {
+      parsed = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      parsed = selectedAddressRaw;
+    }
+    setSelectedAddress(parsed);
+  }, [location]);
+
+  // Always sync address state with value prop
+  useEffect(() => {
+    if (typeof value === 'object' && value !== null && 'address' in value) {
+      setAddress(value.address);
+      setSelectedLocation(value.address);
+    } else if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed && typeof parsed === 'object' && 'address' in parsed) {
+          setAddress(parsed.address);
+          setSelectedLocation(parsed.address);
+        } else {
+          setAddress(value);
+          setSelectedLocation(value);
+        }
+      } catch {
+        setAddress(value);
+        setSelectedLocation(value);
+      }
+    } else if (!value) {
+      setAddress('');
+      setSelectedLocation(null);
+    }
+  }, [value]);
+
+  // Get current location
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    setError(null);
+    let geoTimeout;
+    if (navigator.geolocation) {
+      let didRespond = false;
+      geoTimeout = setTimeout(() => {
+        if (!didRespond) {
+          setIsGettingLocation(false);
+          setError('Could not get your location. Please try again.');
+        }
+      }, 8000); // 8 seconds timeout
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          didRespond = true;
+          clearTimeout(geoTimeout);
+          const { latitude, longitude } = position.coords;
+          let fetchTimeout;
+          let didFetch = false;
+          try {
+            // Reverse geocode to get address
+            fetchTimeout = setTimeout(() => {
+              if (!didFetch) {
+                setIsGettingLocation(false);
+                setError('Could not resolve your address. Please try again.');
+              }
+            }, 5000); // 5 seconds timeout
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+            );
+            const data = await response.json();
+            didFetch = true;
+            clearTimeout(fetchTimeout);
+            const addressText = data.display_name;
+            setAddress(addressText);
+            setSelectedLocation(addressText);
+            localStorage.setItem('selected_address', JSON.stringify({
+              address: addressText,
+              lat: latitude.toString(),
+              lon: longitude.toString()
+            }));
+          } catch (error) {
+            setIsGettingLocation(false);
+            setError('Could not resolve your address. Please try again.');
+            // Fallback to coordinates
+            setAddress(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setSelectedLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            localStorage.setItem('selected_address', JSON.stringify({
+              address: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+              lat: latitude.toString(),
+              lon: longitude.toString()
+            }));
+          }
+          setIsGettingLocation(false);
+        },
+        (error) => {
+          didRespond = true;
+          clearTimeout(geoTimeout);
+          setIsGettingLocation(false);
+          setError('Could not get your location. Please try again.');
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 8000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    } else {
+      setIsGettingLocation(false);
+      setError('Geolocation is not supported by this browser.');
+    }
+  };
+
+  // Address autocomplete handler
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setAddress(val);
+
+    // Always filter recommended cities instantly
+    setFilteredCities(
+      SORTED_LOCATIONS.filter(city => city.toLowerCase().startsWith(val.toLowerCase()))
+    );
+
+    // Only search API if at least 4 characters
+    if (val.length < 4) {
+      setAddressResults([]);
+      return;
+    }
+
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(async () => {
+      setAddressLoading(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=10&countrycodes=in`);
+        let data = await res.json();
+        const lowerVal = val.toLowerCase();
+        data = data.sort((a, b) => {
+          const aStarts = a.display_name.toLowerCase().startsWith(lowerVal);
+          const bStarts = b.display_name.toLowerCase().startsWith(lowerVal);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+          return 0;
+        });
+        setAddressResults(data);
+      } catch (err) {
+        setAddressResults([]);
+      } finally {
+        setAddressLoading(false);
+      }
+    }, 400);
+  };
+
+  const handleAddressSelect = (result: any) => {
+    setAddress(result.display_name);
+    setAddressResults([]);
+    setSelectedLocation(result.display_name);
+    // Store in localStorage for later use
+    localStorage.setItem('selected_address', JSON.stringify({
+      address: result.display_name,
+      lat: result.lat,
+      lon: result.lon
+    }));
+  };
+
+  if (standalone) {
+    return (
+      <div className="w-80 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
+        {/* Header with clear messaging */}
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">Find Experiences Near You</h3>
+          </div>
+          <p className="text-sm text-gray-600">
+            Enter your specific address for accurate proximity matching
+          </p>
+        </div>
+
+        {/* Address input with autocomplete */}
+        <div className="p-4 bg-white">
+          <div className="space-y-3">
+            {/* Current Location Button */}
+            <Button
+              variant="outline"
+              onClick={getCurrentLocation}
+              disabled={isGettingLocation}
+              className="w-full justify-start gap-2 text-sm"
+            >
+              <Navigation className="h-4 w-4" />
+              {isGettingLocation ? 'Getting your location...' : 'Use my current location'}
+            </Button>
+
+            {/* Address Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Enter your address
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
+                  value={address}
+                  onChange={handleAddressChange}
+                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            {addressLoading && (
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                Searching for addresses...
+              </div>
+            )}
+
+            {/* Address autocomplete results */}
+            {addressResults.length > 0 && (
+              <div className="max-h-48 overflow-y-auto bg-white border rounded-lg shadow-sm">
+                <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b bg-gray-50">
+                  Address suggestions
+                </div>
+                {addressResults.map((result, idx) => (
+                  <button
+                    key={idx}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b last:border-b-0"
+                    onClick={() => handleAddressSelect(result)}
+                  >
+                    <div className="font-medium">{result.display_name.split(',')[0]}</div>
+                    <div className="text-xs text-gray-500">{result.display_name}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Quick City Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Or select a city
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowCities(!showCities)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  {showCities ? 'Hide' : 'Show'} cities
+                </button>
+              </div>
+              
+              {showCities && (
+                <div className="max-h-32 overflow-y-auto border rounded-lg">
+                  <div className="p-2 space-y-1">
+                    {filteredCities.map(city => (
+                      <button
+                        key={city}
+                        className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded"
+                        onClick={() => {
+                          setAddress(city);
+                          setSelectedLocation(city);
+                          let coords = CITY_COORDINATES[city];
+                          if (!coords && city.toLowerCase().includes('delhi')) {
+                            coords = { latitude: 28.6139, longitude: 77.2090 };
+                          }
+                          if (coords) {
+                            const addressData = {
+                              address: city,
+                              lat: coords.latitude,
+                              lon: coords.longitude
+                            };
+                            localStorage.setItem('selected_address', JSON.stringify(addressData));
+                          } else {
+                            const addressData = { address: city };
+                            localStorage.setItem('selected_address', JSON.stringify(addressData));
+                          }
+                        }}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Find Experiences button */}
+            {selectedLocation && (
+              <div className="pt-2">
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-10 font-medium"
+                  onClick={() => {
+                    try {
+                      const parsed = JSON.parse(localStorage.getItem('selected_address') || '');
+                      onChange(parsed);
+                    } catch {
+                      onChange(selectedLocation);
+                    }
+                    if (typeof setOpen === 'function') setOpen(false);
+                  }}
+                >
+                  Find Experiences Near This Location
+                </Button>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-sm text-red-600 mt-2">{error}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: render as dropdown
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -66,47 +391,148 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           <ChevronDown className="ml-1 h-4 w-4 text-gray-400" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-44 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white">
-        <div className="p-2 border-b border-gray-100 dark:border-gray-800 bg-white">
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="h-8 text-xs px-2 bg-white"
-            autoFocus
-          />
+      <DropdownMenuContent className="w-80 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
+        {/* Header with clear messaging */}
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">Find Experiences Near You</h3>
+          </div>
+          <p className="text-sm text-gray-600">
+            Enter your specific address for accurate proximity matching
+          </p>
         </div>
-        <div className="max-h-56 overflow-y-auto bg-white">
-          <button
-            className={cn(
-              'w-full text-left px-3 py-1.5 text-xs hover:bg-accent',
-              !value && 'font-semibold'
-            )}
-            onClick={() => {
-              onChange(null);
-              setOpen(false);
-            }}
-          >
-            {!value && <Check className="inline mr-1 h-3 w-3" />}All India
-          </button>
-          {filteredLocations.length === 0 && (
-            <div className="px-3 py-2 text-muted-foreground text-xs">No locations found</div>
-          )}
-          {filteredLocations.map(city => (
-            <button
-              key={city}
-              className={cn(
-                'w-full text-left px-3 py-1.5 text-xs hover:bg-accent',
-                value === city && 'font-semibold'
-              )}
-              onClick={() => {
-                onChange(city);
-                setOpen(false);
-              }}
+
+        {/* Address input with autocomplete */}
+        <div className="p-4 bg-white">
+          <div className="space-y-3">
+            {/* Current Location Button */}
+            <Button
+              variant="outline"
+              onClick={getCurrentLocation}
+              disabled={isGettingLocation}
+              className="w-full justify-start gap-2 text-sm"
             >
-              {value === city && <Check className="inline mr-1 h-3 w-3" />} {city}
-            </button>
-          ))}
+              <Navigation className="h-4 w-4" />
+              {isGettingLocation ? 'Getting your location...' : 'Use my current location'}
+            </Button>
+
+            {/* Address Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Enter your address
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
+                  value={address}
+                  onChange={handleAddressChange}
+                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            {addressLoading && (
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                Searching for addresses...
+              </div>
+            )}
+
+            {/* Address autocomplete results */}
+            {addressResults.length > 0 && (
+              <div className="max-h-48 overflow-y-auto bg-white border rounded-lg shadow-sm">
+                <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b bg-gray-50">
+                  Address suggestions
+                </div>
+                {addressResults.map((result, idx) => (
+                  <button
+                    key={idx}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b last:border-b-0"
+                    onClick={() => handleAddressSelect(result)}
+                  >
+                    <div className="font-medium">{result.display_name.split(',')[0]}</div>
+                    <div className="text-xs text-gray-500">{result.display_name}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Quick City Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Or select a city
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowCities(!showCities)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  {showCities ? 'Hide' : 'Show'} cities
+                </button>
+              </div>
+              
+              {showCities && (
+                <div className="max-h-32 overflow-y-auto border rounded-lg">
+                  <div className="p-2 space-y-1">
+                    {filteredCities.map(city => (
+                      <button
+                        key={city}
+                        className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded"
+                        onClick={() => {
+                          setAddress(city);
+                          setSelectedLocation(city);
+                          let coords = CITY_COORDINATES[city];
+                          if (!coords && city.toLowerCase().includes('delhi')) {
+                            coords = { latitude: 28.6139, longitude: 77.2090 };
+                          }
+                          if (coords) {
+                            const addressData = {
+                              address: city,
+                              lat: coords.latitude,
+                              lon: coords.longitude
+                            };
+                            localStorage.setItem('selected_address', JSON.stringify(addressData));
+                          } else {
+                            const addressData = { address: city };
+                            localStorage.setItem('selected_address', JSON.stringify(addressData));
+                          }
+                        }}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Find Experiences button */}
+            {selectedLocation && (
+              <div className="pt-2">
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-10 font-medium"
+                  onClick={() => {
+                    try {
+                      const parsed = JSON.parse(localStorage.getItem('selected_address') || '');
+                      onChange(parsed);
+                    } catch {
+                      onChange(selectedLocation);
+                    }
+                    if (typeof setOpen === 'function') setOpen(false);
+                  }}
+                >
+                  Find Experiences Near This Location
+                </Button>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-sm text-red-600 mt-2">{error}</div>
+            )}
+          </div>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
