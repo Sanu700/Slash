@@ -4,9 +4,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { FormData } from '@/types/personalizerTypes';
-import { submitAnswer, fetchInitQuestion, goBackOneStep } from '@/lib/aiPersonalizer';
+import { submitAnswer, fetchSuggestions, goBackOneStep } from '@/lib/aiPersonalizer';
 import { useToast } from '@/components/ui/use-toast';
 
 interface StepInterestsProps {
@@ -16,6 +16,10 @@ interface StepInterestsProps {
   onNext: () => void;
   onBack: () => void;
   isGenerating: boolean;
+  setSuggestedExperiences: React.Dispatch<React.SetStateAction<any[]>>;
+  interestsPrompt?: string;
+  setInterestsInput: (input: string) => void;
+  aiSessionId?: string;
 }
 
 const StepInterests = ({ 
@@ -24,7 +28,11 @@ const StepInterests = ({
   onCustomInterestsChange, 
   onNext, 
   onBack, 
-  isGenerating 
+  isGenerating, 
+  setSuggestedExperiences,
+  interestsPrompt,
+  setInterestsInput,
+  aiSessionId
 }: StepInterestsProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -55,11 +63,6 @@ const StepInterests = ({
     setIsProcessing(true);
     
     try {
-      // Step 1: Call /init first
-      console.log('=== INITIALIZING AI CONTEXT (INTERESTS STEP) ===');
-      await fetchInitQuestion();
-      console.log('AI initialized successfully in interests step');
-      
       // Call /submit with interests data
       console.log('=== SUBMITTING INTERESTS DATA ===');
       
@@ -77,8 +80,14 @@ const StepInterests = ({
       console.log('Combined interests:', interestsInput);
       console.log('=== END INTERESTS DATA ===');
       
-      await submitAnswer(interestsInput);
+      setInterestsInput(interestsInput);
+      await submitAnswer(aiSessionId, interestsInput);
       console.log('Interests data submitted successfully');
+
+      // Call /suggestion to get AI recommendations
+      const suggestions = await fetchSuggestions('', 5, aiSessionId);
+      setSuggestedExperiences(suggestions);
+      console.log('Suggestions fetched and set successfully');
       
       // Move to next step
       onNext();
@@ -98,7 +107,7 @@ const StepInterests = ({
   const handleBackClick = async () => {
     try {
       console.log('=== CALLING /back ===');
-      await goBackOneStep();
+      await goBackOneStep(aiSessionId);
       console.log('/back called successfully');
       
       // Call the parent's onBack function
@@ -118,10 +127,9 @@ const StepInterests = ({
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-medium mb-2">What are they interested in?</h2>
-        <p className="text-muted-foreground">
-          Select all interests that apply to {formData.recipient || 'the recipient'}.
-        </p>
+        {interestsPrompt && (
+          <p className="text-lg font-medium text-primary mb-2">{interestsPrompt}</p>
+        )}
       </div>
 
       <Card>
@@ -184,7 +192,10 @@ const StepInterests = ({
               Processing...
             </>
           ) : (
-            'Next'
+            <>
+              <Sparkles className="h-4 w-4" />
+              Get AI Suggestions
+            </>
           )}
         </Button>
       </div>
