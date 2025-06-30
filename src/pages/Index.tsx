@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { MapPin, Search } from 'lucide-react';
 import SuggestedExperiences from '@/components/SuggestedExperiences';
+import { CITY_COORDINATES } from '@/components/CitySelector';
 
 const Index = () => {
   const [featuredExperiences, setFeaturedExperiences] = useState<Experience[]>([]);
@@ -67,13 +68,47 @@ const Index = () => {
       parsed = selectedAddressRaw;
     }
     setSelectedAddress(parsed);
+    let city = '';
     if (parsed && typeof parsed === 'object' && parsed.address) {
-      setSuggestedCity(parsed.address);
+      const parts = parsed.address.split(',').map(s => s.trim());
+      const knownCities = Object.keys(CITY_COORDINATES);
+      const indianStates = [
+        'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh','Puducherry','Chandigarh','Andaman and Nicobar Islands','Dadra and Nagar Haveli and Daman and Diu','Lakshadweep'];
+      // 1. Try to find a known city from right to left
+      for (let i = parts.length - 1; i >= 0; i--) {
+        if (knownCities.some(c => c.toLowerCase() === parts[i].toLowerCase())) {
+          city = parts[i];
+          break;
+        }
+      }
+      // 2. If not found, try from left to right for a part that's not a number, not a state, and at least 3 chars
+      if (!city) {
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (
+            part.length >= 3 &&
+            !/\d{3,}/.test(part) &&
+            !indianStates.some(state => state.toLowerCase() === part.toLowerCase())
+          ) {
+            city = part;
+            break;
+          }
+        }
+      }
+      // 3. Fallback: previous logic
+      if (!city) {
+        if (parts.length > 1) {
+          city = parts[parts.length - 2];
+        } else {
+          city = parsed.address;
+        }
+      }
     } else if (typeof parsed === 'string') {
-      setSuggestedCity(parsed);
+      city = parsed;
     } else {
-      setSuggestedCity('');
+      city = '';
     }
+    setSuggestedCity(city);
   }, [allExperiences]);
 
   let filteredExperiences: Experience[] = allExperiences;
