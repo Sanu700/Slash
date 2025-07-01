@@ -50,9 +50,10 @@ interface LocationDropdownProps {
   onChange: (value: string | null) => void;
   placeholder?: string;
   standalone?: boolean;
+  onClose?: () => void;
 }
 
-const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location', standalone = false }) => {
+const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location', standalone = false, onClose }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [address, setAddress] = useState('');
@@ -398,7 +399,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                     } catch {
                       onChange(selectedLocation);
                     }
-                    if (typeof setOpen === 'function') setOpen(false);
+                    if (onClose) onClose();
                   }}
                 >
                   Find Experiences Near This Location
@@ -598,7 +599,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                     } catch {
                       onChange(selectedLocation);
                     }
-                    if (typeof setOpen === 'function') setOpen(false);
+                    setOpen(false);
                   }}
                 >
                   Find Experiences Near This Location
