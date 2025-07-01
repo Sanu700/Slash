@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+
 const BASE_URL = "https://slash-rag-agent.onrender.com" 
 
 // Add retry logic for failed requests
@@ -167,118 +169,26 @@ export const fetchNextQuestion = async (session_id?: string) => {
   }
 };
 
-export const fetchSuggestions = async (query = "", k = 5, session_id?: string) => {
-  console.log('=== FETCH SUGGESTIONS FUNCTION CALLED ===');
-  console.log('Parameters received:');
-  console.log('- query:', query);
-  console.log('- k:', k);
-  console.log('- session_id:', session_id);
-  console.log('BASE_URL:', BASE_URL);
-  console.log('=== END PARAMETERS ===');
-  
+export const fetchSuggestions = async (tag = "", k = 5, session_id?: string) => {
+  // Fetch suggestions directly from Supabase
   try {
-    // Handle undefined parameters properly
-    const safeQuery = query === undefined ? "" : query;
-    const safeK = k === undefined ? 5 : k;
-    
-    console.log('Fetching suggestions with query:', safeQuery, 'k:', safeK, 'session_id:', session_id);
-    let url = `${BASE_URL}/suggestion?query=${encodeURIComponent(safeQuery)}&k=${safeK}`;
-    if (session_id) {
-      url += `&session_id=${encodeURIComponent(session_id)}`;
+    let supabaseQuery = supabase
+      .from('experiences')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(k);
+
+    // Filter by tags if provided (assuming tags is an array column)
+    if (tag) {
+      supabaseQuery = supabaseQuery.contains('tags', [tag]);
     }
-    console.log('Final URL being called:', url);
-    console.log('About to make fetch request to:', url);
-    console.log('Request method: GET');
-    
-    const res = await fetchWithRetry(url, {
-      method: 'GET',
-    });
-    console.log('Fetch request completed, status:', res.status);
-    console.log('Response headers:', res.headers);
-    
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('Suggestions Error Response:', errorText);
-      console.error('Error status:', res.status);
-      console.error('Error status text:', res.statusText);
-      throw new Error(`Failed to fetch suggestions: ${res.status} ${res.statusText}`);
+
+    const { data, error } = await supabaseQuery;
+    if (error) {
+      console.error('Error fetching suggestions from Supabase:', error);
+      throw new Error('Failed to fetch suggestions from Supabase');
     }
-    
-    // Log the raw response text first
-    const responseText = await res.text();
-    console.log('Raw response text:', responseText);
-    
-    // Try to parse as JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('Failed to parse JSON:', parseError, 'Raw text:', responseText);
-      throw new Error('Invalid JSON response from API');
-    }
-    
-    console.log('Parsed suggestions response:', data);
-    console.log('Response type:', typeof data);
-    console.log('Is array:', Array.isArray(data));
-    console.log('Response keys:', data && typeof data === 'object' ? Object.keys(data) : 'N/A');
-    
-    // Handle different response structures with proper bounds checking
-    if (Array.isArray(data)) {
-      console.log('Returning array response:', data);
-      // Check if array is not empty before returning
-      if (data.length > 0) {
-        return data;
-      } else {
-        console.warn('Empty array received from API');
-        return [];
-      }
-    } else if (data.suggestions && Array.isArray(data.suggestions)) {
-      console.log('Returning suggestions array:', data.suggestions);
-      // Check if suggestions array is not empty
-      if (data.suggestions.length > 0) {
-        return data.suggestions;
-      } else {
-        console.warn('Empty suggestions array received from API');
-        return [];
-      }
-    } else if (data.results && Array.isArray(data.results)) {
-      console.log('Returning results array:', data.results);
-      // Check if results array is not empty
-      if (data.results.length > 0) {
-        return data.results;
-      } else {
-        console.warn('Empty results array received from API');
-        return [];
-      }
-    } else if (typeof data === 'object' && data !== null) {
-      // If the response is an object but doesn't have the expected structure,
-      // try to extract suggestions from it
-      console.log('Attempting to parse response object:', data);
-      
-      // Check if the response has a direct array of items with bounds checking
-      const keys = Object.keys(data);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        if (Array.isArray(data[key])) {
-          console.log(`Found array in key: ${key}`, data[key]);
-          // Check if the array is not empty before returning
-          if (data[key].length > 0) {
-            return data[key];
-          } else {
-            console.warn(`Empty array found in key: ${key}`);
-            // Continue searching for non-empty arrays
-            continue;
-          }
-        }
-      }
-      
-      // If no non-empty array found, return the data as is (might be a single suggestion)
-      console.log('No non-empty array found, returning data as is:', data);
-      return [data];
-    } else {
-      console.warn('Unexpected response structure:', data);
-      throw new Error('Invalid response structure from API');
-    }
+    return data || [];
   } catch (error) {
     console.error('Error fetching suggestions:', error);
     throw error;
