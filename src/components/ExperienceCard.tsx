@@ -234,6 +234,12 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             {/* Title */}
             <h3 className="text-lg md:text-xl font-medium mb-2 line-clamp-2">{experience.title}</h3>
 
+            {/* Location as text */}
+            <div className="text-xs md:text-sm text-white/80 mb-1 flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
+              <span className="truncate">{experience.location}</span>
+            </div>
+
             {/* Location + Price */}
             <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
               <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
