@@ -504,7 +504,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     }
                     onChange={(val) => {
                       setSelectedLocation(val);
-                      navigate('/experiences');
+                      window.dispatchEvent(new Event('locationChanged'));
+                      if (window.location.pathname !== '/experiences') {
+                        navigate('/experiences');
+                      }
                     }}
                     standalone
                   />
