@@ -53,6 +53,20 @@ interface LocationDropdownProps {
   onClose?: () => void;
 }
 
+// Utility: Haversine formula to calculate distance between two lat/lon points in km
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location', standalone = false, onClose }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -73,6 +87,9 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
 
   const [cityResults, setCityResults] = useState<string[]>([]);
 
+  // Store user's coordinates if available
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+
   useEffect(() => {
     // Always read the latest value from localStorage when the route changes
     const selectedAddressRaw = localStorage.getItem('selected_address');
@@ -83,6 +100,10 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
       parsed = selectedAddressRaw;
     }
     setSelectedAddress(parsed);
+    // If lat/lon available, store as userCoords
+    if (parsed && parsed.lat && parsed.lon) {
+      setUserCoords({ lat: parseFloat(parsed.lat), lon: parseFloat(parsed.lon) });
+    }
   }, [location]);
 
   // Always sync address state with value prop
@@ -128,6 +149,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           didRespond = true;
           clearTimeout(geoTimeout);
           const { latitude, longitude } = position.coords;
+          setUserCoords({ lat: latitude, lon: longitude }); // <-- update here
           let fetchTimeout;
           let didFetch = false;
           try {
@@ -184,8 +206,8 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
     }
   };
 
-  // Address autocomplete handler
-  const handleAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Address autocomplete handler (debounced)
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setAddress(val);
 
@@ -193,30 +215,71 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
     if (val.length < 1) {
       setCityResults([]);
       setAddressResults([]);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      setAddressLoading(false);
       return;
     }
     const lowerVal = val.toLowerCase();
     const cityFiltered = SORTED_LOCATIONS.filter(city => city.toLowerCase().startsWith(lowerVal));
     setCityResults(cityFiltered);
 
+    // Debounce API call
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     setAddressLoading(true);
-    try {
-      // API address suggestions
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=50&countrycodes=in`);
-      let data = await res.json();
-      // Show results where any word in display_name starts with the input
-      const filtered = data.filter(item =>
-        item.display_name
-          .toLowerCase()
-          .split(/[, ]+/)
-          .some(part => part.trim().startsWith(lowerVal))
-      );
-      setAddressResults(filtered);
-    } catch (err) {
-      setAddressResults([]);
-    } finally {
-      setAddressLoading(false);
-    }
+    debounceTimeout.current = setTimeout(async () => {
+      try {
+        // API address suggestions
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=50&countrycodes=in`);
+        let data = await res.json();
+        if (!Array.isArray(data)) {
+          setAddressResults([]);
+          setAddressLoading(false);
+          setError('No results found.');
+          return;
+        }
+        // Show results where any word in display_name starts with the input
+        let filtered = data.filter(item =>
+          item.display_name
+            .toLowerCase()
+            .split(/[, ]+/)
+            .some(part => part.trim().startsWith(lowerVal))
+        );
+        // If filter removes everything, fallback to all results
+        if (filtered.length === 0 && data.length > 0) {
+          filtered = data;
+        }
+        // If userCoords available, sort by distance
+        if (userCoords && filtered.length > 0) {
+          filtered = filtered.map(item => {
+            let dist = null;
+            if (item.lat && item.lon) {
+              dist = haversineDistance(
+                userCoords.lat,
+                userCoords.lon,
+                parseFloat(item.lat),
+                parseFloat(item.lon)
+              );
+            }
+            return { ...item, _distance: dist };
+          });
+          filtered.sort((a, b) => {
+            if (a._distance == null) return 1;
+            if (b._distance == null) return -1;
+            return a._distance - b._distance;
+          });
+        }
+        setAddressResults(filtered);
+        setError(filtered.length === 0 ? 'No results found.' : null);
+      } catch (err) {
+        setAddressResults([]);
+        setError('Error fetching address suggestions.');
+        // For debugging
+        // eslint-disable-next-line no-console
+        console.error('Address autocomplete error:', err);
+      } finally {
+        setAddressLoading(false);
+      }
+    }, 400);
   };
 
   const handleAddressSelect = (result: any) => {
