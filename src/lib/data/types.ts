@@ -24,6 +24,7 @@ export interface Experience {
     lat: number;
     lng: number;
   };
+  exp_type?: string[];
   onClick?: () => void; // Add onClick property for ExperienceCard in Profile page
 }
 
