@@ -35,6 +35,7 @@ const mapDbExperienceToModel = (item: any): Experience => ({
   date: item.date,
   category: item.category,
   nicheCategory: item.niche_category,
+  exp_type: item.exp_type || [],
   trending: item.trending || false,
   featured: item.featured || false,
   romantic: item.romantic || false,
@@ -57,7 +58,7 @@ export const useExperiencesManager = () => {
       try {
         const { data, error } = await supabase
           .from('experiences')
-          .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity');
+          .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity');
         
         if (error) {
           throw error;
@@ -103,6 +104,7 @@ export const useExperiencesManager = () => {
           date: experience.date,
           category: experience.category,
           niche_category: experience.nicheCategory,
+          exp_type: experience.exp_type,
           trending: experience.trending || false,
           featured: experience.featured || false,
           romantic: experience.romantic || false,
@@ -142,6 +144,7 @@ export const useExperiencesManager = () => {
       if (updates.date !== undefined) updateData.date = updates.date;
       if (updates.category !== undefined) updateData.category = updates.category;
       if (updates.nicheCategory !== undefined) updateData.niche_category = updates.nicheCategory;
+      if (updates.exp_type !== undefined) updateData.exp_type = updates.exp_type;
       if (updates.trending !== undefined) updateData.trending = updates.trending;
       if (updates.featured !== undefined) updateData.featured = updates.featured;
       if (updates.romantic !== undefined) updateData.romantic = updates.romantic;
@@ -208,6 +211,7 @@ export const useExperiencesManager = () => {
         date: exp.date,
         category: exp.category,
         niche_category: exp.nicheCategory,
+        exp_type: exp.exp_type,
         trending: exp.trending || false,
         featured: exp.featured || false,
         romantic: exp.romantic || false,
@@ -226,7 +230,7 @@ export const useExperiencesManager = () => {
       // Refresh the experiences list
       const { data, error: fetchError } = await supabase
         .from('experiences')
-        .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity');
+        .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity');
         
       if (fetchError) {
         throw fetchError;
@@ -252,7 +256,7 @@ export const useExperiencesManager = () => {
     try {
       const { data, error } = await supabase
         .from('experiences')
-        .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity');
+        .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity');
         
       if (error) {
         throw error;
@@ -299,7 +303,7 @@ export const getAllExperiences = async (): Promise<Experience[]> => {
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity');
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity');
     
     if (error) {
       throw error;
@@ -317,7 +321,7 @@ export const getTrendingExperiences = async (): Promise<Experience[]> => {
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity')
       .eq('trending', true);
     
     if (error) {
@@ -337,7 +341,7 @@ export const getFeaturedExperiences = async (): Promise<Experience[]> => {
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity')
       .eq('featured', true);
     
     if (error) {
@@ -357,7 +361,7 @@ export const getExperienceById = async (id: string): Promise<Experience | null> 
   try {
     const { data, error } = await supabase
       .from('experiences')
-      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity')
       .eq('id', id)
       .maybeSingle();
     
@@ -386,7 +390,7 @@ export const getExperiencesByCategory = async (categoryId: string): Promise<Expe
     
     const { data, error } = await supabase
       .from('experiences')
-      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, trending, featured, romantic, adventurous, group_activity')
+      .select('id, title, description, image_url, price, location, latitude, longitude, duration, participants, date, category, niche_category, exp_type, trending, featured, romantic, adventurous, group_activity')
       .ilike('category', categoryObj.name.toLowerCase());
     
     if (error) {
