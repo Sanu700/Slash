@@ -167,7 +167,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
         {/* Image Container fills the card */}
         <div className="flex-1 h-full w-full overflow-hidden">
           <img
-            src={experience.imageUrl}
+            src={Array.isArray(experience.imageUrl) ? (experience.imageUrl[0] || '/placeholder.svg') : (experience.imageUrl || '/placeholder.svg')}
             alt={experience.title}
             className={cn(
               "w-full h-full object-cover object-center transition-transform duration-700 ease-out",
