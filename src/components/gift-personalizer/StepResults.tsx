@@ -13,6 +13,7 @@ interface Suggestion {
   description: string;
   price: number;
   category: string;
+  image_url?: string;
   image?: string;
   imageUrl?: string;
   img?: string;
@@ -32,7 +33,7 @@ interface StepResultsProps {
 
 const AISuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
   const navigate = useNavigate();
-  const imageUrl = suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
+  const imageUrl = suggestion.image_url || suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
   
   // Debug logging
   console.log('AISuggestionCard image data:', {

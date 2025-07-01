@@ -182,7 +182,7 @@ const AISuggestions = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {suggestions.map((suggestion, index) => {
               // Try to find image from multiple possible field names
-              const imageUrl = suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail;
+              const imageUrl = suggestion.image_url || suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
               
               return (
                 <motion.div
