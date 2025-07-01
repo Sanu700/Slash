@@ -459,7 +459,9 @@ const ExperienceView = () => {
                   <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {similarExperiences.map((exp) => (
-                      <ExperienceCard key={exp.id} experience={exp} />
+                      <div key={exp.id} className="aspect-[4/3] h-full w-full flex">
+                        <ExperienceCard experience={exp} />
+                      </div>
                     ))}
                   </div>
                 </div>
