@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,10 +25,9 @@ const CartContent = ({ cartExperiences, handleExperienceClick }: CartContentProp
             };
             
             return (
-              <ExperienceCard 
-                key={experience.id} 
-                experience={expWithClick}
-              />
+              <div key={experience.id} className="aspect-[4/3] h-full w-full flex">
+                <ExperienceCard experience={expWithClick} />
+              </div>
             );
           })}
         </div>
