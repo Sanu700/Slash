@@ -4,7 +4,7 @@ export interface Experience {
   id: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: string[];
   price: number;
   location: string;
   latitude?: number;
