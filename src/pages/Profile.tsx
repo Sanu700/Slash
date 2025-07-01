@@ -51,6 +51,8 @@ const Profile = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [savedExperiences, setSavedExperiences] = useState([]);
   const [viewedExperiences, setViewedExperiences] = useState([]);
+  // Add local state for wishlist to allow UI update on remove
+  const [localWishlist, setLocalWishlist] = useState([]);
   // Wishlist from Supabase
   const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
 
@@ -93,6 +95,17 @@ const Profile = () => {
       })();
     }
   }, [user]);
+
+  useEffect(() => {
+    setLocalWishlist(wishlistExperiences);
+  }, [wishlistExperiences]);
+
+  // Remove from local wishlist when un-wishlisted
+  const handleWishlistChange = (experienceId, isInWishlist) => {
+    if (!isInWishlist) {
+      setLocalWishlist(prev => prev.filter(exp => exp.id !== experienceId));
+    }
+  };
 
   // Profile info for header
   const profile = {
@@ -192,7 +205,7 @@ const Profile = () => {
         {/* Tab Content */}
         <div>
           {activeTab === 'wishlist' && (
-            <WishlistContent wishlistExperiences={wishlistExperiences} handleExperienceClick={(id) => navigate(`/experience/${id}`)} />
+            <WishlistContent wishlistExperiences={localWishlist} handleExperienceClick={(id) => navigate(`/experience/${id}`)} onWishlistChange={handleWishlistChange} />
           )}
           {activeTab === 'saved' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

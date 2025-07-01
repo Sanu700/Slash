@@ -229,81 +229,46 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
         </button>
 
         {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-4 text-white">
-          <div className={cn("transition-transform duration-300", isHovered ? "translate-y-0" : "translate-y-4")}>
+        <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-4 text-white pointer-events-none">
+          <div className={cn("transition-transform duration-300", isHovered ? "translate-y-0" : "translate-y-4")}> 
             {/* Title */}
-            <h3 className="text-lg md:text-xl font-medium mb-2 line-clamp-2">{experience.title}</h3>
+            <h3 className="text-lg md:text-xl font-medium mb-2 line-clamp-2 overflow-hidden pointer-events-auto">{experience.title}</h3>
 
             {/* Location + Price */}
-            <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
-              <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-                <DialogTrigger asChild>
-
-                  <Button
-                    size="sm"
-                    className="bg-white text-black hover:bg-white/90 font-semibold text-xs md:text-sm py-2 px-4 rounded-full shadow"
-                    style={{ minWidth: 120 }}
-                  >
-                    Show Map
-                  </Button>
-
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[625px]">
-                  <DialogHeader>
-                    <DialogTitle>{experience.title} - Location</DialogTitle>
-                  </DialogHeader>
-                  <ExperienceMap locationName={experience.location} />
-                </DialogContent>
-              </Dialog>
-              <div className="text-base md:text-lg font-medium whitespace-nowrap px-2 py-0.5">
-                {formatRupees(experience.price)}
-              </div>
+            <div className="flex items-center justify-between mb-1 pointer-events-auto">
+              <span className="flex items-center text-xs md:text-sm text-white/80 truncate max-w-[60%]">
+                <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
+                <span className="truncate block max-w-[90px] md:max-w-[150px]">{experience.location}</span>
+              </span>
+              <span className="text-base md:text-lg font-medium whitespace-nowrap px-2 py-0.5">{formatRupees(experience.price)}</span>
             </div>
-            {/* Time and Distance Proximity (with debug info) */}
-            {(distance || travelTime) ? (
-              <div className="flex items-center gap-3 mb-2">
-                {travelTime && (
-                  <span className="flex items-center gap-1 text-xs text-white px-2 py-0.5">
-                    <Clock className="h-3 w-3" />
-                    {travelTime.replace(/^~\s*/, '')}
-                  </span>
-                )}
-                {travelTime && distance && (
-                  <span className="text-white text-xs">|</span>
-                )}
-                {distance && (
-                  <span className="flex items-center gap-1 text-xs text-white px-2 py-0.5">
-                    <MapPin className="h-3 w-3" />
-                    {distance}
-                  </span>
-                )}
+
+            {/* Description (clamped) */}
+            {experience.description && (
+              <div className="text-xs text-white/80 mb-1 line-clamp-2 overflow-hidden pointer-events-auto">
+                {experience.description}
               </div>
-            ) : (
-              <div className="text-xs text-red-200 mb-2">No proximity info (debug: expLat={String(experience.latitude)}, expLng={String(experience.longitude)}, city={String(selectedCity)}, cityCoords={JSON.stringify(selectedCity && CITY_COORDINATES[selectedCity])})</div>
             )}
 
             {/* Duration, Participants, Date */}
-            <div className={cn(
-              "grid grid-cols-3 gap-1 md:gap-2 mb-3 md:mb-4 opacity-0 transition-opacity duration-300",
-              isHovered ? "opacity-100" : "opacity-0"
-            )}>
-              <div className="flex items-center text-xs text-white/70">
-                <Clock className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.duration}</span>
-              </div>
-              <div className="flex items-center text-xs text-white/70">
-                <Users className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.participants}</span>
-              </div>
-              <div className="flex items-center text-xs text-white/70">
-                <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.date}</span>
-              </div>
+            <div className="flex items-center gap-2 mb-2 text-xs text-white/70 pointer-events-auto">
+              <span className="flex items-center">
+                <Clock className="h-3 w-3 mr-1" />
+                {experience.duration}
+              </span>
+              <span className="flex items-center">
+                <Users className="h-3 w-3 mr-1" />
+                {experience.participants}
+              </span>
+              <span className="flex items-center">
+                <Calendar className="h-3 w-3 mr-1" />
+                {experience.date}
+              </span>
             </div>
 
             {/* Button */}
             <div className={cn(
-              "transition-all duration-300 transform",
+              "transition-all duration-300 transform pointer-events-auto",
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}>
               <Link to={`/experience/${experience.id}`}>
