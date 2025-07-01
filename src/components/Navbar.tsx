@@ -58,6 +58,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -386,6 +387,17 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
   };
 
+  useEffect(() => {
+    // Always read the latest value from localStorage when the route changes
+    const selectedAddressRaw = localStorage.getItem('selected_address');
+    let parsed = null;
+    try {
+      parsed = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      parsed = selectedAddressRaw;
+    }
+    setSelectedLocation(parsed);
+  }, [location]);
 
   return (
     <>
@@ -467,16 +479,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gifting-guide" className={cn("text-sm font-medium", textClass)}>
-              Gifting Guide
-            </Link>
             <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
             <div className="relative">
-              <DropdownMenu>
+              <DropdownMenu open={locationDropdownOpen} onOpenChange={setLocationDropdownOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)}>
+                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)} onClick={() => setLocationDropdownOpen(true)}>
                     <MapPin className="h-4 w-4 text-blue-600" />
                     <span
                       className="max-w-[120px] truncate inline-block align-middle"
@@ -487,6 +496,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                             ? selectedLocation
                             : getLocationLabel()
                       }
+                      style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
                     >
                       {getLocationLabel()}
                     </span>
@@ -504,9 +514,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     }
                     onChange={(val) => {
                       setSelectedLocation(val);
-                      navigate('/experiences');
+                      window.dispatchEvent(new Event('locationChanged'));
+                      if (window.location.pathname !== '/experiences') {
+                        navigate('/experiences');
+                      }
                     }}
                     standalone
+                    onClose={() => setLocationDropdownOpen(false)}
                   />
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -651,7 +665,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
             <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">All Experiences</Link>
-            <Link to="/gifting-guide" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gifting Guide</Link>
             <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gift Personalizer</Link>
             <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Host an Experience</Link>
             {/* Company Section */}
