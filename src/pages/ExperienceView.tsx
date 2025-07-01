@@ -21,6 +21,24 @@ import ExperienceMap from '@/components/ExperienceMap';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CITY_COORDINATES } from '../components/CitySelector';
 
+function getValidImgSrc(src: any) {
+  if (!src) return '/placeholder.svg';
+  if (Array.isArray(src)) {
+    return getValidImgSrc(src[0]);
+  }
+  if (typeof src === 'object') {
+    if (src.url && typeof src.url === 'string') return src.url;
+    if (src.path && typeof src.path === 'string') return src.path;
+    return '/placeholder.svg';
+  }
+  if (typeof src !== 'string') return '/placeholder.svg';
+  if (src.startsWith('data:image/')) return src;
+  if (/^[A-Za-z0-9+/=]+={0,2}$/.test(src) && src.length > 100) {
+    return `data:image/jpeg;base64,${src}`;
+  }
+  return src;
+}
+
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -334,7 +352,7 @@ const ExperienceView = () => {
         {/* Hero Image Section */}
         <div className="relative h-[50vh] md:h-[60vh] w-full">
           <img 
-            src={experience.imageUrl} 
+            src={getValidImgSrc(experience.imageUrl)} 
             alt={experience.title}
             className="h-full w-full object-cover"
           />
