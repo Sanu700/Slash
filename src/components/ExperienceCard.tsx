@@ -235,12 +235,35 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             <h3 className="text-lg md:text-xl font-medium mb-2 line-clamp-2 overflow-hidden pointer-events-auto">{experience.title}</h3>
 
             {/* Location + Price */}
-            <div className="flex items-center justify-between mb-1 pointer-events-auto">
-              <span className="flex items-center text-xs md:text-sm text-white/80 truncate max-w-[60%]">
+            <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
+              {/* Location label as plain text */}
+              <span className="flex items-center text-xs md:text-sm text-white/80 max-w-[120px] md:max-w-[180px] truncate" title={experience.location}>
                 <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
                 <span className="truncate block max-w-[90px] md:max-w-[150px]">{experience.location}</span>
               </span>
-              <span className="text-base md:text-lg font-medium whitespace-nowrap px-2 py-0.5">{formatRupees(experience.price)}</span>
+              {/* Show Map button opens modal with ExperienceMap */}
+              <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+                <DialogTrigger asChild>
+
+                  <Button
+                    size="sm"
+                    className="bg-white text-black hover:bg-white/90 font-semibold text-xs md:text-sm py-2 px-4 rounded-full shadow"
+                    style={{ minWidth: 100 }}
+                  >
+                    Show Map
+                  </Button>
+
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[625px]">
+                  <DialogHeader>
+                    <DialogTitle>{experience.title} - Location</DialogTitle>
+                  </DialogHeader>
+                  <ExperienceMap locationName={experience.location} />
+                </DialogContent>
+              </Dialog>
+              <div className="text-base md:text-lg font-medium whitespace-nowrap px-2 py-0.5">
+                {formatRupees(experience.price)}
+              </div>
             </div>
 
             {/* Description (clamped) */}
