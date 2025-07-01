@@ -27,6 +27,7 @@ import TravelDemo from "./pages/TravelDemo";
 import { WishlistProvider } from './contexts/WishlistContext';
 import OrderDetails from './pages/OrderDetails';
 import OrderItemDetails from './pages/OrderItemDetails';
+import ExperienceType from "./pages/ExperienceType";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -103,6 +104,7 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/" element={<Layout><Index /></Layout>} />
                   <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
+                  <Route path="/experiences/type/:type" element={<Layout><ExperienceType /></Layout>} />
                   <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
                   <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
                   <Route path="/cart" element={<Layout><Cart /></Layout>} />
