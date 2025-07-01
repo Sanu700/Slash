@@ -13,6 +13,7 @@ interface Suggestion {
   description: string;
   price: number;
   category: string;
+  image_url?: string;
   image?: string;
   imageUrl?: string;
   img?: string;
