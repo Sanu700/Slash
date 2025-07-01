@@ -317,7 +317,7 @@ const Index = () => {
         </section>
 
         <TrendingSection />
-        <Newsletter />
+        
       </main>
     </div>
   );
