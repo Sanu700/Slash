@@ -58,6 +58,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -386,6 +387,17 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     handleNavigation(`/experiences?search=${encodeURIComponent(term)}`);
   };
 
+  useEffect(() => {
+    // Always read the latest value from localStorage when the route changes
+    const selectedAddressRaw = localStorage.getItem('selected_address');
+    let parsed = null;
+    try {
+      parsed = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      parsed = selectedAddressRaw;
+    }
+    setSelectedLocation(parsed);
+  }, [location]);
 
   return (
     <>
@@ -474,9 +486,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               Gift Personalizer
             </Link>
             <div className="relative">
-              <DropdownMenu>
+              <DropdownMenu open={locationDropdownOpen} onOpenChange={setLocationDropdownOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)}>
+                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)} onClick={() => setLocationDropdownOpen(true)}>
                     <MapPin className="h-4 w-4 text-blue-600" />
                     <span
                       className="max-w-[120px] truncate inline-block align-middle"
@@ -510,6 +522,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                       }
                     }}
                     standalone
+                    onClose={() => setLocationDropdownOpen(false)}
                   />
                 </DropdownMenuContent>
               </DropdownMenu>
