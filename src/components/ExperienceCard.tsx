@@ -236,13 +236,19 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
 
             {/* Location + Price */}
             <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
+              {/* Location label as plain text */}
+              <span className="flex items-center text-xs md:text-sm text-white/80 max-w-[120px] md:max-w-[180px] truncate" title={experience.location}>
+                <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
+                <span className="truncate block max-w-[90px] md:max-w-[150px]">{experience.location}</span>
+              </span>
+              {/* Show Map button opens modal with ExperienceMap */}
               <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
                 <DialogTrigger asChild>
 
                   <Button
                     size="sm"
                     className="bg-white text-black hover:bg-white/90 font-semibold text-xs md:text-sm py-2 px-4 rounded-full shadow"
-                    style={{ minWidth: 120 }}
+                    style={{ minWidth: 100 }}
                   >
                     Show Map
                   </Button>
