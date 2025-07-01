@@ -160,9 +160,9 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative h-full w-full overflow-hidden rounded-xl flex flex-col">
-        {/* Image Container with Fixed Aspect Ratio */}
-        <div className="aspect-[4/3] w-full overflow-hidden">
+      <div className="relative h-full w-full overflow-hidden rounded-xl flex flex-col flex-1">
+        {/* Image Container fills the card */}
+        <div className="flex-1 h-full w-full overflow-hidden">
           <img
             src={experience.imageUrl}
             alt={experience.title}
@@ -170,16 +170,13 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               "w-full h-full object-cover object-center transition-transform duration-700 ease-out",
               isHovered ? "scale-110" : "scale-100"
             )}
-            style={{ minHeight: '200px' }}
             onError={(e) => {
-              console.log(`Image failed to load for ${experience.title}:`, experience.imageUrl);
               const target = e.target as HTMLImageElement;
               target.src = '/placeholder.svg';
             }}
           />
         </div>
-
-        {/* Overlay */}
+        {/* Overlay and content remain absolutely positioned */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
         {/* Trending Badge */}
