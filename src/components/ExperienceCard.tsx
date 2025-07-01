@@ -1,10 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Experience } from '@/lib/data';
+import { Heart, HeartIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { MapPin, Clock, Users, Calendar, Heart } from 'lucide-react';
-import { formatRupees, getTravelTimeMinutes } from '@/lib/formatters';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -12,27 +10,55 @@ import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { calculateHaversineDistance } from '@/lib/distanceUtils';
+import { MapPin, Clock } from 'lucide-react';
 
 import { CITY_COORDINATES } from './CitySelector';
 
 import { TravelInfoDisplay } from './TravelInfoDisplay';
 
+// Array of fallback images for variety
+const FALLBACK_IMAGES = [
+  '/placeholder.svg',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
+];
+
+function getRandomFallback() {
+  return FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)];
+}
+
+function getValidImgSrc(src: any) {
+  if (!src) return '/placeholder.svg';
+  if (Array.isArray(src)) {
+    // Use the first image in the array, or fallback
+    return getValidImgSrc(src[0]);
+  }
+  if (typeof src === 'object') {
+    if (src.url && typeof src.url === 'string') return src.url;
+    if (src.path && typeof src.path === 'string') return src.path;
+    return '/placeholder.svg';
+  }
+  if (typeof src !== 'string') return '/placeholder.svg';
+  if (src.startsWith('data:image/')) return src;
+  if (/^[A-Za-z0-9+/=]+={0,2}$/.test(src) && src.length > 100) {
+    return `data:image/jpeg;base64,${src}`;
+  }
+  return src;
+}
 
 interface ExperienceCardProps {
   experience: Experience;
   featured?: boolean;
   onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
+  index?: number;
 }
 
-const ExperienceCard = ({ experience, featured = false, onWishlistChange }: ExperienceCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+const ExperienceCard = ({ experience, featured = false, onWishlistChange, index }: ExperienceCardProps) => {
   const [isInWishlist, setIsInWishlist] = useState(false);
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
-  const [travelTime, setTravelTime] = useState<string | null>(null);
-  const [distance, setDistance] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
   const [selectedAddress, setSelectedAddress] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -91,27 +117,26 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       experience.latitude && experience.longitude &&
       fromLat !== null && fromLng !== null
     ) {
-      const dist = calculateHaversineDistance(fromLat, fromLng, experience.latitude, experience.longitude);
-      setDistance(`${dist.toFixed(1)} km away`);
-      getTravelTimeMinutes(
+      const dist = calculateHaversineDistance(
         fromLat,
         fromLng,
         experience.latitude,
         experience.longitude
-      ).then(mins => {
-        if (mins !== null) {
-          setTravelTime(`~${mins} min`);
-        } else {
-          // Fallback: estimate travel time as 1 min per km
-          setTravelTime(`~${Math.round(dist)} min (est.)`);
-        }
-      }).catch(() => {
-        // Fallback: estimate travel time as 1 min per km
-        setTravelTime(`~${Math.round(dist)} min (est.)`);
-      });
-    } else {
-      setTravelTime(null);
-      setDistance(null);
+      );
+      setDistance(`${dist.toFixed(1)} km`);
+      let minutes;
+      if (dist === 0) {
+        minutes = 0;
+      } else {
+        minutes = Math.max(1, Math.round((dist / 30) * 60));
+      }
+      if (minutes >= 60) {
+        const hr = Math.floor(minutes / 60);
+        const min = minutes % 60;
+        setTravelTime(min > 0 ? `${hr} hr ${min} min` : `${hr} hr`);
+      } else {
+        setTravelTime(`${minutes} min`);
+      }
     }
   }, [experience.latitude, experience.longitude, experience.id, selectedCity, selectedAddress]);
 
@@ -153,146 +178,144 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
     });
   };
 
+  // Determine if this card is in the first row (3 columns)
+  const isFirstRow = (index ?? 0) < 3;
+
+  const [travelTime, setTravelTime] = useState<string | null>(null);
+  const [distance, setDistance] = useState<string | null>(null);
+  const [imgSrc, setImgSrc] = useState(experience.imageUrl || '/placeholder.svg');
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Debug log for image source and type
+  console.log('ExperienceCard image:', { imgSrc, type: typeof imgSrc, experience, imageUrl: experience.imageUrl });
+
+  // Calculate proximity info (mock/fallback for demo)
+  const [debugCoords, setDebugCoords] = useState({ fromLat: null, fromLng: null, toLat: null, toLng: null });
+  useEffect(() => {
+    const cityCoords = { latitude: 28.6139, longitude: 77.2090 }; // Delhi fallback
+    let fromLat = null;
+    let fromLng = null;
+    if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
+      fromLat = parseFloat(selectedAddress.lat);
+      fromLng = parseFloat(selectedAddress.lon);
+    } else if (selectedCity && CITY_COORDINATES[selectedCity]) {
+      fromLat = CITY_COORDINATES[selectedCity].latitude;
+      fromLng = CITY_COORDINATES[selectedCity].longitude;
+    } else {
+      fromLat = cityCoords.latitude;
+      fromLng = cityCoords.longitude;
+    }
+    setDebugCoords({
+      fromLat,
+      fromLng,
+      toLat: experience.latitude,
+      toLng: experience.longitude
+    });
+    if (experience.latitude && experience.longitude) {
+      const dist = calculateHaversineDistance(
+        fromLat,
+        fromLng,
+        experience.latitude,
+        experience.longitude
+      );
+      setDistance(`${dist.toFixed(1)} km`);
+      let minutes;
+      if (dist === 0) {
+        minutes = 0;
+      } else {
+        minutes = Math.max(1, Math.round((dist / 30) * 60));
+      }
+      if (minutes >= 60) {
+        const hr = Math.floor(minutes / 60);
+        const min = minutes % 60;
+        setTravelTime(min > 0 ? `${hr} hr ${min} min` : `${hr} hr`);
+      } else {
+        setTravelTime(`${minutes} min`);
+      }
+    }
+  }, [experience.latitude, experience.longitude, selectedCity, selectedAddress]);
+
+  // If the experience image changes, reset the imgSrc
+  useEffect(() => {
+    setImgSrc(experience.imageUrl || '/placeholder.svg');
+  }, [experience.imageUrl]);
+
   return (
-    <div
-      ref={cardRef}
-      className={cn(
-        "group relative overflow-hidden rounded-xl hover-lift transition-all duration-300 h-full w-full flex flex-col",
-        featured ? "md:col-span-2" : ""
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="relative h-full w-full overflow-hidden rounded-xl flex flex-col">
-        {/* Image Container with Fixed Aspect Ratio */}
-        <div className="aspect-[4/3] w-full overflow-hidden">
-          <img
-            src={experience.imageUrl}
-            alt={experience.title}
-            className={cn(
-              "w-full h-full object-cover object-center transition-transform duration-700 ease-out",
-              isHovered ? "scale-110" : "scale-100"
-            )}
-            style={{ minHeight: '200px' }}
-            onError={(e) => {
-              console.log(`Image failed to load for ${experience.title}:`, experience.imageUrl);
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.svg';
-            }}
-          />
-        </div>
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-        {/* Trending Badge */}
-        {experience.trending && (
-          <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-white/90 backdrop-blur-sm text-black px-2 py-1 md:px-3 md:py-1 rounded-full text-xs font-medium">
-            Trending
-          </div>
-        )}
-
-        {/* Favorite Button */}
+    <div className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden">
+      {/* Image section */}
+      <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
+        <img
+          src={getValidImgSrc(imgSrc)}
+          alt={experience.title}
+          className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
+          onError={e => {
+            e.currentTarget.onerror = null;
+            setImgSrc('/placeholder.svg');
+            setImgError(true);
+          }}
+          onLoad={() => setImgError(false)}
+        />
+        {/* Wishlist icon, only visible on hover */}
         <button
+          className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           onClick={handleToggleWishlist}
           disabled={isProcessing}
-          className={cn(
-            "absolute top-2 right-2 md:top-3 md:right-3 p-1.5 md:p-2 rounded-full backdrop-blur-sm transition-all z-10",
-            isInWishlist
-              ? "bg-white text-red-500"
-              : "bg-black/30 text-white hover:bg-black/50"
-          )}
-          type="button"
         >
-          <Heart className={cn("h-3.5 w-3.5 md:h-4 md:w-4", isInWishlist && "fill-red-500")} />
+          {isInWishlist ? (
+            <HeartIcon className="h-5 w-5 text-red-500 fill-red-500 transition" />
+          ) : (
+            <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500 transition" />
+          )}
         </button>
-
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-4 text-white">
-          <div className={cn("transition-transform duration-300", isHovered ? "translate-y-0" : "translate-y-4")}>
-            {/* Title */}
-            <h3 className="text-lg md:text-xl font-medium mb-2 line-clamp-2">{experience.title}</h3>
-
-            {/* Location + Price */}
-            <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
-              <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-                <DialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center text-xs md:text-sm text-white/80 cursor-pointer hover:underline bg-transparent border-none p-0 m-0 max-w-[120px] md:max-w-[180px] truncate"
-                    style={{ background: 'none', border: 'none' }}
-                    title={experience.location}
-                  >
-                    <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
-                    <span className="truncate block max-w-[90px] md:max-w-[150px]">{experience.location}</span>
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[625px]">
-                  <DialogHeader>
-                    <DialogTitle>{experience.title}</DialogTitle>
-                  </DialogHeader>
-                  <ExperienceMap locationName={experience.location} />
-                </DialogContent>
-              </Dialog>
-              <div className="text-base md:text-lg font-medium whitespace-nowrap px-2 py-0.5">
-                {formatRupees(experience.price)}
-              </div>
-            </div>
-            {/* Time and Distance Proximity (with debug info) */}
-            {(distance || travelTime) ? (
-              <div className="flex items-center gap-3 mb-2">
-                {travelTime && (
-                  <span className="flex items-center gap-1 text-xs text-white px-2 py-0.5">
-                    <Clock className="h-3 w-3" />
-                    {travelTime.replace(/^~\s*/, '')}
-                  </span>
-                )}
-                {travelTime && distance && (
-                  <span className="text-white text-xs">|</span>
-                )}
-                {distance && (
-                  <span className="flex items-center gap-1 text-xs text-white px-2 py-0.5">
-                    <MapPin className="h-3 w-3" />
-                    {distance}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className="text-xs text-red-200 mb-2">No proximity info (debug: expLat={String(experience.latitude)}, expLng={String(experience.longitude)}, city={String(selectedCity)}, cityCoords={JSON.stringify(selectedCity && CITY_COORDINATES[selectedCity])})</div>
-            )}
-
-            {/* Duration, Participants, Date */}
-            <div className={cn(
-              "grid grid-cols-3 gap-1 md:gap-2 mb-3 md:mb-4 opacity-0 transition-opacity duration-300",
-              isHovered ? "opacity-100" : "opacity-0"
-            )}>
-              <div className="flex items-center text-xs text-white/70">
-                <Clock className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.duration}</span>
-              </div>
-              <div className="flex items-center text-xs text-white/70">
-                <Users className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.participants}</span>
-              </div>
-              <div className="flex items-center text-xs text-white/70">
-                <Calendar className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1 flex-shrink-0" />
-                <span className="truncate">{experience.date}</span>
-              </div>
-            </div>
-
-            {/* Button */}
-            <div className={cn(
-              "transition-all duration-300 transform",
-              isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            )}>
-              <Link to={`/experience/${experience.id}`}>
-                <Button size="sm" className="w-full bg-white text-black hover:bg-white/90 font-semibold text-xs md:text-sm py-2">
-                  View Experience
-                </Button>
-              </Link>
-            </div>
+      </div>
+      {/* Info section */}
+      <div className="p-4">
+        {/* Proximity info: time and distance */}
+        {(travelTime || distance) && (
+          <div className="flex items-center gap-2 text-base text-gray-700 font-semibold mb-2 bg-white/80 px-3 py-1 rounded-lg shadow-sm" style={{display: 'inline-flex'}}>
+            {travelTime && <><Clock className="h-4 w-4 mr-1 text-primary" />{travelTime}</>}
+            {travelTime && distance && <span className="mx-1">|</span>}
+            {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
           </div>
+        )}
+        {/* Name and price row */}
+        <div className="flex justify-between items-center mb-1">
+          <h3 className="font-semibold text-lg truncate flex items-center" title={experience.title}>
+            {experience.title}
+          </h3>
+          <span className="font-bold text-primary text-base ml-2 whitespace-nowrap">₹{experience.price}</span>
         </div>
+        {/* Address and Show Map row */}
+        <div className="flex justify-between items-center text-sm text-gray-500 mb-1 truncate">
+          <div className="flex items-center truncate">
+            <MapPin className="inline-block h-4 w-4 mr-1 text-gray-400" />
+            <span className="truncate" title={experience.location}>{experience.location}</span>
+          </div>
+          <button
+            className="text-primary underline text-xs ml-2"
+            type="button"
+            onClick={() => setIsMapOpen(true)}
+            tabIndex={0}
+          >
+            Show Map
+          </button>
+        </div>
+        <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Location Map</DialogTitle>
+            </DialogHeader>
+            <ExperienceMap locationName={experience.location} />
+          </DialogContent>
+        </Dialog>
+        {/* Minimal View Experience button */}
+        <Link to={`/experience/${experience.id}`}>
+          <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
+            View Experience
+          </Button>
+        </Link>
       </div>
     </div>
   );
