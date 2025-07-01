@@ -18,7 +18,6 @@ import CategoryExplore from "./pages/CategoryExplore";
 import AllExperiences from "./pages/AllExperiences";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
-import GiftingGuide from "./pages/GiftingGuide";
 import GiftPersonalizer from "./pages/GiftPersonalizer";
 import AISuggestions from "./pages/AISuggestions";
 import Booking from "./pages/Booking";
@@ -28,6 +27,7 @@ import TravelDemo from "./pages/TravelDemo";
 import { WishlistProvider } from './contexts/WishlistContext';
 import OrderDetails from './pages/OrderDetails';
 import OrderItemDetails from './pages/OrderItemDetails';
+import ExperienceType from "./pages/ExperienceType";
 
 // Company Pages
 import AboutUs from "./pages/AboutUs";
@@ -104,11 +104,11 @@ function App() {
                   {/* Public Routes */}
                   <Route path="/" element={<Layout><Index /></Layout>} />
                   <Route path="/experiences" element={<Layout><AllExperiences /></Layout>} />
+                  <Route path="/experiences/type/:type" element={<Layout><ExperienceType /></Layout>} />
                   <Route path="/experience/:id" element={<Layout><ExperienceView /></Layout>} />
                   <Route path="/category/:id" element={<Layout><CategoryExplore /></Layout>} />
                   <Route path="/cart" element={<Layout><Cart /></Layout>} />
                   <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-                  <Route path="/gifting-guide" element={<Layout><GiftingGuide /></Layout>} />
                   <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
                   <Route path="/ai-suggestions" element={<Layout><AISuggestions /></Layout>} />
                   <Route path="/booking/:experienceId" element={<Layout><Booking /></Layout>} />

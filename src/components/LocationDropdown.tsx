@@ -6,6 +6,7 @@ import { Check, ChevronDown, MapPin, Search, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CITY_COORDINATES } from './CitySelector';
 import { useLocation } from 'react-router-dom';
+import Fuse from 'fuse.js';
 
 const INDIAN_LOCATIONS = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
@@ -42,14 +43,17 @@ const INDIAN_LOCATIONS = [
 
 const SORTED_LOCATIONS = [...INDIAN_LOCATIONS].sort((a, b) => a.localeCompare(b));
 
+const fuse = new Fuse(SORTED_LOCATIONS, { threshold: 0.3 }); // Fuzzy, but not too fuzzy
+
 interface LocationDropdownProps {
   value: string | { address: string } | null;
   onChange: (value: string | null) => void;
   placeholder?: string;
   standalone?: boolean;
+  onClose?: () => void;
 }
 
-const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location', standalone = false }) => {
+const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, placeholder = 'Location', standalone = false, onClose }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [address, setAddress] = useState('');
@@ -66,6 +70,8 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
 
   // Add filteredCities state
   const [filteredCities, setFilteredCities] = useState(SORTED_LOCATIONS);
+
+  const [cityResults, setCityResults] = useState<string[]>([]);
 
   useEffect(() => {
     // Always read the latest value from localStorage when the route changes
@@ -179,42 +185,38 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
   };
 
   // Address autocomplete handler
-  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setAddress(val);
 
-    // Always filter recommended cities instantly
-    setFilteredCities(
-      SORTED_LOCATIONS.filter(city => city.toLowerCase().startsWith(val.toLowerCase()))
-    );
-
-    // Only search API if at least 4 characters
-    if (val.length < 4) {
+    // City/area suggestions from local list
+    if (val.length < 1) {
+      setCityResults([]);
       setAddressResults([]);
       return;
     }
+    const lowerVal = val.toLowerCase();
+    const cityFiltered = SORTED_LOCATIONS.filter(city => city.toLowerCase().startsWith(lowerVal));
+    setCityResults(cityFiltered);
 
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(async () => {
-      setAddressLoading(true);
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=10&countrycodes=in`);
-        let data = await res.json();
-        const lowerVal = val.toLowerCase();
-        data = data.sort((a, b) => {
-          const aStarts = a.display_name.toLowerCase().startsWith(lowerVal);
-          const bStarts = b.display_name.toLowerCase().startsWith(lowerVal);
-          if (aStarts && !bStarts) return -1;
-          if (!aStarts && bStarts) return 1;
-          return 0;
-        });
-        setAddressResults(data);
-      } catch (err) {
-        setAddressResults([]);
-      } finally {
-        setAddressLoading(false);
-      }
-    }, 400);
+    setAddressLoading(true);
+    try {
+      // API address suggestions
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&addressdetails=1&limit=50&countrycodes=in`);
+      let data = await res.json();
+      // Show results where any word in display_name starts with the input
+      const filtered = data.filter(item =>
+        item.display_name
+          .toLowerCase()
+          .split(/[, ]+/)
+          .some(part => part.trim().startsWith(lowerVal))
+      );
+      setAddressResults(filtered);
+    } catch (err) {
+      setAddressResults([]);
+    } finally {
+      setAddressLoading(false);
+    }
   };
 
   const handleAddressSelect = (result: any) => {
@@ -281,11 +283,42 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
             )}
 
             {/* Address autocomplete results */}
-            {addressResults.length > 0 && (
+            {(cityResults.length > 0 || addressResults.length > 0) && (
               <div className="max-h-48 overflow-y-auto bg-white border rounded-lg shadow-sm">
                 <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b bg-gray-50">
                   Address suggestions
                 </div>
+                {/* City/area suggestions from local list */}
+                {cityResults.map((city, idx) => (
+                  <button
+                    key={city}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b last:border-b-0"
+                    onClick={() => {
+                      setAddress(city);
+                      setSelectedLocation(city);
+                      let coords = CITY_COORDINATES[city];
+                      if (!coords && city.toLowerCase().includes('delhi')) {
+                        coords = { latitude: 28.6139, longitude: 77.2090 };
+                      }
+                      if (coords) {
+                        const addressData = {
+                          address: city,
+                          lat: coords.latitude,
+                          lon: coords.longitude
+                        };
+                        localStorage.setItem('selected_address', JSON.stringify(addressData));
+                      } else {
+                        const addressData = { address: city };
+                        localStorage.setItem('selected_address', JSON.stringify(addressData));
+                      }
+                      setCityResults([]);
+                      setAddressResults([]);
+                    }}
+                  >
+                    <div className="font-medium">{city}</div>
+                  </button>
+                ))}
+                {/* API address suggestions */}
                 {addressResults.map((result, idx) => (
                   <button
                     key={idx}
@@ -298,26 +331,29 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                 ))}
               </div>
             )}
-
-            {/* Quick City Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Or select a city
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowCities(!showCities)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  {showCities ? 'Hide' : 'Show'} cities
-                </button>
-              </div>
-              
-              {showCities && (
-                <div className="max-h-32 overflow-y-auto border rounded-lg">
-                  <div className="p-2 space-y-1">
-                    {filteredCities.map(city => (
+            {/* Helper text and Show cities button */}
+            <div className="flex items-end justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setShowCities(!showCities)}
+                className="text-sm text-blue-600 hover:text-blue-800 ml-2"
+              >
+                {showCities ? 'Hide' : 'Show'} cities
+              </button>
+            </div>
+            {/* City list for Show cities */}
+            {showCities && (
+              <div className="max-h-64 overflow-y-auto border rounded-lg mt-2 bg-white">
+                <div className="p-2">
+                  <input
+                    type="text"
+                    placeholder="Search city..."
+                    className="w-full mb-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                  />
+                  <div className="space-y-1">
+                    {SORTED_LOCATIONS.filter(city => city.toLowerCase().startsWith(search.toLowerCase())).map(city => (
                       <button
                         key={city}
                         className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded"
@@ -328,6 +364,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                           if (!coords && city.toLowerCase().includes('delhi')) {
                             coords = { latitude: 28.6139, longitude: 77.2090 };
                           }
+                          // Store object in localStorage, but do not use it for setSelectedLocation or onChange
                           if (coords) {
                             const addressData = {
                               address: city,
@@ -339,15 +376,16 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                             const addressData = { address: city };
                             localStorage.setItem('selected_address', JSON.stringify(addressData));
                           }
+                          setShowCities(false);
                         }}
                       >
-                        {city}
+                        {typeof city === 'string' ? city : ''}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Find Experiences button */}
             {selectedLocation && (
@@ -361,7 +399,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                     } catch {
                       onChange(selectedLocation);
                     }
-                    if (typeof setOpen === 'function') setOpen(false);
+                    if (onClose) onClose();
                   }}
                 >
                   Find Experiences Near This Location
@@ -387,7 +425,11 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           className="w-40 h-10 px-3 text-sm font-normal bg-white text-gray-900 border border-gray-300 shadow-sm rounded-md flex items-center gap-1 hover:bg-gray-50"
         >
           <MapPin className="h-4 w-4 text-primary mr-1" />
-          <span className={cn('truncate', value ? 'font-medium' : 'text-gray-500')}>{value || placeholder}</span>
+          <span className={cn('truncate', value ? 'font-medium' : 'text-gray-500')}>
+            {typeof value === 'object' && value !== null && 'address' in value
+              ? value.address
+              : (typeof value === 'string' ? value : placeholder)}
+          </span>
           <ChevronDown className="ml-1 h-4 w-4 text-gray-400" />
         </Button>
       </DropdownMenuTrigger>
@@ -441,11 +483,42 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
             )}
 
             {/* Address autocomplete results */}
-            {addressResults.length > 0 && (
+            {(cityResults.length > 0 || addressResults.length > 0) && (
               <div className="max-h-48 overflow-y-auto bg-white border rounded-lg shadow-sm">
                 <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b bg-gray-50">
                   Address suggestions
                 </div>
+                {/* City/area suggestions from local list */}
+                {cityResults.map((city, idx) => (
+                  <button
+                    key={city}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b last:border-b-0"
+                    onClick={() => {
+                      setAddress(city);
+                      setSelectedLocation(city);
+                      let coords = CITY_COORDINATES[city];
+                      if (!coords && city.toLowerCase().includes('delhi')) {
+                        coords = { latitude: 28.6139, longitude: 77.2090 };
+                      }
+                      if (coords) {
+                        const addressData = {
+                          address: city,
+                          lat: coords.latitude,
+                          lon: coords.longitude
+                        };
+                        localStorage.setItem('selected_address', JSON.stringify(addressData));
+                      } else {
+                        const addressData = { address: city };
+                        localStorage.setItem('selected_address', JSON.stringify(addressData));
+                      }
+                      setCityResults([]);
+                      setAddressResults([]);
+                    }}
+                  >
+                    <div className="font-medium">{city}</div>
+                  </button>
+                ))}
+                {/* API address suggestions */}
                 {addressResults.map((result, idx) => (
                   <button
                     key={idx}
@@ -458,26 +531,29 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                 ))}
               </div>
             )}
-
-            {/* Quick City Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Or select a city
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowCities(!showCities)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  {showCities ? 'Hide' : 'Show'} cities
-                </button>
-              </div>
-              
-              {showCities && (
-                <div className="max-h-32 overflow-y-auto border rounded-lg">
-                  <div className="p-2 space-y-1">
-                    {filteredCities.map(city => (
+            {/* Helper text and Show cities button */}
+            <div className="flex items-end justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setShowCities(!showCities)}
+                className="text-sm text-blue-600 hover:text-blue-800 ml-2"
+              >
+                {showCities ? 'Hide' : 'Show'} cities
+              </button>
+            </div>
+            {/* City list for Show cities */}
+            {showCities && (
+              <div className="max-h-64 overflow-y-auto border rounded-lg mt-2 bg-white">
+                <div className="p-2">
+                  <input
+                    type="text"
+                    placeholder="Search city..."
+                    className="w-full mb-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                  />
+                  <div className="space-y-1">
+                    {SORTED_LOCATIONS.filter(city => city.toLowerCase().startsWith(search.toLowerCase())).map(city => (
                       <button
                         key={city}
                         className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100 rounded"
@@ -488,6 +564,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                           if (!coords && city.toLowerCase().includes('delhi')) {
                             coords = { latitude: 28.6139, longitude: 77.2090 };
                           }
+                          // Store object in localStorage, but do not use it for setSelectedLocation or onChange
                           if (coords) {
                             const addressData = {
                               address: city,
@@ -499,15 +576,16 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                             const addressData = { address: city };
                             localStorage.setItem('selected_address', JSON.stringify(addressData));
                           }
+                          setShowCities(false);
                         }}
                       >
-                        {city}
+                        {typeof city === 'string' ? city : ''}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Find Experiences button */}
             {selectedLocation && (
@@ -521,7 +599,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                     } catch {
                       onChange(selectedLocation);
                     }
-                    if (typeof setOpen === 'function') setOpen(false);
+                    setOpen(false);
                   }}
                 >
                   Find Experiences Near This Location

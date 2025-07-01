@@ -91,21 +91,24 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       experience.latitude && experience.longitude &&
       fromLat !== null && fromLng !== null
     ) {
+      const dist = calculateHaversineDistance(fromLat, fromLng, experience.latitude, experience.longitude);
+      setDistance(`${dist.toFixed(1)} km away`);
       getTravelTimeMinutes(
         fromLat,
         fromLng,
         experience.latitude,
         experience.longitude
       ).then(mins => {
-        if (mins !== null) setTravelTime(`~${mins} min`);
+        if (mins !== null) {
+          setTravelTime(`~${mins} min`);
+        } else {
+          // Fallback: estimate travel time as 1 min per km
+          setTravelTime(`~${Math.round(dist)} min (est.)`);
+        }
+      }).catch(() => {
+        // Fallback: estimate travel time as 1 min per km
+        setTravelTime(`~${Math.round(dist)} min (est.)`);
       });
-      // Also calculate and set distance if address is selected
-      if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
-        const dist = calculateHaversineDistance(fromLat, fromLng, experience.latitude, experience.longitude);
-        setDistance(`${dist.toFixed(1)} km away`);
-      } else {
-        setDistance(null);
-      }
     } else {
       setTravelTime(null);
       setDistance(null);
@@ -160,9 +163,9 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative h-full w-full overflow-hidden rounded-xl flex flex-col">
-        {/* Image Container with Fixed Aspect Ratio */}
-        <div className="aspect-[4/3] w-full overflow-hidden">
+      <div className="relative h-full w-full overflow-hidden rounded-xl flex flex-col flex-1">
+        {/* Image Container fills the card */}
+        <div className="flex-1 h-full w-full overflow-hidden">
           <img
             src={experience.imageUrl}
             alt={experience.title}
@@ -170,16 +173,13 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
               "w-full h-full object-cover object-center transition-transform duration-700 ease-out",
               isHovered ? "scale-110" : "scale-100"
             )}
-            style={{ minHeight: '200px' }}
             onError={(e) => {
-              console.log(`Image failed to load for ${experience.title}:`, experience.imageUrl);
               const target = e.target as HTMLImageElement;
               target.src = '/placeholder.svg';
             }}
           />
         </div>
-
-        {/* Overlay */}
+        {/* Overlay and content remain absolutely positioned */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
         {/* Trending Badge */}
@@ -216,11 +216,12 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
                 <DialogTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center text-xs md:text-sm text-white/80 cursor-pointer hover:underline bg-transparent border-none p-0 m-0"
+                    className="flex items-center text-xs md:text-sm text-white/80 cursor-pointer hover:underline bg-transparent border-none p-0 m-0 max-w-[120px] md:max-w-[180px] truncate"
                     style={{ background: 'none', border: 'none' }}
+                    title={experience.location}
                   >
                     <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
-                    <span className="truncate">{experience.location}</span>
+                    <span className="truncate block max-w-[90px] md:max-w-[150px]">{experience.location}</span>
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[625px]">
@@ -230,24 +231,31 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
                   <ExperienceMap locationName={experience.location} />
                 </DialogContent>
               </Dialog>
-              <div className="text-base md:text-lg font-medium">{formatRupees(experience.price)}</div>
-            </div>
-
-            {/* Professional Info Bar for Time and Distance */}
-            {(travelTime || distance) && (
-              <div className="experience-info-bar mt-2 mb-3">
-                <div className="flex items-center justify-center w-full gap-4">
-                  <span className="flex items-center gap-1 text-white">
-                    <Clock className="h-4 w-4" />
-                    <span className="font-medium">{travelTime ? travelTime : 'N/A'}</span>
-                  </span>
-                  <span className="h-5 w-px bg-gray-300 mx-2" />
-                  <span className="flex items-center gap-1 text-white">
-                    <MapPin className="h-4 w-4" />
-                    <span className="font-medium">{distance ? distance : 'N/A'}</span>
-                  </span>
-                </div>
+              <div className="text-base md:text-lg font-medium whitespace-nowrap px-2 py-0.5">
+                {formatRupees(experience.price)}
               </div>
+            </div>
+            {/* Time and Distance Proximity (with debug info) */}
+            {(distance || travelTime) ? (
+              <div className="flex items-center gap-3 mb-2">
+                {travelTime && (
+                  <span className="flex items-center gap-1 text-xs text-white px-2 py-0.5">
+                    <Clock className="h-3 w-3" />
+                    {travelTime.replace(/^~\s*/, '')}
+                  </span>
+                )}
+                {travelTime && distance && (
+                  <span className="text-white text-xs">|</span>
+                )}
+                {distance && (
+                  <span className="flex items-center gap-1 text-xs text-white px-2 py-0.5">
+                    <MapPin className="h-3 w-3" />
+                    {distance}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="text-xs text-red-200 mb-2">No proximity info (debug: expLat={String(experience.latitude)}, expLng={String(experience.longitude)}, city={String(selectedCity)}, cityCoords={JSON.stringify(selectedCity && CITY_COORDINATES[selectedCity])})</div>
             )}
 
             {/* Duration, Participants, Date */}
@@ -268,21 +276,6 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
                 <span className="truncate">{experience.date}</span>
               </div>
             </div>
-
-            {/* Travel Information - Only show if coordinates are available */}
-            {
-              experience.coordinates && (
-                <div className={cn(
-                  "mb-3 md:mb-4 opacity-0 transition-opacity duration-300",
-                  isHovered ? "opacity-100" : "opacity-0"
-                )}>
-                  <TravelInfoDisplay
-                    experienceLocation={experience.coordinates}
-                    className="bg-white/10 backdrop-blur-sm border-white/20"
-                  />
-                </div>
-              )
-            }
 
             {/* Button */}
             <div className={cn(

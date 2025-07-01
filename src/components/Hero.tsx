@@ -77,7 +77,16 @@ const Hero = () => {
 
       {/* Carousel indicators */}
       <div className="absolute bottom-24 right-10 flex space-x-2 z-10">
-        {imageUrls.map((_, index) => <button key={index} className={cn("w-2 h-2 rounded-full transition-all", index === currentImage ? "bg-white w-6" : "bg-white/40")} onClick={() => setCurrentImage(index)} />)}
+        {imageUrls.map((_, index) => (
+          <button
+            key={index}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all",
+              index === currentImage ? "bg-white w-6" : "bg-white/40"
+            )}
+            onClick={() => setCurrentImage(index)}
+          />
+        ))}
       </div>
 
       {/* Content */}
@@ -105,6 +114,26 @@ const Hero = () => {
             <div className="flex flex-col items-center space-y-8 w-full">
               <div className="flex items-center justify-center w-full mb-2">
                 <SuggestedExperiences />
+              </div>
+              <div className="flex flex-row gap-4 justify-start w-full mb-2">
+                <NavLink to="/experiences" onClick={scrollToTop}>
+                  <Button
+                    size="lg"
+                    className="bg-secondary text-primary rounded-full font-semibold text-lg shadow-lg hover:bg-secondary/80 hover:text-primary hover:scale-[1.03] transition-transform duration-200 h-12 px-8 flex items-center gap-2 border-2 border-secondary"
+                  >
+                    Explore Experiences
+                    <span className="ml-1">&rarr;</span>
+                  </Button>
+                </NavLink>
+                <a href="#gifting-guide">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-primary text-primary bg-white rounded-full font-semibold text-lg hover:bg-primary/10 hover:text-primary hover:border-primary hover:scale-[1.03] transition-transform duration-200 h-12 px-8 flex items-center gap-2 shadow-md"
+                  >
+                    Gift Inspiration
+                  </Button>
+                </a>
               </div>
               <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-4xl mx-auto transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}> 
                 {[{
