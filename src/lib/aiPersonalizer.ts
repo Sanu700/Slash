@@ -1,4 +1,8 @@
-const BASE_URL = "https://slash-rag-agent.onrender.com" 
+
+const API_BASE = "https://slash-rag-agent.onrender.com";
+
+
+
 
 // Add retry logic for failed requests
 const fetchWithRetry = async (url: string, options: RequestInit, retries = 3) => {
@@ -51,7 +55,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = 3) =>
 
 export const fetchInitQuestion = async () => {
   try {
-    const res = await fetchWithRetry(`${BASE_URL}/init`, {
+    const res = await fetchWithRetry(`${API_BASE}/init`, {
       method: 'GET',
     });
     
@@ -97,7 +101,7 @@ export const submitAnswer = async (session_id: string, ans: string) => {
     
     // Debug logging to show what's being sent
     console.log('=== SUBMIT ANSWER DEBUG ===');
-    console.log('Request URL:', `${BASE_URL}/submit`);
+    console.log('Request URL:', `${API_BASE}/submit`);
     console.log('Request method:', 'POST');
     console.log('Session ID parameter:', session_id);
     console.log('Answer parameter:', ans);
@@ -105,7 +109,7 @@ export const submitAnswer = async (session_id: string, ans: string) => {
     console.log('JSON stringified body:', JSON.stringify(requestBody));
     console.log('=== END SUBMIT ANSWER DEBUG ===');
     
-    const res = await fetchWithRetry(`${BASE_URL}/submit`, {
+    const res = await fetchWithRetry(`${API_BASE}/submit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -134,7 +138,7 @@ export const submitAnswer = async (session_id: string, ans: string) => {
 
 export const fetchNextQuestion = async (session_id?: string) => {
   try {
-    let url = `${BASE_URL}/next`;
+    let url = `${API_BASE}/next`;
     if (session_id) {
       url += `?session_id=${encodeURIComponent(session_id)}`;
     }
@@ -173,7 +177,7 @@ export const fetchSuggestions = async (query = "", k = 5, session_id?: string) =
   console.log('- query:', query);
   console.log('- k:', k);
   console.log('- session_id:', session_id);
-  console.log('BASE_URL:', BASE_URL);
+  console.log('BASE_URL:', API_BASE);
   console.log('=== END PARAMETERS ===');
   
   try {
@@ -182,7 +186,7 @@ export const fetchSuggestions = async (query = "", k = 5, session_id?: string) =
     const safeK = k === undefined ? 5 : k;
     
     console.log('Fetching suggestions with query:', safeQuery, 'k:', safeK, 'session_id:', session_id);
-    let url = `${BASE_URL}/suggestion?query=${encodeURIComponent(safeQuery)}&k=${safeK}`;
+    let url = `${API_BASE}/suggestion?query=${encodeURIComponent(safeQuery)}&k=${safeK}`;
     if (session_id) {
       url += `&session_id=${encodeURIComponent(session_id)}`;
     }
@@ -287,7 +291,7 @@ export const fetchSuggestions = async (query = "", k = 5, session_id?: string) =
 
 export const fetchContext = async () => {
   try {
-    const res = await fetchWithRetry(`${BASE_URL}/context`, {
+    const res = await fetchWithRetry(`${API_BASE}/context`, {
       method: 'GET',
     });
     if (!res.ok) {
@@ -311,7 +315,7 @@ export const goBackOneStep = async (session_id?: string) => {
     console.log('🔥 THIS IS THE EXACT SAME SESSION_ID FROM /INIT');
     console.log('🔥 === END /BACK DEBUG ===');
     
-    let url = `${BASE_URL}/back`;
+    let url = `${API_BASE}/back`;
     if (session_id) {
       url += `?session_id=${encodeURIComponent(session_id)}`;
     }
@@ -375,7 +379,7 @@ export const goBackOneStep = async (session_id?: string) => {
 export const resetSession = async () => {
   try {
     console.log('=== RESETTING AI SESSION ===');
-    const res = await fetchWithRetry(`${BASE_URL}/reset`, {
+    const res = await fetchWithRetry(`${API_BASE}/reset`, {
       method: 'GET',
     });
     if (!res.ok) {
@@ -406,7 +410,7 @@ export const submitFollowup = async (session_id: string, input: string, id?: str
     }
     
     // Build URL with query parameters for GET request
-    let url = `${BASE_URL}/followup?session_id=${encodeURIComponent(session_id)}&ans=${encodeURIComponent(followupInput)}`;
+    let url = `${API_BASE}/followup?session_id=${encodeURIComponent(session_id)}&ans=${encodeURIComponent(followupInput)}`;
     
     console.log('=== SUBMIT FOLLOWUP DEBUG ===');
     console.log('Request URL:', url);
