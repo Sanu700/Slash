@@ -337,8 +337,11 @@ const AllExperiences = () => {
                 }}
               />
             </div>
-            <span className="font-bold text-2xl mb-2 text-center">{type}</span>
-            <span className="text-xs bg-white/80 text-black rounded-full px-3 py-1 font-semibold">{experiencesArr.length} experiences</span>
+            {/* Name and ellipse stacked below image */}
+            <div className="flex flex-col items-center justify-center w-full min-h-[80px] gap-2 pb-2 mt-0">
+              <span className="font-bold text-2xl text-center">{type}</span>
+              <span className="text-xs bg-white/80 text-black rounded-full px-3 py-1 font-semibold">{experiencesArr.length} experiences</span>
+            </div>
           </div>
         </div>
       ) };
