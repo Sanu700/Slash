@@ -307,6 +307,21 @@ const ExperienceView = () => {
   const handlePrevImage = () => setCurrentImageIdx(idx => (idx - 1 + imageUrls.length) % imageUrls.length);
   const handleNextImage = () => setCurrentImageIdx(idx => (idx + 1) % imageUrls.length);
   
+  // Add to localStorage for guests
+  useEffect(() => {
+    if (!user && experience) {
+      // Add to viewedExperiences in localStorage
+      let viewed = localStorage.getItem('viewedExperiences');
+      let arr = viewed ? JSON.parse(viewed) : [];
+      // Remove if already present (to re-add at front)
+      arr = arr.filter((exp) => exp && exp.id !== experience.id);
+      arr.unshift({ ...experience });
+      // Limit to 50
+      if (arr.length > 50) arr = arr.slice(0, 50);
+      localStorage.setItem('viewedExperiences', JSON.stringify(arr));
+    }
+  }, [user, experience]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">

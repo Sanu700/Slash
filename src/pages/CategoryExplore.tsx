@@ -175,7 +175,9 @@ const CategoryExplore = () => {
             isInView ? "opacity-100" : "opacity-0"
           )}>
             {filteredExperiences.map((experience) => (
-              <ExperienceCard key={experience.id} experience={experience} />
+              <div key={experience.id} className="aspect-[4/3] h-full w-full flex">
+                <ExperienceCard experience={experience} />
+              </div>
             ))}
           </div>
         ) : (
