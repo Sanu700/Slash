@@ -98,8 +98,6 @@ function App() {
             <WishlistProvider>
               <BrowserRouter>
                 <ScrollToTop />
-                <LocationAccessModal onClose={handleLocationModalClose} />
-                <CitySelectorModal open={showCityModal} onClose={() => setShowCityModal(false)} />
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Layout><Index /></Layout>} />
