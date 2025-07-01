@@ -327,7 +327,7 @@ const AllExperiences = () => {
             {/* Show image from the first experience in the group */}
             <div className="aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-white/30 mb-4">
               <img
-                src={experiencesArr[0].imageUrl}
+                src={Array.isArray(experiencesArr[0].imageUrl) ? (experiencesArr[0].imageUrl[0] || '/placeholder.svg') : (experiencesArr[0].imageUrl || '/placeholder.svg')}
                 alt={type}
                 className="w-full h-full object-cover object-center transition-transform duration-700 ease-out"
                 style={{ minHeight: '200px' }}

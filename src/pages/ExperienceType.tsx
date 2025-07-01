@@ -23,13 +23,15 @@ const ExperienceType = () => {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="container mx-auto py-8 pt-28">
+    <div className="container max-w-6xl mx-auto px-4 md:px-10 py-12 pt-28">
       <h1 className="text-4xl font-extrabold mb-6 text-center capitalize">
         {type ? `${type} Experiences` : "Experiences"}
       </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children">
         {filtered.map(exp => (
-          <ExperienceCard key={exp.id} experience={exp} />
+          <div key={exp.id} className="col-span-1 h-full w-full aspect-[4/3] flex flex-col">
+            <ExperienceCard experience={exp} />
+          </div>
         ))}
       </div>
       {filtered.length === 0 && <div>No experiences found for this type.</div>}
