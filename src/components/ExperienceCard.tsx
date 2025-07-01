@@ -153,6 +153,30 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
     });
   };
 
+  // Helper to build navigation URL
+  const getNavigationUrl = () => {
+    let origin = '';
+    if (typeof window !== 'undefined') {
+      const selectedAddressRaw = localStorage.getItem('selected_address');
+      if (selectedAddressRaw) {
+        try {
+          const parsed = JSON.parse(selectedAddressRaw);
+          if (parsed && parsed.lat && parsed.lon) {
+            origin = `${parsed.lat},${parsed.lon}`;
+          }
+        } catch {
+          // fallback: do nothing
+        }
+      }
+    }
+    const destination = experience.coordinates
+      ? `${experience.coordinates.lat},${experience.coordinates.lng}`
+      : encodeURIComponent(experience.location);
+    return origin
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+  };
+
   return (
     <div
       ref={cardRef}
@@ -214,19 +238,19 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
             <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
               <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
                 <DialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center text-xs md:text-sm text-white/80 cursor-pointer hover:underline bg-transparent border-none p-0 m-0 max-w-[120px] md:max-w-[180px] truncate"
-                    style={{ background: 'none', border: 'none' }}
-                    title={experience.location}
+
+                  <Button
+                    size="sm"
+                    className="bg-white text-black hover:bg-white/90 font-semibold text-xs md:text-sm py-2 px-4 rounded-full shadow"
+                    style={{ minWidth: 120 }}
                   >
-                    <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1 flex-shrink-0" />
-                    <span className="truncate block max-w-[90px] md:max-w-[150px]">{experience.location}</span>
-                  </button>
+                    Show Map
+                  </Button>
+
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[625px]">
                   <DialogHeader>
-                    <DialogTitle>{experience.title}</DialogTitle>
+                    <DialogTitle>{experience.title} - Location</DialogTitle>
                   </DialogHeader>
                   <ExperienceMap locationName={experience.location} />
                 </DialogContent>
