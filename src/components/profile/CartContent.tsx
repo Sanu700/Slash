@@ -16,7 +16,7 @@ const CartContent = ({ cartExperiences, handleExperienceClick }: CartContentProp
   return (
     <>
       {cartExperiences.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {cartExperiences.map(experience => {
             // Create a new experience object with onClick handler
             const expWithClick = {
@@ -25,7 +25,7 @@ const CartContent = ({ cartExperiences, handleExperienceClick }: CartContentProp
             };
             
             return (
-              <div key={experience.id} className="aspect-[4/3] h-full w-full flex">
+              <div key={experience.id} className="aspect-[4/3] h-full w-full flex flex-col col-span-1">
                 <ExperienceCard experience={expWithClick} />
               </div>
             );
