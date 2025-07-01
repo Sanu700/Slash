@@ -31,16 +31,18 @@ export const handler: Handler = async (event) => {
       },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // If not JSON, return error with raw text
       return {
-        statusCode: response.status,
+        statusCode: 502,
         headers,
-        body: JSON.stringify({ error: 'External API error', details: errorText }),
+        body: JSON.stringify({ error: 'Invalid response from AI service', details: text }),
       };
     }
-
-    const data = await response.json();
 
     return {
       statusCode: 200,
@@ -51,7 +53,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
+      body: JSON.stringify({ error: 'Internal Server Error', details: String(error) }),
     };
   }
 }; 

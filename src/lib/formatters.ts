@@ -30,30 +30,18 @@ export const formatRupees = (price: number): string => {
  * @returns {Promise<number|null>} Travel time in minutes, or null if error
  */
 export async function getTravelTimeMinutes(fromLat, fromLng, toLat, toLng) {
-  const apiKey = '5b3ce3597851110001cf6248a8b5672fb44148a89cc73498624eae7b';
-  const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}`;
-  const body = {
-    coordinates: [
-      [fromLng, fromLat],
-      [toLng, toLat]
-    ]
-  };
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': apiKey
-      },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const seconds = data.routes?.[0]?.summary?.duration;
-    if (!seconds) return null;
-    return Math.round(seconds / 60);
-  } catch (e) {
-    console.error('Error fetching travel time:', e);
-    return null;
-  }
+  // Use Haversine formula for straight-line distance
+  function toRad(x) { return (x * Math.PI) / 180; }
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(toLat - fromLat);
+  const dLon = toRad(toLng - fromLng);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(fromLat)) *
+      Math.cos(toRad(toLat)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in km
+  // Estimate travel time: 1 min per km (driving)
+  return Math.round(distance);
 }
