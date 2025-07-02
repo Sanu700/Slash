@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
-import { fetchInitQuestion, submitAnswer } from '@/lib/aiPersonalizer';
+import { submitAnswer, fetchNextQuestion } from '@/lib/aiPersonalizer';
 import { useToast } from '@/components/ui/use-toast';
 
 interface StepBasicsProps {
@@ -16,9 +16,13 @@ interface StepBasicsProps {
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   onNext: () => void;
   isGenerating: boolean;
+  aiPrompt?: string;
+  setBasicsInput: (input: string) => void;
+  aiSessionId?: string;
+  setInterestsPrompt: (prompt: string) => void;
 }
 
-const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenerating }: StepBasicsProps) => {
+const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenerating, aiPrompt, setBasicsInput, aiSessionId, setInterestsPrompt }: StepBasicsProps) => {
   const { toast } = useToast();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,18 +51,9 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
     setIsProcessing(true);
     
     try {
-      // Step 1: Call /init if not already initialized
-      if (!isInitialized) {
-        console.log('=== INITIALIZING AI CONTEXT (FIRST TIME) ===');
-        await fetchInitQuestion();
-        console.log('AI initialized successfully');
-        setIsInitialized(true);
-      }
-
-      // Step 2: Call /submit with basics data
+      // Step 2: Construct the proper input string with all form data
       console.log('=== SUBMITTING BASICS DATA ===');
       
-      // Construct the proper input string with all form data
       const recipient = formData.recipient || 'User';
       const location = formData.city || 'Mumbai';
       const relation = formData.relationship === 'other' ? formData.customRelationship : formData.relationship || 'Friend';
@@ -74,10 +69,46 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
       console.log('Number of parts:', combinedInput.split('`').length);
       console.log('=== END BASICS DATA ===');
       
-      await submitAnswer(combinedInput);
-      console.log('Basics data submitted successfully');
-      
-      // Step 3: Move to next step
+      setBasicsInput(combinedInput);
+
+      // Step 1: Use the session ID that was already initialized in the main component
+      if (!isInitialized) {
+        console.log('=== USING PRE-INITIALIZED SESSION ID ===');
+        console.log('AI session ID from main component:', aiSessionId);
+        setIsInitialized(true);
+        
+        // Use the session ID from the main component
+        const sessionId = aiSessionId;
+        
+        // Debug logging for session ID
+        console.log('=== SESSION ID DEBUG ===');
+        console.log('Session ID from main component:', sessionId);
+        console.log('Session ID type:', typeof sessionId);
+        console.log('Session ID length:', sessionId ? sessionId.length : 'undefined');
+        console.log('=== END SESSION ID DEBUG ===');
+        
+        // Step 2: Send session ID and user input to /submit
+        console.log('Sending session ID and user input to /submit:', sessionId, combinedInput);
+        await submitAnswer(sessionId, combinedInput);
+        console.log('Basics data submitted successfully');
+
+        // Step 3: Call /next to advance the AI state
+        console.log('Calling /next to advance AI state');
+        const nextQuestion = await fetchNextQuestion(sessionId);
+        console.log('Advanced to next question:', nextQuestion);
+        
+        // Step 4: Set the interests prompt with the AI response
+        if (nextQuestion) {
+          console.log('Setting interests prompt with AI response:', nextQuestion);
+          setInterestsPrompt(nextQuestion);
+        }
+        
+        // Step 5: Move to next step in UI
+        onNext();
+        return; // Exit early since we've handled everything
+      }
+
+      // If already initialized, just move to next step
       onNext();
       
     } catch (error) {
@@ -95,10 +126,9 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-medium mb-2">Tell us about the recipient</h2>
-        <p className="text-muted-foreground">
-          Let's start with some basic information about who you're shopping for.
-        </p>
+        {aiPrompt && (
+          <p className="text-lg font-medium text-primary mb-2">{aiPrompt}</p>
+        )}
       </div>
 
       <Card>

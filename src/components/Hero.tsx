@@ -77,7 +77,16 @@ const Hero = () => {
 
       {/* Carousel indicators */}
       <div className="absolute bottom-24 right-10 flex space-x-2 z-10">
-        {imageUrls.map((_, index) => <button key={index} className={cn("w-2 h-2 rounded-full transition-all", index === currentImage ? "bg-white w-6" : "bg-white/40")} onClick={() => setCurrentImage(index)} />)}
+        {imageUrls.map((_, index) => (
+          <button
+            key={index}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all",
+              index === currentImage ? "bg-white w-6" : "bg-white/40"
+            )}
+            onClick={() => setCurrentImage(index)}
+          />
+        ))}
       </div>
 
       {/* Content */}
@@ -102,12 +111,31 @@ const Hero = () => {
               92% of all people prefer an Experience over a Material gift and 63% forget what they recieved a year back.
             </p>
             
-            <div className="flex flex-col items-start space-y-6">
-              <div className="flex items-center space-x-4 -ml-[-0.5px]">
+            <div className="flex flex-col items-center space-y-8 w-full">
+              <div className="flex items-center justify-center w-full mb-2">
                 <SuggestedExperiences />
-        </div>
-        
-              <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 max-w-5xl mx-auto transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}>
+              </div>
+              <div className="flex flex-row gap-4 justify-start w-full mb-2">
+                <NavLink to="/experiences" onClick={scrollToTop}>
+                  <Button
+                    size="lg"
+                    className="bg-secondary text-primary rounded-full font-semibold text-lg shadow-lg hover:bg-secondary/80 hover:text-primary hover:scale-[1.03] transition-transform duration-200 h-12 px-8 flex items-center gap-2 border-2 border-secondary"
+                  >
+                    Explore Experiences
+                    <span className="ml-1">&rarr;</span>
+                  </Button>
+                </NavLink>
+                <a href="#gifting-guide">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-primary text-primary bg-white rounded-full font-semibold text-lg hover:bg-primary/10 hover:text-primary hover:border-primary hover:scale-[1.03] transition-transform duration-200 h-12 px-8 flex items-center gap-2 shadow-md"
+                  >
+                    Gift Inspiration
+                  </Button>
+                </a>
+              </div>
+              <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-4xl mx-auto transition-all duration-1000 delay-300", isInView ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0")}> 
                 {[{
                   value: "500+",
                   label: "Experiences"
@@ -121,11 +149,11 @@ const Hero = () => {
                   value: "100%",
                   label: "Satisfaction"
                 }].map((stat, index) => (
-                  <div key={index} className="backdrop-blur-sm bg-white/20 rounded-lg p-4 md:p-5 flex flex-col items-center justify-center text-center">
-                    <div className="text-2xl md:text-3xl font-medium mb-1">
+                  <div key={index} className="bg-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center min-w-[100px] border border-white/10">
+                    <div className="text-xl md:text-2xl font-normal text-white/80 mb-1">
                       <AnimatedCounter value={stat.value} />
                     </div>
-                    <p className="text-sm text-white/90">{stat.label}</p>
+                    <p className="text-xs md:text-sm text-white/70 font-normal">{stat.label}</p>
                   </div>
                 ))}
               </div>

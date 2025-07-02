@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getExperienceById, getSimilarExperiences } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { formatRupees, getTravelTimeMinutes } from '@/lib/formatters';
-import { MapPin, Clock, Users, Calendar, ArrowLeft, Heart, ShoppingCart, Bookmark, Plus, Minus } from 'lucide-react';
+import { MapPin, Clock, Users, Calendar, ArrowLeft, Heart, ShoppingCart, Bookmark, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
 import { useCart } from '@/contexts/CartContext';
@@ -144,32 +144,17 @@ const ExperienceView = () => {
   const isGuest = !user || !user.id || typeof user.id !== 'string' || user.id.length < 10;
   
   const handleAddToCart = async () => {
+    if (isGuest) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (!selectedDate) {
       setShowDatePopover(true);
       toast.error('Please select a date before adding to cart.');
       return;
     }
-    if (isGuest) {
-      // LocalStorage fallback ONLY, do not call CartContext or Supabase
-      if (!experience) return;
-      let cart = localStorage.getItem('cart');
-      let cartArr = cart ? JSON.parse(cart) : [];
-      const idx = cartArr.findIndex((item: any) => item.experienceId === experience.id);
-      if (idx > -1) {
-        cartArr[idx].quantity = quantityInCart;
-        setQuantityInCart(cartArr[idx].quantity);
-      } else {
-        cartArr.push({ 
-          experienceId: experience.id, 
-          quantity: quantityInCart,
-          selectedDate: selectedDate.toISOString()
-        });
-        setQuantityInCart(quantityInCart);
-      }
-      localStorage.setItem('cart', JSON.stringify(cartArr));
-      toast.success('Added to cart');
-      return;
-    }
+
     setIsCartLoading(true);
     try {
       // Add to cart with the selected quantity
@@ -334,6 +319,27 @@ const ExperienceView = () => {
     }
   };
   
+  // Gallery state for multiple images
+  const imageUrls = Array.isArray(experience?.imageUrl) ? experience.imageUrl : [experience?.imageUrl].filter(Boolean);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const handlePrevImage = () => setCurrentImageIdx(idx => (idx - 1 + imageUrls.length) % imageUrls.length);
+  const handleNextImage = () => setCurrentImageIdx(idx => (idx + 1) % imageUrls.length);
+  
+  // Add to localStorage for guests
+  useEffect(() => {
+    if (!user && experience) {
+      // Add to viewedExperiences in localStorage
+      let viewed = localStorage.getItem('viewedExperiences');
+      let arr = viewed ? JSON.parse(viewed) : [];
+      // Remove if already present (to re-add at front)
+      arr = arr.filter((exp) => exp && exp.id !== experience.id);
+      arr.unshift({ ...experience });
+      // Limit to 50
+      if (arr.length > 50) arr = arr.slice(0, 50);
+      localStorage.setItem('viewedExperiences', JSON.stringify(arr));
+    }
+  }, [user, experience]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -349,23 +355,59 @@ const ExperienceView = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+
         {/* Hero Image Section */}
         <div className="relative h-[50vh] md:h-[60vh] w-full">
           <img 
             src={getValidImgSrc(experience.imageUrl)} 
+
             alt={experience.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover rounded-lg"
+            style={{ maxHeight: '100%', maxWidth: '100%' }}
           />
+          {/* Left Arrow */}
+          {imageUrls.length > 1 && (
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white rounded-full p-2 z-10"
+              onClick={handlePrevImage}
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+          {/* Right Arrow */}
+          {imageUrls.length > 1 && (
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white rounded-full p-2 z-10"
+              onClick={handleNextImage}
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
           <div className="absolute top-6 left-6">
-            <button 
-              onClick={() => navigate(-1)} 
+            <button
+              onClick={() => navigate(-1)}
               className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
             >
               <ArrowLeft className="h-5 w-5 text-white" />
             </button>
           </div>
+          {/* Thumbnails (future support for multiple images) */}
+          {imageUrls.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 rounded-lg px-3 py-2">
+              {imageUrls.map((img, idx) => (
+                <img
+                  key={img}
+                  src={img}
+                  alt={`Thumbnail ${idx + 1}`}
+                  className={`w-16 h-12 object-cover rounded cursor-pointer border-2 ${currentImageIdx === idx ? 'border-primary' : 'border-transparent'} hover:border-primary`}
+                  onClick={() => setCurrentImageIdx(idx)}
+                />
+              ))}
+            </div>
+          )}
         </div>
         
         {/* Main Content Section */}
@@ -451,7 +493,9 @@ const ExperienceView = () => {
                   <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {similarExperiences.map((exp) => (
-                      <ExperienceCard key={exp.id} experience={exp} />
+                      <div key={exp.id} className="aspect-[4/3] h-full w-full flex">
+                        <ExperienceCard experience={exp} />
+                      </div>
                     ))}
                   </div>
                 </div>

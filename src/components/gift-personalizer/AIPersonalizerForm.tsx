@@ -23,6 +23,7 @@ interface Suggestion {
   description: string;
   price: number;
   category: string;
+  image_url?: string;
   image?: string;
   imageUrl?: string;
   img?: string;
@@ -42,7 +43,7 @@ interface AIFormData {
 
 const AISuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
   const navigate = useNavigate();
-  const imageUrl = suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
+  const imageUrl = suggestion.image_url || suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
   
   // Debug logging
   console.log('AISuggestionCard image data:', {
@@ -103,6 +104,7 @@ export default function AIPersonalizerForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [sessionId, setSessionId] = useState<string>('');
   
   const [formData, setFormData] = useState<AIFormData>({
     name: '',
@@ -125,8 +127,9 @@ export default function AIPersonalizerForm() {
   const initializeForm = async () => {
     setIsLoading(true);
     try {
-      const question = await fetchInitQuestion();
-      setCurrentQuestion(question);
+      const result = await fetchInitQuestion();
+      setCurrentQuestion(result.question);
+      setSessionId(result.session_id);
     } catch (error) {
       toast({
         title: "Error",
@@ -196,25 +199,25 @@ export default function AIPersonalizerForm() {
         answer = `${formData.name}\`${formData.location}\`${formData.relation}\`${formData.occasion}\`${formData.budget}`;
       } else if (currentStep === 2) {
         // Step 2: Interests - use tags
-        answer = currentTags.join(', ');
+        answer = currentTags.join('`');
       } else if (currentStep === 3) {
         // Step 3: Preferences - use text input
         answer = currentInput;
       }
 
       // Submit answer
-      await submitAnswer(answer);
+      await submitAnswer(sessionId, answer);
 
       if (currentStep < 4) {
         // Get next question
-        const nextQuestion = await fetchNextQuestion();
+        const nextQuestion = await fetchNextQuestion(sessionId);
         setCurrentQuestion(nextQuestion);
         setCurrentStep(prev => prev + 1);
         setCurrentInput('');
         setCurrentTags([]);
       } else {
         // Step 4: Get suggestions
-        const results = await fetchSuggestions();
+        const results = await fetchSuggestions('', 5, sessionId);
         setSuggestions(results);
       }
     } catch (error) {
