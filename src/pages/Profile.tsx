@@ -66,6 +66,7 @@ const Profile = () => {
   const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
   const { bookingHistory, isLoading: isBookingHistoryLoading } = useBookingHistory(user?.id);
   const [referralCount, setReferralCount] = useState(0);
+  const [allExperiences, setAllExperiences] = useState([]);
 
   const mockPeople = [
     {
@@ -146,6 +147,7 @@ const Profile = () => {
     (async () => {
       // Use wishlist and viewed for preferences
       const allExperiences = await getAllExperiences();
+      setAllExperiences(allExperiences);
       let prefs = buildUserPreferences(localWishlist, viewedExperiences);
       // If not enough data, fallback to trending/sample
       if (!prefs.preferredCategories.length && (!localWishlist.length && !viewedExperiences.length)) {
@@ -227,10 +229,20 @@ const Profile = () => {
   }, [wishlistExperiences]);
 
   // Remove from local wishlist when un-wishlisted
-  const handleWishlistChange = (experienceId, isInWishlist) => {
-    if (!isInWishlist) {
-      setLocalWishlist(prev => prev.filter(exp => exp.id !== experienceId));
-    }
+  const handleWishlistChange = (experienceId, isNowInWishlist) => {
+    setLocalWishlist(prev => {
+      if (isNowInWishlist) {
+        // Add experience to wishlist if not already present
+        const exp = allExperiences.find(e => e.id === experienceId);
+        if (exp && !prev.some(e => e.id === experienceId)) {
+          return [...prev, exp];
+        }
+        return prev;
+      } else {
+        // Remove from wishlist
+        return prev.filter(exp => exp.id !== experienceId);
+      }
+    });
   };
 
   // Profile info for header
@@ -387,7 +399,7 @@ const Profile = () => {
             {activeTab === 'wishlist' && (
               localWishlist.length > 0 ? localWishlist.map(exp => (
                 <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
-                  <ExperienceCard experience={exp} onWishlistChange={handleWishlistChange} />
+                  <ExperienceCard experience={exp} onWishlistChange={handleWishlistChange} isInWishlist={true} />
                 </div>
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No wishlist experiences yet.</div>
             )}
