@@ -1,11 +1,33 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useExperiencesManager } from "@/lib/data";
 import ExperienceCard from "@/components/ExperienceCard";
+import { useWishlistExperiences } from '@/hooks/useDataLoaders';
+import { useAuth } from '@/lib/auth';
 
 const ExperienceType = () => {
   const { type } = useParams();
   const { experiences, isLoading } = useExperiencesManager();
+  const { user } = useAuth();
+  const { wishlistExperiences } = useWishlistExperiences(user?.id);
+  const [localWishlist, setLocalWishlist] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (wishlistExperiences) {
+      setLocalWishlist(wishlistExperiences.map(exp => exp.id));
+    }
+  }, [wishlistExperiences]);
+
+  const handleWishlistChange = (experienceId: string, isNowInWishlist: boolean) => {
+    setLocalWishlist(prev => {
+      if (isNowInWishlist) {
+        if (!prev.includes(experienceId)) return [...prev, experienceId];
+        return prev;
+      } else {
+        return prev.filter(id => id !== experienceId);
+      }
+    });
+  };
 
   useEffect(() => {
     // Use a timeout to ensure content is rendered before scrolling
@@ -29,7 +51,12 @@ const ExperienceType = () => {
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children">
         {filtered.map(exp => (
-          <ExperienceCard key={exp.id} experience={exp} />
+          <ExperienceCard
+            key={exp.id}
+            experience={exp}
+            isInWishlist={localWishlist.includes(exp.id)}
+            onWishlistChange={handleWishlistChange}
+          />
         ))}
       </div>
       {filtered.length === 0 && <div>No experiences found for this type.</div>}

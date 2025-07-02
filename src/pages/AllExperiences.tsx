@@ -22,6 +22,8 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+import { useWishlistExperiences } from '@/hooks/useDataLoaders';
+import { useAuth } from '@/lib/auth';
 
 // Add distance filter options
 const DISTANCE_FILTERS = [
@@ -63,6 +65,17 @@ const AllExperiences = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [locationClearedCount, setLocationClearedCount] = useState(0);
+  const { user: rawUser } = useAuth();
+  // Debug log for user
+  console.log('Current user:', rawUser);
+  // Use fallback user ID if not logged in or invalid
+  function isValidUUID(id) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  }
+  const fallbackUserId = '00000000-0000-0000-0000-000000000000'; // Replace with a real UUID from your Supabase users table for testing
+  const user = rawUser && isValidUUID(rawUser.id) ? rawUser : { id: fallbackUserId };
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const [localWishlist, setLocalWishlist] = useState<string[]>([]);
 
   // Get location from query param
   const query = new URLSearchParams(location.search);
@@ -307,6 +320,29 @@ const AllExperiences = () => {
     );
   }, [filteredExperiences]);
 
+  useEffect(() => {
+    if (wishlistExperiences) {
+      setLocalWishlist(wishlistExperiences.map(exp => exp.id));
+      console.log('Loaded wishlistExperiences:', wishlistExperiences);
+    }
+  }, [wishlistExperiences]);
+
+  const handleWishlistChange = (experienceId: string, isNowInWishlist: boolean) => {
+    setLocalWishlist(prev => {
+      if (isNowInWishlist) {
+        if (!prev.includes(experienceId)) return [...prev, experienceId];
+        return prev;
+      } else {
+        return prev.filter(id => id !== experienceId);
+      }
+    });
+    console.log('Wishlist changed:', experienceId, isNowInWishlist);
+  };
+
+  // Helper for proximity fallback
+  const defaultCity = 'Bangalore';
+  const defaultCoords = { latitude: 12.9716, longitude: 77.5946 };
+
   // Prepare a combined list of cards (grouped and ungrouped) for pagination
   const allCards = useMemo(() => {
     const groupCardEntries = Object.entries(groupedExperiences).map(([type, exps], idx) => {
@@ -314,7 +350,12 @@ const AllExperiences = () => {
       if (experiencesArr.length === 1) {
         // Standalone card
         return { type: 'standalone', key: experiencesArr[0].id, content: (
-          <ExperienceCard key={experiencesArr[0].id} experience={experiencesArr[0]} />
+          <ExperienceCard 
+            key={experiencesArr[0].id} 
+            experience={{ ...experiencesArr[0] }}
+            isInWishlist={localWishlist.includes(experiencesArr[0].id)}
+            onWishlistChange={handleWishlistChange}
+          />
         ) };
       }
       // Group card
@@ -364,11 +405,16 @@ const AllExperiences = () => {
       type: 'standalone',
       key: exp.id,
       content: (
-        <ExperienceCard key={exp.id} experience={exp} />
+        <ExperienceCard 
+          key={exp.id} 
+          experience={{ ...exp }}
+          isInWishlist={localWishlist.includes(exp.id)}
+          onWishlistChange={handleWishlistChange}
+        />
       )
     }));
     return [...groupCardEntries, ...ungroupedCardEntries];
-  }, [groupedExperiences, ungroupedExperiences, navigate]);
+  }, [groupedExperiences, ungroupedExperiences, navigate, localWishlist]);
 
   // Pagination for all cards
   const cardsPerPage = 9;
