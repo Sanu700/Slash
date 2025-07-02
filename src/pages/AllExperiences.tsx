@@ -287,11 +287,93 @@ const AllExperiences = () => {
     return filtered;
   }, [sortOrder, searchTerm, experiences, isLoading, activeFilters, locationParam, locationClearedCount]);
 
-  // Calculate pagination
-  const indexOfLastExperience = currentPage * experiencesPerPage;
-  const indexOfFirstExperience = indexOfLastExperience - experiencesPerPage;
-  const currentExperiences = filteredExperiences.slice(indexOfFirstExperience, indexOfLastExperience);
-  const totalPages = Math.ceil(filteredExperiences.length / experiencesPerPage);
+  // Group experiences by exp_type (first value), skip 'Other' group
+  const groupedExperiences = useMemo<Record<string, Experience[]>>(() => {
+    const groups: Record<string, Experience[]> = {};
+    filteredExperiences.forEach(exp => {
+      if (Array.isArray(exp.exp_type) && exp.exp_type.length > 0 && exp.exp_type[0]) {
+        const type = exp.exp_type[0];
+        if (!groups[type]) groups[type] = [];
+        groups[type].push(exp);
+      }
+    });
+    return groups;
+  }, [filteredExperiences]);
+
+  // Find ungrouped experiences (no exp_type or empty array)
+  const ungroupedExperiences = useMemo(() => {
+    return filteredExperiences.filter(
+      exp => !Array.isArray(exp.exp_type) || exp.exp_type.length === 0 || !exp.exp_type[0]
+    );
+  }, [filteredExperiences]);
+
+  // Prepare a combined list of cards (grouped and ungrouped) for pagination
+  const allCards = useMemo(() => {
+    const groupCardEntries = Object.entries(groupedExperiences).map(([type, exps], idx) => {
+      const experiencesArr = exps as Experience[];
+      if (experiencesArr.length === 1) {
+        // Standalone card
+        return { type: 'standalone', key: experiencesArr[0].id, content: (
+          <ExperienceCard key={experiencesArr[0].id} experience={experiencesArr[0]} />
+        ) };
+      }
+      // Group card
+      const groupColors = [
+        'bg-blue-100',
+        'bg-green-100',
+        'bg-yellow-100',
+        'bg-pink-100',
+        'bg-purple-100',
+        'bg-orange-100',
+        'bg-teal-100',
+        'bg-red-100',
+        'bg-indigo-100',
+        'bg-emerald-100',
+        'bg-fuchsia-100',
+        'bg-cyan-100',
+      ];
+      const colorClass = groupColors[idx % groupColors.length];
+      return { type: 'group', key: type, content: (
+        <div key={type} className="col-span-1">
+          <div
+            className={`rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer ${colorClass}`}
+            onClick={() => navigate(`/experiences/type/${encodeURIComponent(type)}`)}
+          >
+            {/* Show image from the first experience in the group */}
+            <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
+              <img
+                src={Array.isArray(experiencesArr[0].imageUrl) ? experiencesArr[0].imageUrl[0] : experiencesArr[0].imageUrl}
+                alt={type}
+                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out"
+                style={{ minHeight: '200px' }}
+                onError={e => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
+              />
+            </div>
+            <div className="p-4 flex flex-col items-center justify-center w-full gap-2 min-h-[184px]">
+              <span className="font-extrabold text-3xl text-center text-gray-900">{type}</span>
+              <span className="text-base bg-white/80 text-gray-900 rounded-full px-4 py-2 font-bold">{experiencesArr.length} experiences</span>
+            </div>
+          </div>
+        </div>
+      ) };
+    });
+    const ungroupedCardEntries = ungroupedExperiences.map(exp => ({
+      type: 'standalone',
+      key: exp.id,
+      content: (
+        <ExperienceCard key={exp.id} experience={exp} />
+      )
+    }));
+    return [...groupCardEntries, ...ungroupedCardEntries];
+  }, [groupedExperiences, ungroupedExperiences, navigate]);
+
+  // Pagination for all cards
+  const cardsPerPage = 9;
+  const totalPages = Math.ceil(allCards.length / cardsPerPage);
+  const paginatedCards = allCards.slice((currentPage - 1) * cardsPerPage, currentPage * cardsPerPage);
 
   const handleSortChange = (order: 'default' | 'price-low' | 'price-high' | 'duration-low' | 'duration-high') => {
     setSortOrder(order);
@@ -449,14 +531,12 @@ const AllExperiences = () => {
               </div>
 
               {/* Experiences Grid */}
-              {filteredExperiences.length > 0 ? (
+              {allCards.length > 0 ? (
                 <div className={cn(
                   "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children pt-16",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
-                  {currentExperiences.map((experience, idx) => (
-                    <ExperienceCard key={experience.id} experience={experience} index={idx} />
-                  ))}
+                  {paginatedCards.map(card => card.content)}
                 </div>
               ) : (
                 <div className="text-center py-16">
@@ -481,7 +561,7 @@ const AllExperiences = () => {
               )}
 
               {/* Pagination */}
-              {filteredExperiences.length > experiencesPerPage && renderPagination()}
+              {allCards.length > cardsPerPage && renderPagination()}
             </>
           )}
         </div>
