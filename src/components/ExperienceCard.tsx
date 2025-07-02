@@ -75,6 +75,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   // Debug log to check values at render time
   console.log('RENDER ExperienceCard:', experience.title, experience.latitude, experience.longitude, selectedCity);
 
+  // Update selectedCity and selectedAddress when localStorage changes or when the user selects a new city
   useEffect(() => {
     const handleStorage = () => {
       setSelectedCity(localStorage.getItem('selected_city'));
@@ -90,55 +91,19 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
+  // Also update when selected_city or selected_address changes in localStorage (e.g., after user selects a city)
   useEffect(() => {
-    console.log('TravelTime useEffect triggered for', experience.title, {
-      lat: experience.latitude,
-      lng: experience.longitude,
-      selectedCity,
-      cityCoords: selectedCity ? CITY_COORDINATES[selectedCity] : null
-    });
-
-    // Use selected city or default to Bangalore if no city is selected
-    const cityToUse = selectedCity || 'Bangalore';
-    const cityCoords = CITY_COORDINATES[cityToUse];
-
-    // Prefer address coordinates if available
-    let fromLat: number | null = null;
-    let fromLng: number | null = null;
-    if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
-      fromLat = parseFloat(selectedAddress.lat);
-      fromLng = parseFloat(selectedAddress.lon);
-    } else if (selectedCity && CITY_COORDINATES[selectedCity]) {
-      fromLat = CITY_COORDINATES[selectedCity].latitude;
-      fromLng = CITY_COORDINATES[selectedCity].longitude;
+    setSelectedCity(localStorage.getItem('selected_city'));
+    const raw = localStorage.getItem('selected_address');
+    try {
+      setSelectedAddress(raw ? JSON.parse(raw) : null);
+    } catch {
+      setSelectedAddress(null);
     }
+  }, [localStorage.getItem('selected_city'), localStorage.getItem('selected_address')]);
 
-    if (
-      experience.latitude && experience.longitude &&
-      fromLat !== null && fromLng !== null
-    ) {
-      const dist = calculateHaversineDistance(
-        fromLat,
-        fromLng,
-        experience.latitude,
-        experience.longitude
-      );
-      setDistance(`${dist.toFixed(1)} km`);
-      let minutes;
-      if (dist === 0) {
-        minutes = 0;
-      } else {
-        minutes = Math.max(1, Math.round((dist / 30) * 60));
-      }
-      if (minutes >= 60) {
-        const hr = Math.floor(minutes / 60);
-        const min = minutes % 60;
-        setTravelTime(min > 0 ? `${hr} hr ${min} min` : `${hr} hr`);
-      } else {
-        setTravelTime(`${minutes} min`);
-      }
-    }
-  }, [experience.latitude, experience.longitude, experience.id, selectedCity, selectedAddress]);
+  // Always use Bangalore as default if no city/address
+  const BANGALORE_COORDS = { latitude: 12.9716, longitude: 77.5946 };
 
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -163,12 +128,12 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   // Debug log for image source and type
   console.log('ExperienceCard image:', { imgSrc, type: typeof imgSrc, experience, imageUrl: experience.imageUrl });
 
-  // Calculate proximity info (mock/fallback for demo)
-  const [debugCoords, setDebugCoords] = useState({ fromLat: null, fromLng: null, toLat: null, toLng: null });
   useEffect(() => {
-    const cityCoords = { latitude: 28.6139, longitude: 77.2090 }; // Delhi fallback
-    let fromLat = null;
-    let fromLng = null;
+    setDistance(null);
+    setTravelTime(null);
+    let fromLat: number | null = null;
+    let fromLng: number | null = null;
+    let showProximity = true;
     if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
       fromLat = parseFloat(selectedAddress.lat);
       fromLng = parseFloat(selectedAddress.lon);
@@ -176,16 +141,15 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
       fromLat = CITY_COORDINATES[selectedCity].latitude;
       fromLng = CITY_COORDINATES[selectedCity].longitude;
     } else {
-      fromLat = cityCoords.latitude;
-      fromLng = cityCoords.longitude;
+      showProximity = false;
     }
-    setDebugCoords({
-      fromLat,
-      fromLng,
-      toLat: experience.latitude,
-      toLng: experience.longitude
-    });
-    if (experience.latitude && experience.longitude) {
+    if (
+      showProximity &&
+      typeof experience.latitude === 'number' && typeof experience.longitude === 'number' &&
+      fromLat !== null && fromLng !== null &&
+      !isNaN(experience.latitude) && !isNaN(experience.longitude) &&
+      !isNaN(fromLat) && !isNaN(fromLng)
+    ) {
       const dist = calculateHaversineDistance(
         fromLat,
         fromLng,
@@ -207,7 +171,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
         setTravelTime(`${minutes} min`);
       }
     }
-  }, [experience.latitude, experience.longitude, selectedCity, selectedAddress]);
+  }, [experience.latitude, experience.longitude, experience.id, selectedCity, selectedAddress]);
 
   // If the experience image changes, reset the imgSrc
   useEffect(() => {
