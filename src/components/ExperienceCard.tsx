@@ -155,11 +155,22 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange }: Expe
         <div className="absolute inset-0 flex flex-col justify-end p-4 text-white pointer-events-none bg-gradient-to-t from-black/80 via-black/30 to-transparent">
           <h3 className="text-lg font-semibold mb-1 line-clamp-2 pointer-events-auto">{experience.title}</h3>
 
+            {/* Location as text */}
+            <div className="text-xs md:text-sm text-white/80 mb-1 flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
+              <span className="truncate">{experience.location}</span>
+            </div>
+
+            {/* Location + Price */}
+            <div className="flex items-center space-x-2 md:space-x-4 mb-2 md:mb-3">
+              <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+                <DialogTrigger asChild>
           <div className="flex items-center space-x-4 text-sm mb-1 pointer-events-auto">
             <span title={experience.location} className="flex items-center truncate">
               <MapPin className="h-4 w-4 mr-1" />
               {experience.location}
             </span>
+
 
             {distance && travelTime && (
               <span className="flex items-center">
