@@ -540,10 +540,6 @@ const AllExperiences = () => {
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
 
-                  {currentExperiences.map((experience, idx) => (
-                    <ExperienceCard key={experience.id} experience={experience} index={idx} />
-                  ))}
-
                   {paginatedCards.map(card => card.content)}
 
                 </div>
