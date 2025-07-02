@@ -21,6 +21,24 @@ import ExperienceMap from '@/components/ExperienceMap';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CITY_COORDINATES } from '../components/CitySelector';
 
+function getValidImgSrc(src: any) {
+  if (!src) return '/placeholder.svg';
+  if (Array.isArray(src)) {
+    return getValidImgSrc(src[0]);
+  }
+  if (typeof src === 'object') {
+    if (src.url && typeof src.url === 'string') return src.url;
+    if (src.path && typeof src.path === 'string') return src.path;
+    return '/placeholder.svg';
+  }
+  if (typeof src !== 'string') return '/placeholder.svg';
+  if (src.startsWith('data:image/')) return src;
+  if (/^[A-Za-z0-9+/=]+={0,2}$/.test(src) && src.length > 100) {
+    return `data:image/jpeg;base64,${src}`;
+  }
+  return src;
+}
+
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -307,6 +325,21 @@ const ExperienceView = () => {
   const handlePrevImage = () => setCurrentImageIdx(idx => (idx - 1 + imageUrls.length) % imageUrls.length);
   const handleNextImage = () => setCurrentImageIdx(idx => (idx + 1) % imageUrls.length);
   
+  // Add to localStorage for guests
+  useEffect(() => {
+    if (!user && experience) {
+      // Add to viewedExperiences in localStorage
+      let viewed = localStorage.getItem('viewedExperiences');
+      let arr = viewed ? JSON.parse(viewed) : [];
+      // Remove if already present (to re-add at front)
+      arr = arr.filter((exp) => exp && exp.id !== experience.id);
+      arr.unshift({ ...experience });
+      // Limit to 50
+      if (arr.length > 50) arr = arr.slice(0, 50);
+      localStorage.setItem('viewedExperiences', JSON.stringify(arr));
+    }
+  }, [user, experience]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -322,11 +355,12 @@ const ExperienceView = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
-        {/* Gallery Section */}
-        <div className="relative h-[50vh] md:h-[60vh] w-full flex flex-col items-center justify-center">
-          {/* Main Image */}
-          <img
-            src={imageUrls[currentImageIdx]}
+
+        {/* Hero Image Section */}
+        <div className="relative h-[50vh] md:h-[60vh] w-full">
+          <img 
+            src={getValidImgSrc(experience.imageUrl)} 
+
             alt={experience.title}
             className="h-full w-full object-cover rounded-lg"
             style={{ maxHeight: '100%', maxWidth: '100%' }}

@@ -130,6 +130,21 @@ const AllExperiences = () => {
     return () => window.removeEventListener('locationChanged', handler);
   }, []);
 
+  // Sync currentPage with URL on mount and when location.search changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const page = parseInt(params.get('page') || '1', 10);
+    setCurrentPage(page);
+  }, [location.search]);
+
+  // Update the URL when changing pages
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    const params = new URLSearchParams(location.search);
+    params.set('page', page);
+    navigate({ search: params.toString() }, { replace: true });
+  };
+
   // Memoize filtered and sorted experiences
   const filteredExperiences = useMemo(() => {
     if (isLoading) return [];
@@ -386,7 +401,7 @@ const AllExperiences = () => {
       <div className="flex justify-center mt-8 space-x-2">
         <Button
           variant="outline"
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
           disabled={currentPage === 1}
         >
           Previous
@@ -396,7 +411,7 @@ const AllExperiences = () => {
             <Button
               key={page}
               variant={currentPage === page ? "default" : "outline"}
-              onClick={() => setCurrentPage(page)}
+              onClick={() => handlePageChange(page)}
               className="w-10"
             >
               {page}
@@ -405,7 +420,7 @@ const AllExperiences = () => {
         </div>
         <Button
           variant="outline"
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
           disabled={currentPage === totalPages}
         >
           Next
@@ -521,10 +536,16 @@ const AllExperiences = () => {
               {/* Experiences Grid */}
               {allCards.length > 0 ? (
                 <div className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children",
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children pt-16",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
+
+                  {currentExperiences.map((experience, idx) => (
+                    <ExperienceCard key={experience.id} experience={experience} index={idx} />
+                  ))}
+
                   {paginatedCards.map(card => card.content)}
+
                 </div>
               ) : (
                 <div className="text-center py-16">

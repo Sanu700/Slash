@@ -1,236 +1,543 @@
 // src/pages/Profile.tsx
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import OrdersTab from '@/components/OrdersTab';
-import Navbar from '@/components/Navbar';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import WishlistContent from '@/components/profile/WishlistContent';
+import ExperienceCard from '@/components/ExperienceCard';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, LogOut, User, ShoppingCart } from 'lucide-react';
-import { updateUserProfile } from '@/lib/profileService';
+import { Heart, ShoppingCart, Edit, Share2, Bookmark, Star, X, Gift, Copy, HelpCircle, Mail, Shield, Settings } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { updateUserProfile } from '@/lib/profileService';
+import { useWishlistExperiences, useBookingHistory } from '@/hooks/useDataLoaders';
+import { supabase } from '@/lib/supabase';
+import { getTrendingExperiences } from '@/lib/data';
+import { sampleExperiences } from '@/lib/data/sampleData';
+import { getRecommendedExperiences, UserPreferences } from '@/lib/data/experienceMatching';
+import { getAllExperiences } from '@/lib/data/experiences';
+import { categories } from '@/lib/data/categories';
+import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 
-const Profile: React.FC = () => {
+// Helper to get saved experiences from localStorage
+const getSavedExperiences = () => {
+  try {
+    const saved = localStorage.getItem('savedExperiences');
+    const arr = saved ? JSON.parse(saved) : [];
+    // Filter out any falsey or corrupt entries (must have id, title, etc)
+    return Array.isArray(arr) ? arr.filter(exp => exp && exp.id && exp.title) : [];
+  } catch {
+    return [];
+  }
+};
+// Helper to get viewed experiences from localStorage
+const getViewedExperiences = () => {
+  try {
+    const viewed = localStorage.getItem('viewedExperiences');
+    const arr = viewed ? JSON.parse(viewed) : [];
+    return Array.isArray(arr) ? arr.filter(exp => exp && exp.id && exp.title) : [];
+  } catch {
+    return [];
+  }
+};
+// Remove a saved experience by id
+const removeSavedExperience = (id) => {
+  const arr = getSavedExperiences();
+  const filtered = arr.filter(exp => exp.id !== id);
+  localStorage.setItem('savedExperiences', JSON.stringify(filtered));
+  return filtered;
+};
+
+const Profile = () => {
   const { user, logout } = useAuth();
+  const { toggleWishlist } = useExperienceInteractions(user?.id);
   const navigate = useNavigate();
-  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('wishlist');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [editName, setEditName] = useState(user?.user_metadata?.full_name || '');
+  const [editAvatar, setEditAvatar] = useState(user?.user_metadata?.avatar_url || '');
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [editAvatarPreview, setEditAvatarPreview] = useState<string>(user?.user_metadata?.avatar_url || '/placeholder.svg');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [savedExperiences, setSavedExperiences] = useState([]);
+  const [viewedExperiences, setViewedExperiences] = useState([]);
+  // Add local state for wishlist to allow UI update on remove
+  const [localWishlist, setLocalWishlist] = useState([]);
+  // Wishlist from Supabase
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const { bookingHistory, isLoading: isBookingHistoryLoading } = useBookingHistory(user?.id);
+  const [referralCount, setReferralCount] = useState(0);
 
-  // which top-level tab is active?
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
+  const mockPeople = [
+    {
+      id: 'u1',
+      name: 'Aarav Mehta',
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      mutual: 3
+    },
+    {
+      id: 'u2',
+      name: 'Priya Sharma',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+      mutual: 1
+    },
+    {
+      id: 'u3',
+      name: 'Rohan Gupta',
+      avatar: 'https://randomuser.me/api/portraits/men/65.jpg',
+      mutual: 2
+    },
+    {
+      id: 'u4',
+      name: 'Simran Kaur',
+      avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
+      mutual: 0
+    },
+  ];
 
-  React.useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    if (tab === 'orders' || tab === 'profile') {
-      setActiveTab(tab as 'profile' | 'orders');
-    } else {
-      setActiveTab('profile');
-    }
-  }, [location.search]);
-
-  // When the tab changes, update the URL
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as 'profile' | 'orders');
-    const params = new URLSearchParams(location.search);
-    if (value === 'profile') {
-      params.delete('tab');
-    } else {
-      params.set('tab', value);
-    }
-    navigate({ pathname: '/profile', search: params.toString() }, { replace: true });
+  const buildUserPreferences = (wishlist, viewed) => {
+    // Collect categories from wishlist and viewed
+    const all = [...(wishlist || []), ...(viewed || [])];
+    const preferredCategories = Array.from(new Set(all.map(exp => {
+      // Try to match category name to category id
+      const cat = categories.find(c => c.name.toLowerCase() === (exp.category || '').toLowerCase());
+      return cat ? cat.id : exp.category;
+    }).filter(Boolean)));
+    // Estimate budget range from liked/viewed
+    const prices = all.map(exp => exp.price).filter(p => typeof p === 'number');
+    const min = prices.length ? Math.max(0, Math.min(...prices) - 500) : 0;
+    const max = prices.length ? Math.max(...prices) + 1000 : 10000;
+    // Estimate duration (try to parse hours from string)
+    const parseDuration = (d) => {
+      if (!d) return 2;
+      if (typeof d === 'number') return d;
+      const match = d.match(/(\d+(\.\d+)?)/);
+      return match ? parseFloat(match[1]) : 2;
+    };
+    const durations = all.map(exp => parseDuration(exp.duration)).filter(Boolean);
+    const durMin = durations.length ? Math.max(0, Math.min(...durations) - 1) : 1;
+    const durMax = durations.length ? Math.max(...durations) + 2 : 8;
+    // Estimate group size
+    const groupSizes = all.map(exp => {
+      if (typeof exp.participants === 'string') {
+        const match = exp.participants.match(/\d+/g);
+        return match ? Math.max(...match.map(Number)) : 2;
+      }
+      if (typeof exp.participants === 'number') return exp.participants;
+      return 2;
+    });
+    const groupSize = groupSizes.length ? Math.round(groupSizes.reduce((a, b) => a + b, 0) / groupSizes.length) : 2;
+    // Estimate interests from tags/nicheCategory
+    const interests = Array.from(new Set(all.flatMap(exp => [exp.nicheCategory, ...(exp.tags || [])]).filter(Boolean)));
+    // Default values for time/day/accessibility
+    return {
+      preferredCategories,
+      budgetRange: { min, max },
+      preferredDuration: { min: durMin, max: durMax },
+      preferredTimeOfDay: ['morning', 'afternoon', 'evening'] as ('morning' | 'afternoon' | 'evening')[],
+      preferredDays: ['weekday', 'weekend'] as ('weekday' | 'weekend')[],
+      groupSize,
+      accessibilityNeeds: [],
+      interests,
+    };
   };
 
-  // local form state for editing
-  const [showModal, setShowModal] = useState(false);
-  const [name, setName] = useState(user?.user_metadata?.full_name || '');
-  const [avatarUrl, setAvatarUrl] = useState(
-    user?.user_metadata?.avatar_url || '/default-avatar.png'
-  );
+  const [recommended, setRecommended] = useState([]);
+  useEffect(() => {
+    (async () => {
+      // Use wishlist and viewed for preferences
+      const allExperiences = await getAllExperiences();
+      let prefs = buildUserPreferences(localWishlist, viewedExperiences);
+      // If not enough data, fallback to trending/sample
+      if (!prefs.preferredCategories.length && (!localWishlist.length && !viewedExperiences.length)) {
+        let rec = await getTrendingExperiences();
+        if (!rec || rec.length === 0) rec = sampleExperiences.slice(0, 6);
+        setRecommended(rec);
+        return;
+      }
+      // Map allExperiences to the minimal structure expected by getRecommendedExperiences
+      const mapped = allExperiences.map(exp => ({
+        id: exp.id,
+        categoryId: (() => {
+          const cat = categories.find(c => c.name.toLowerCase() === (exp.category || '').toLowerCase());
+          return cat ? cat.id : exp.category;
+        })(),
+        name: exp.title,
+        description: exp.description,
+        price: exp.price,
+        duration: typeof exp.duration === 'number' ? exp.duration : (() => {
+          const match = (exp.duration || '').toString().match(/(\d+(\.\d+)?)/);
+          return match ? parseFloat(match[1]) : 2;
+        })(),
+        availableTimeSlots: [{ timeOfDay: 'morning' as const, days: ['weekday', 'weekend'] as ('weekday' | 'weekend')[] }],
+        groupSize: { min: 1, max: 10 },
+        accessibilityFeatures: [],
+        tags: (exp as any).tags || [],
+        rating: (exp as any).rating || 4,
+        imageUrl: Array.isArray(exp.imageUrl) ? exp.imageUrl[0] : exp.imageUrl,
+      }));
+      const recs = getRecommendedExperiences(prefs, mapped, 6);
+      // Map back to app's Experience type for display
+      const recsForDisplay = recs.map(r => allExperiences.find(e => e.id === r.id)).filter(Boolean);
+      setRecommended(recsForDisplay);
+    })();
+  }, [localWishlist, viewedExperiences]);
 
-  const handleAccountOverviewSave = async () => {
-    if (!user || !user.id) return;
-    try {
-      await updateUserProfile(user.id, {
-        full_name: name,
-        avatar_url: avatarUrl,
-      });
-      toast({
-        title: 'Success',
-        description: 'Profile updated successfully',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update profile',
-        variant: 'destructive',
-      });
+  // Fetch saved and viewed experiences on mount
+  useEffect(() => {
+    setSavedExperiences(getSavedExperiences());
+    // Fetch viewed experiences
+    if (!user) {
+      setViewedExperiences(getViewedExperiences());
+    } else {
+      // Fetch from Supabase: join viewed_experiences and experiences
+      (async () => {
+        const { data, error } = await supabase
+          .from('viewed_experiences')
+          .select('experience_id, viewed_at')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(50);
+        if (error) {
+          setViewedExperiences([]);
+          return;
+        }
+        if (data && data.length > 0) {
+          // Fetch experience details for each
+          const exps = [];
+          for (const item of data) {
+            const { data: expData } = await supabase
+              .from('experiences')
+              .select('*')
+              .eq('id', item.experience_id)
+              .single();
+            if (expData) {
+              exps.push({ ...expData, imageUrl: expData.image_url });
+            }
+          }
+          setViewedExperiences(exps);
+        } else {
+          setViewedExperiences([]);
+        }
+      })();
     }
+  }, [user]);
+
+  useEffect(() => {
+    setLocalWishlist(wishlistExperiences);
+  }, [wishlistExperiences]);
+
+  // Remove from local wishlist when un-wishlisted
+  const handleWishlistChange = (experienceId, isInWishlist) => {
+    if (!isInWishlist) {
+      setLocalWishlist(prev => prev.filter(exp => exp.id !== experienceId));
+    }
+  };
+
+  // Profile info for header
+  const profile = {
+    name: user?.user_metadata?.full_name || editName || 'Jamie Smith',
+    username: user?.username || 'jamiesmith',
+    avatar: user?.user_metadata?.avatar_url || editAvatar || '/placeholder.svg',
+    email: user?.email || '',
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditAvatarFile(file);
+      setEditAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleEditProfile = async () => {
+    let avatarUrl = editAvatar;
+    if (editAvatarFile) {
+      // TODO: Upload to storage provider (e.g., Supabase Storage, S3, etc.)
+      // For now, just use the preview URL (not persistent)
+      avatarUrl = editAvatarPreview;
+    }
+    try {
+      await updateUserProfile(user.id, { full_name: editName, avatar_url: avatarUrl });
+      toast({ title: 'Profile updated!' });
+      setShowEditModal(false);
+      // Optionally update user context/state here
+    } catch {
+      toast({ title: 'Failed to update profile', variant: 'destructive' });
+    }
+  };
+
+  const handleShareProfile = async () => {
+    const url = `${window.location.origin}/profile/${user?.username || user?.email?.split('@')[0]}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Profile link copied!', description: url });
+    } catch {
+      toast({ title: 'Failed to copy link', variant: 'destructive' });
+    }
+  };
+
+  // Remove from saved experiences
+  const handleRemoveSaved = (id) => {
+    const updated = removeSavedExperience(id);
+    setSavedExperiences(updated);
+    toast({ title: 'Removed', description: 'Experience removed from Saved for Later.' });
+  };
+
+  // Simulate fetching live referral count (replace with real API if available)
+  useEffect(() => {
+    // Example: fetch from localStorage or backend
+    const stored = localStorage.getItem('referralCount');
+    setReferralCount(stored ? parseInt(stored, 10) : 0);
+    // Optionally, listen for changes (e.g., after a successful referral)
+    // You can replace this with a real API call in the future
+  }, []);
+
+  // Stats (use local state for instant UI update)
+  const totalBookedExperiences = bookingHistory.reduce((sum, booking) => sum + (booking.items?.length || 0), 0);
+  const stats = [
+    { label: 'Experiences', value: viewedExperiences.length },
+    { label: 'Wishlist', value: localWishlist.length },
+    { label: 'Saved', value: savedExperiences.length },
+    { label: 'Bookings', value: totalBookedExperiences },
+    { label: 'Referrals', value: referralCount },
+  ];
+
+  // --- Recommended For You handlers ---
+  const handleShareExperience = async (exp) => {
+    const url = `${window.location.origin}/experience/${exp.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Experience link copied!', description: url });
+    } catch {
+      toast({ title: 'Failed to copy link', variant: 'destructive' });
+    }
+  };
+  const handleLikeExperience = async (exp) => {
+    if (!user) {
+      toast({ title: 'Please log in to save to your wishlist', variant: 'destructive' });
+      return;
+    }
+    const isInWishlist = localWishlist.some(e => e.id === exp.id);
+    await toggleWishlist(exp.id, isInWishlist, { [exp.id]: exp }, () => {
+      const newWishlistState = !isInWishlist;
+      setLocalWishlist(prev => {
+        if (newWishlistState) return [...prev, exp];
+        return prev.filter(e => e.id !== exp.id);
+      });
+    });
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="container max-w-6xl mx-auto px-4 pt-24 pb-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
-          <nav className="w-full md:w-64 flex-shrink-0 space-y-4">
-            <Card className="p-4">
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab('profile')}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => navigate('/wishlist')}
-                >
-                  <Heart className="mr-2 h-4 w-4" />
-                  Wishlist
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => navigate('/cart')}
-                >
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Cart
-                </Button>
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <CardContent className="p-0">
-                <nav className="space-y-2">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2"
-                    onClick={() => setShowModal(true)}
-                  >
-                    Edit Profile
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={logout}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
-                </nav>
-              </CardContent>
-            </Card>
-          </nav>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            <Card className="p-6">
-              <Tabs
-                value={activeTab}
-                onValueChange={handleTabChange}
-              >
-                <TabsList className="mb-6">
-                  <TabsTrigger value="profile">Profile</TabsTrigger>
-                  <TabsTrigger value="orders">Orders</TabsTrigger>
-                </TabsList>
-
-                {/* PROFILE TAB */}
-                <TabsContent value="profile" className="space-y-6">
-                  <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex flex-col items-center gap-4">
-                          <Avatar className="h-24 w-24">
-                            <AvatarImage src={avatarUrl} />
-                            <AvatarFallback>
-                              {user?.email?.charAt(0).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="text-center">
-                            <div className="text-xl font-bold">
-                              {name || 'Unnamed User'}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {user?.email}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Account Overview</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <label className="block mb-1 font-medium">Name</label>
-                          <Input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <label className="block mb-1 font-medium">Avatar URL</label>
-                          <Input
-                            value={avatarUrl}
-                            onChange={(e) => setAvatarUrl(e.target.value)}
-                          />
-                        </div>
-                        <Button className="w-full" onClick={handleAccountOverviewSave}>Save Changes</Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                {/* ORDERS TAB */}
-                <TabsContent value="orders" className="space-y-6">
-                  <OrdersTab />
-                </TabsContent>
-              </Tabs>
-            </Card>
+    <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
+      {/* Profile Header - formal, spaced, aligned */}
+      <div className="profile-header bg-gradient-to-r from-neutral-200 to-neutral-100 text-gray-900 py-8 px-2 md:px-6 border-b border-gray-200">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-center gap-8">
+          <div className="h-28 w-28 rounded-full bg-white p-1.5 flex-shrink-0 shadow-lg flex items-center justify-center border border-gray-200">
+            <img src={user?.user_metadata?.avatar_url || editAvatar || '/placeholder.svg'} alt="Profile" className="h-full w-full rounded-full object-cover" />
+          </div>
+          <div className="flex-1 flex flex-col items-center md:items-start gap-1">
+            <h1 className="text-2xl md:text-3xl font-bold mb-0 text-gray-900 tracking-tight leading-tight">{user?.user_metadata?.full_name || editName || 'Your Name'}</h1>
+            {user?.username && <p className="text-gray-500 text-base font-medium">@{user.username}</p>}
+          </div>
+          <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-center">
+            <Button className="bg-white text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-gray-100 transition shadow-sm border border-gray-300 text-sm" onClick={() => {
+              setEditName(user?.user_metadata?.full_name || '');
+              setEditAvatar(user?.user_metadata?.avatar_url || '');
+              setEditAvatarFile(null);
+              setEditAvatarPreview(user?.user_metadata?.avatar_url || '/placeholder.svg');
+              setShowEditModal(true);
+            }}>Edit Profile</Button>
+            <Button className="bg-neutral-200 text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-neutral-300 transition flex items-center gap-2 shadow-sm border border-gray-300 text-sm" onClick={handleShareProfile}>
+              <Share2 className="h-5 w-5" />
+              <span>Share Profile</span>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Edit Profile Modal */}
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md space-y-4">
-            <h2 className="text-xl font-bold">Edit Profile</h2>
-            <div>
-              <label className="block mb-1 font-medium">Name</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-14 mt-12">
+        {/* Main Content Area */}
+        <div className="md:w-2/3 flex flex-col gap-12">
+          {/* Stats Bar - formal, spaced */}
+          <div className="bg-white rounded-2xl shadow flex divide-x divide-gray-100 mb-6 border border-gray-100 min-h-[80px]">
+            {stats.map((stat, i) => (
+              <div key={stat.label} className="flex-1 text-center py-5 px-1 md:px-4">
+                <p className="font-semibold text-lg text-gray-900 mb-0.5">{stat.value}</p>
+                <p className="text-gray-500 text-xs tracking-wide">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          {/* Tabs */}
+          <div className="bg-white rounded-2xl shadow mb-4 overflow-hidden border border-gray-100">
+            <div className="flex overflow-x-auto justify-center gap-4 px-4 py-2 min-h-[60px]">
+              {['wishlist', 'saved', 'viewed', 'history'].map(tab => (
+                <button
+                  key={tab}
+                  className={`px-10 py-3 flex-1 text-center capitalize transition font-medium text-base tracking-wide rounded-lg ${activeTab === tab ? 'border-b-4 border-primary text-primary bg-neutral-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                  style={{ minWidth: 140, maxWidth: 220 }}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab === 'viewed' ? 'Viewed' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="block mb-1 font-medium">Avatar URL</label>
-              <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} />
+          </div>
+          {/* Tab Content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {activeTab === 'wishlist' && (
+              localWishlist.length > 0 ? localWishlist.map(exp => (
+                <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
+                  <ExperienceCard experience={exp} onWishlistChange={handleWishlistChange} />
+                </div>
+              )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No wishlist experiences yet.</div>
+            )}
+            {activeTab === 'saved' && (
+              savedExperiences.length > 0 ? savedExperiences.map(exp => (
+                <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
+                  <ExperienceCard experience={exp} />
+                  <Button size="icon" variant="ghost" className="absolute top-2 right-2 z-10" onClick={() => handleRemoveSaved(exp.id)} title="Remove from Saved">
+                    <X className="h-5 w-5 text-gray-500" />
+                  </Button>
+                </div>
+              )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No saved experiences yet.</div>
+            )}
+            {activeTab === 'viewed' && (
+              viewedExperiences.length > 0 ? viewedExperiences.map(exp => (
+                <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
+                  <ExperienceCard experience={exp} />
+                </div>
+              )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No viewed experiences yet.</div>
+            )}
+            {activeTab === 'history' && (
+              isBookingHistoryLoading ? (
+                <div className="col-span-full text-center text-gray-400 py-12 text-lg">Loading bookings...</div>
+              ) : bookingHistory.length === 0 ? (
+                <div className="col-span-full text-center text-gray-400 py-12 text-lg">No bookings yet.</div>
+              ) : bookingHistory.every(b => !b.items || b.items.length === 0) ? (
+                <div className="col-span-full text-center text-gray-400 py-12 text-lg">No booked experiences found.</div>
+              ) : bookingHistory.map(booking => (
+                booking.items.map(item => (
+                  <div key={item.experience.id + booking.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
+                    <ExperienceCard experience={item.experience} />
+                    <div className="absolute bottom-2 right-2 bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">Booked on {new Date(booking.booking_date).toLocaleDateString()}</div>
+                  </div>
+                ))
+              ))
+            )}
+          </div>
+        </div>
+        {/* Sidebar - formal, spaced, aligned */}
+        <div className="md:w-1/3 flex flex-col gap-8">
+          {/* Recommended For You */}
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-5 border border-gray-100 min-h-[220px]">
+            <h2 className="font-semibold text-lg mb-2 text-gray-900">Recommended For You</h2>
+            {recommended.slice(0, 3).map(exp => {
+              const isInWishlist = localWishlist.some(e => e.id === exp.id);
+              return (
+                <div
+                  key={exp.id}
+                  className="flex items-center gap-4 cursor-pointer hover:bg-neutral-100 rounded-lg transition"
+                  onClick={() => navigate(`/experience/${exp.id}`)}
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(`/experience/${exp.id}`); }}
+                >
+                  <div className="h-16 w-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200">
+                    <img src={exp.imageUrl || '/placeholder.svg'} alt={exp.title} className="h-12 w-12 object-cover rounded-lg" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium mb-1 text-gray-800 truncate">{exp.title}</h3>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-4 w-4 text-yellow-400" />
+                      <span className="text-gray-500 text-xs ml-1">4.9 (128)</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end" onClick={e => e.stopPropagation()}>
+                    <Button size="icon" variant="ghost" className="text-gray-400 hover:text-primary" onClick={() => handleShareExperience(exp)}>
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className={`heart-button h-9 w-9 rounded-full flex items-center justify-center ${isInWishlist ? 'text-primary' : 'text-gray-400 hover:text-primary'}`} onClick={() => handleLikeExperience(exp)}>
+                      <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-primary' : ''}`} />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* People You May Know */}
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-5 border border-gray-100 min-h-[180px]">
+            <h2 className="font-semibold text-lg mb-2 text-gray-900">People You May Know</h2>
+            {mockPeople.map(person => (
+              <div key={person.id} className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                  <img src={person.avatar} alt={person.name} className="h-full w-full rounded-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium mb-0.5 text-gray-800 truncate">{person.name}</p>
+                  <p className="text-gray-500 text-xs truncate">{person.mutual ? `${person.mutual} mutual connection${person.mutual !== 1 ? 's' : ''}` : 'Similar interests'}</p>
+                </div>
+                <Button className="text-primary hover:bg-primary/10 px-4 py-1.5 rounded-full text-sm font-medium border border-primary/20 bg-white">Connect</Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Edit Profile Modal with avatar upload */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-md flex flex-col gap-6">
+            <h2 className="text-2xl font-semibold mb-2 text-gray-900 text-center">Edit Profile</h2>
+            <div className="flex flex-col items-center gap-2 mb-2">
+              <div className="h-28 w-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                <img src={editAvatarPreview || user?.user_metadata?.avatar_url || '/placeholder.svg'} alt="Avatar Preview" className="h-full w-full object-cover rounded-full" />
+              </div>
+              <input type="file" accept="image/*" className="mt-2" onChange={handleAvatarFileChange} />
             </div>
-            <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                onClick={() => {
-                  // TODO: persist changes to Supabase
-                  setShowModal(false);
-                }}
-              >
-                Save
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </Button>
+            <div className="mb-2">
+              <label className="block text-gray-700 mb-2">Name</label>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Avatar URL (optional)</label>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                value={editAvatar}
+                onChange={e => setEditAvatar(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-4">
+              <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+              <Button onClick={handleEditProfile}>Save</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Profile Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-lg relative">
+            <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" onClick={() => setShowShareModal(false)}>&times;</button>
+            <h2 className="text-xl font-bold mb-4">Share Profile</h2>
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">Share your profile with friends</p>
+              <div className="flex items-center bg-gray-100 rounded-lg p-3 mb-4">
+                <input type="text" value={`https://slash-experiences.netlify.app/profile/${profile.username}`} className="bg-transparent flex-1 outline-none text-gray-700" readOnly />
+                <Button className="ml-2 text-primary" onClick={handleShareProfile}>Copy</Button>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <Button variant="outline" className="flex-1">Facebook</Button>
+              <Button variant="outline" className="flex-1">Twitter</Button>
+              <Button variant="outline" className="flex-1">WhatsApp</Button>
+              <Button variant="outline" className="flex-1">Email</Button>
             </div>
           </div>
         </div>
