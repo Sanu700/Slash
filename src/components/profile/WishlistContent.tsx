@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,15 +8,16 @@ import { Heart } from 'lucide-react';
 interface WishlistContentProps {
   wishlistExperiences: Experience[];
   handleExperienceClick: (experienceId: string) => void;
+  onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
 }
 
-const WishlistContent = ({ wishlistExperiences, handleExperienceClick }: WishlistContentProps) => {
+const WishlistContent = ({ wishlistExperiences, handleExperienceClick, onWishlistChange }: WishlistContentProps) => {
   const navigate = useNavigate();
 
   return (
     <>
       {wishlistExperiences.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {wishlistExperiences.map(experience => {
             const expWithClick = {
               ...experience,
@@ -25,10 +25,9 @@ const WishlistContent = ({ wishlistExperiences, handleExperienceClick }: Wishlis
             };
             
             return (
-              <ExperienceCard 
-                key={experience.id} 
-                experience={expWithClick}
-              />
+              <div key={experience.id} className="aspect-[4/3] h-full w-full flex flex-col col-span-1">
+                <ExperienceCard experience={expWithClick} onWishlistChange={onWishlistChange} />
+              </div>
             );
           })}
         </div>

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Experience } from '@/lib/data';
-import { Heart, HeartIcon } from 'lucide-react';
+import { Heart, HeartIcon, MapPin, Clock, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useAuth } from '@/lib/auth';
@@ -10,38 +10,17 @@ import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { calculateHaversineDistance } from '@/lib/distanceUtils';
-import { MapPin, Clock } from 'lucide-react';
-
 import { CITY_COORDINATES } from './CitySelector';
-
-import { TravelInfoDisplay } from './TravelInfoDisplay';
-
-// Array of fallback images for variety
-const FALLBACK_IMAGES = [
-  '/placeholder.svg',
-  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
-  'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
-];
-
-function getRandomFallback() {
-  return FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)];
-}
+import { cn } from '@/lib/utils'; // Assuming classNames helper
+import { formatRupees } from '@/lib/currencyUtils'; // Add if needed
 
 function getValidImgSrc(src: any) {
   if (!src) return '/placeholder.svg';
-  if (Array.isArray(src)) {
-    // Use the first image in the array, or fallback
-    return getValidImgSrc(src[0]);
-  }
+  if (Array.isArray(src)) return getValidImgSrc(src[0]);
   if (typeof src === 'object') {
-    if (src.url && typeof src.url === 'string') return src.url;
-    if (src.path && typeof src.path === 'string') return src.path;
-    return '/placeholder.svg';
+    return src.url || src.path || '/placeholder.svg';
   }
-  if (typeof src !== 'string') return '/placeholder.svg';
-  if (src.startsWith('data:image/')) return src;
+  if (typeof src === 'string' && src.startsWith('data:image/')) return src;
   if (/^[A-Za-z0-9+/=]+={0,2}$/.test(src) && src.length > 100) {
     return `data:image/jpeg;base64,${src}`;
   }
@@ -55,16 +34,22 @@ interface ExperienceCardProps {
   index?: number;
 }
 
-const ExperienceCard = ({ experience, featured = false, onWishlistChange, index }: ExperienceCardProps) => {
-  const [isInWishlist, setIsInWishlist] = useState(false);
+const ExperienceCard = ({ experience, featured = false, onWishlistChange }: ExperienceCardProps) => {
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
-  const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(experience.imageUrl || '/placeholder.svg');
+
+  const [selectedCity, setSelectedCity] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null
+  );
   const [selectedAddress, setSelectedAddress] = useState(() => {
     if (typeof window !== 'undefined') {
-      const raw = localStorage.getItem('selected_address');
       try {
-        return raw ? JSON.parse(raw) : null;
+        return JSON.parse(localStorage.getItem('selected_address') || '{}');
       } catch {
         return null;
       }
@@ -72,16 +57,14 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, index 
     return null;
   });
 
-  // Debug log to check values at render time
-  console.log('RENDER ExperienceCard:', experience.title, experience.latitude, experience.longitude, selectedCity);
+  const [travelTime, setTravelTime] = useState<string | null>(null);
+  const [distance, setDistance] = useState<string | null>(null);
 
   useEffect(() => {
     const handleStorage = () => {
       setSelectedCity(localStorage.getItem('selected_city'));
-      // Also update address if changed
-      const raw = localStorage.getItem('selected_address');
       try {
-        setSelectedAddress(raw ? JSON.parse(raw) : null);
+        setSelectedAddress(JSON.parse(localStorage.getItem('selected_address') || '{}'));
       } catch {
         setSelectedAddress(null);
       }
@@ -91,86 +74,39 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, index 
   }, []);
 
   useEffect(() => {
-    console.log('TravelTime useEffect triggered for', experience.title, {
-      lat: experience.latitude,
-      lng: experience.longitude,
-      selectedCity,
-      cityCoords: selectedCity ? CITY_COORDINATES[selectedCity] : null
-    });
-
-    // Use selected city or default to Bangalore if no city is selected
-    const cityToUse = selectedCity || 'Bangalore';
-    const cityCoords = CITY_COORDINATES[cityToUse];
-
-    // Prefer address coordinates if available
-    let fromLat: number | null = null;
-    let fromLng: number | null = null;
-    if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
-      fromLat = parseFloat(selectedAddress.lat);
-      fromLng = parseFloat(selectedAddress.lon);
-    } else if (selectedCity && CITY_COORDINATES[selectedCity]) {
-      fromLat = CITY_COORDINATES[selectedCity].latitude;
-      fromLng = CITY_COORDINATES[selectedCity].longitude;
-    }
-
-    if (
-      experience.latitude && experience.longitude &&
-      fromLat !== null && fromLng !== null
-    ) {
-      const dist = calculateHaversineDistance(
-        fromLat,
-        fromLng,
-        experience.latitude,
-        experience.longitude
-      );
+    const fromLat = selectedAddress?.lat ?? CITY_COORDINATES[selectedCity || 'Bangalore']?.latitude;
+    const fromLng = selectedAddress?.lon ?? CITY_COORDINATES[selectedCity || 'Bangalore']?.longitude;
+    if (experience.latitude && experience.longitude && fromLat && fromLng) {
+      const dist = calculateHaversineDistance(+fromLat, +fromLng, experience.latitude, experience.longitude);
       setDistance(`${dist.toFixed(1)} km`);
-      let minutes;
-      if (dist === 0) {
-        minutes = 0;
-      } else {
-        minutes = Math.max(1, Math.round((dist / 30) * 60));
-      }
+      const minutes = Math.max(1, Math.round((dist / 30) * 60));
       if (minutes >= 60) {
         const hr = Math.floor(minutes / 60);
         const min = minutes % 60;
-        setTravelTime(min > 0 ? `${hr} hr ${min} min` : `${hr} hr`);
+        setTravelTime(min ? `${hr} hr ${min} min` : `${hr} hr`);
       } else {
         setTravelTime(`${minutes} min`);
       }
     }
-  }, [experience.latitude, experience.longitude, experience.id, selectedCity, selectedAddress]);
+  }, [experience, selectedCity, selectedAddress]);
 
   useEffect(() => {
     const checkWishlist = async () => {
-      if (!user) {
-        setIsInWishlist(false);
-        return;
-      }
-
-      try {
-        const { data } = await supabase
-          .from('wishlists')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('experience_id', experience.id)
-          .single();
-
-        setIsInWishlist(!!data);
-      } catch (error) {
-        console.error('Error checking wishlist status:', error);
-      }
+      if (!user) return setIsInWishlist(false);
+      const { data } = await supabase
+        .from('wishlists')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('experience_id', experience.id)
+        .single();
+      setIsInWishlist(!!data);
     };
-
     checkWishlist();
   }, [user, experience.id]);
 
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      toast.error('Please log in to save to your wishlist');
-      return;
-    }
-
+    if (!user) return toast.error('Please log in to save to your wishlist');
     await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, () => {
       const newWishlistState = !isInWishlist;
       setIsInWishlist(newWishlistState);
@@ -178,144 +114,108 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, index 
     });
   };
 
-  // Determine if this card is in the first row (3 columns)
-  const isFirstRow = (index ?? 0) < 3;
-
-  const [travelTime, setTravelTime] = useState<string | null>(null);
-  const [distance, setDistance] = useState<string | null>(null);
-  const [imgSrc, setImgSrc] = useState(experience.imageUrl || '/placeholder.svg');
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const [imgError, setImgError] = useState(false);
-
-  // Debug log for image source and type
-  console.log('ExperienceCard image:', { imgSrc, type: typeof imgSrc, experience, imageUrl: experience.imageUrl });
-
-  // Calculate proximity info (mock/fallback for demo)
-  const [debugCoords, setDebugCoords] = useState({ fromLat: null, fromLng: null, toLat: null, toLng: null });
-  useEffect(() => {
-    const cityCoords = { latitude: 28.6139, longitude: 77.2090 }; // Delhi fallback
-    let fromLat = null;
-    let fromLng = null;
-    if (selectedAddress && selectedAddress.lat && selectedAddress.lon) {
-      fromLat = parseFloat(selectedAddress.lat);
-      fromLng = parseFloat(selectedAddress.lon);
-    } else if (selectedCity && CITY_COORDINATES[selectedCity]) {
-      fromLat = CITY_COORDINATES[selectedCity].latitude;
-      fromLng = CITY_COORDINATES[selectedCity].longitude;
-    } else {
-      fromLat = cityCoords.latitude;
-      fromLng = cityCoords.longitude;
-    }
-    setDebugCoords({
-      fromLat,
-      fromLng,
-      toLat: experience.latitude,
-      toLng: experience.longitude
-    });
-    if (experience.latitude && experience.longitude) {
-      const dist = calculateHaversineDistance(
-        fromLat,
-        fromLng,
-        experience.latitude,
-        experience.longitude
-      );
-      setDistance(`${dist.toFixed(1)} km`);
-      let minutes;
-      if (dist === 0) {
-        minutes = 0;
-      } else {
-        minutes = Math.max(1, Math.round((dist / 30) * 60));
-      }
-      if (minutes >= 60) {
-        const hr = Math.floor(minutes / 60);
-        const min = minutes % 60;
-        setTravelTime(min > 0 ? `${hr} hr ${min} min` : `${hr} hr`);
-      } else {
-        setTravelTime(`${minutes} min`);
-      }
-    }
-  }, [experience.latitude, experience.longitude, selectedCity, selectedAddress]);
-
-  // If the experience image changes, reset the imgSrc
-  useEffect(() => {
-    setImgSrc(experience.imageUrl || '/placeholder.svg');
-  }, [experience.imageUrl]);
-
   return (
-    <div className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden">
-      {/* Image section */}
-      <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
-        <img
-          src={getValidImgSrc(imgSrc)}
-          alt={experience.title}
-          className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
-          onError={e => {
-            e.currentTarget.onerror = null;
-            setImgSrc('/placeholder.svg');
-            setImgError(true);
-          }}
-          onLoad={() => setImgError(false)}
-        />
-        {/* Wishlist icon, only visible on hover */}
+    <div
+      className={cn(
+        'group relative overflow-hidden rounded-xl hover:shadow-xl transition-all duration-300 h-full w-full flex flex-col bg-white shadow',
+        featured ? 'md:col-span-2' : ''
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="relative h-full w-full overflow-hidden rounded-xl flex flex-col flex-1">
+        <div className="flex-1 h-full w-full overflow-hidden">
+          <img
+            src={getValidImgSrc(imgSrc)}
+            alt={experience.title}
+            className={cn(
+              'w-full h-full object-cover object-center transition-transform duration-700 ease-out',
+              isHovered ? 'scale-110' : 'scale-100'
+            )}
+            onError={() => {
+              setImgSrc('/placeholder.svg');
+              setImgError(true);
+            }}
+          />
+        </div>
+
         <button
           className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           onClick={handleToggleWishlist}
+          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           disabled={isProcessing}
         >
           {isInWishlist ? (
-            <HeartIcon className="h-5 w-5 text-red-500 fill-red-500 transition" />
+            <HeartIcon className="h-5 w-5 text-red-500 fill-red-500" />
           ) : (
-            <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500 transition" />
+            <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500" />
           )}
         </button>
-      </div>
-      {/* Info section */}
-      <div className="p-4">
-        {/* Proximity info: time and distance */}
-        {(travelTime || distance) && (
-          <div className="flex items-center gap-2 text-base text-gray-700 font-semibold mb-2 bg-white/80 px-3 py-1 rounded-lg shadow-sm" style={{display: 'inline-flex'}}>
-            {travelTime && <><Clock className="h-4 w-4 mr-1 text-primary" />{travelTime}</>}
-            {travelTime && distance && <span className="mx-1">|</span>}
-            {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
+
+        <div className="absolute inset-0 flex flex-col justify-end p-4 text-white pointer-events-none bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+          <h3 className="text-lg font-semibold mb-1 line-clamp-2 pointer-events-auto">{experience.title}</h3>
+
+          <div className="flex items-center space-x-4 text-sm mb-1 pointer-events-auto">
+            <span title={experience.location} className="flex items-center truncate">
+              <MapPin className="h-4 w-4 mr-1" />
+              {experience.location}
+            </span>
+
+            {distance && travelTime && (
+              <span className="flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                {travelTime} • {distance}
+              </span>
+            )}
           </div>
-        )}
-        {/* Name and price row */}
-        <div className="flex justify-between items-center mb-1">
-          <h3 className="font-semibold text-lg truncate flex items-center" title={experience.title}>
-            {experience.title}
-          </h3>
-          <span className="font-bold text-primary text-base ml-2 whitespace-nowrap">₹{experience.price}</span>
-        </div>
-        {/* Address and Show Map row */}
-        <div className="flex justify-between items-center text-sm text-gray-500 mb-1 truncate">
-          <div className="flex items-center truncate">
-            <MapPin className="inline-block h-4 w-4 mr-1 text-gray-400" />
-            <span className="truncate" title={experience.location}>{experience.location}</span>
+
+          {experience.description && (
+            <p className="text-sm text-white/80 line-clamp-2 mb-2 pointer-events-auto">{experience.description}</p>
+          )}
+
+          <div className="flex items-center gap-4 text-xs pointer-events-auto">
+            {experience.duration && (
+              <span className="flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                {experience.duration}
+              </span>
+            )}
+            {experience.participants && (
+              <span className="flex items-center">
+                <Users className="h-4 w-4 mr-1" />
+                {experience.participants}
+              </span>
+            )}
+            {experience.date && (
+              <span className="flex items-center">
+                <Calendar className="h-4 w-4 mr-1" />
+                {experience.date}
+              </span>
+            )}
           </div>
-          <button
-            className="text-primary underline text-xs ml-2"
-            type="button"
-            onClick={() => setIsMapOpen(true)}
-            tabIndex={0}
-          >
-            Show Map
-          </button>
+
+          <div className="mt-3 pointer-events-auto">
+            <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="bg-white text-black w-full mb-2">
+                  Show Map
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{experience.title} - Location</DialogTitle>
+                </DialogHeader>
+                <ExperienceMap locationName={experience.location} />
+              </DialogContent>
+            </Dialog>
+
+            <Link to={`/experience/${experience.id}`}>
+              <Button size="sm" className="w-full bg-primary text-white hover:bg-primary/90">
+                View Experience
+              </Button>
+            </Link>
+          </div>
         </div>
-        <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Location Map</DialogTitle>
-            </DialogHeader>
-            <ExperienceMap locationName={experience.location} />
-          </DialogContent>
-        </Dialog>
-        {/* Minimal View Experience button */}
-        <Link to={`/experience/${experience.id}`}>
-          <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
-            View Experience
-          </Button>
-        </Link>
       </div>
     </div>
   );

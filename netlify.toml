@@ -6,6 +6,21 @@
   NODE_VERSION = "18"
 
 [[redirects]]
+  from = "/api/followup"
+  to = "/.netlify/functions/followup"
+  status = 200
+
+[[redirects]]
+  from = "/api/ai/followup"
+  to = "/.netlify/functions/followup"
+  status = 200
+
+[[redirects]]
+  from = "/api/ai/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
