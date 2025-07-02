@@ -16,6 +16,16 @@ import { getRecommendedExperiences, UserPreferences } from '@/lib/data/experienc
 import { getAllExperiences } from '@/lib/data/experiences';
 import { categories } from '@/lib/data/categories';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
+import { useToast } from '@/components/ui/use-toast';
+import Papa from 'papaparse';
+
+// Add this at the top of your file (or before using window.gapi)
+declare global {
+  interface Window {
+    gapi: any;
+    google: any;
+  }
+}
 
 // Helper to get saved experiences from localStorage
 const getSavedExperiences = () => {
@@ -46,11 +56,15 @@ const removeSavedExperience = (id) => {
   return filtered;
 };
 
+// Google People API config
+const GOOGLE_CLIENT_ID = '323651366685-2e8mvsumvrbokudl67f0bqmiqfddi1s8.apps.googleusercontent.com'; // <-- Replace with your client ID
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/contacts.readonly';
+
 const Profile = () => {
   const { user, logout } = useAuth();
   const { toggleWishlist } = useExperienceInteractions(user?.id);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('wishlist');
+  const [activeTab, setActiveTab] = useState('liked');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [editName, setEditName] = useState(user?.user_metadata?.full_name || '');
@@ -67,6 +81,8 @@ const Profile = () => {
   const { bookingHistory, isLoading: isBookingHistoryLoading } = useBookingHistory(user?.id);
   const [referralCount, setReferralCount] = useState(0);
   const [allExperiences, setAllExperiences] = useState([]);
+  const { toast } = useToast();
+  const [matchedFriends, setMatchedFriends] = useState([]);
 
   const mockPeople = [
     {
@@ -225,7 +241,7 @@ const Profile = () => {
   }, [user]);
 
   useEffect(() => {
-    setLocalWishlist(wishlistExperiences);
+    setLocalWishlist(Array.isArray(wishlistExperiences) ? wishlistExperiences : []);
   }, [wishlistExperiences]);
 
   // Remove from local wishlist when un-wishlisted
@@ -339,6 +355,49 @@ const Profile = () => {
     });
   };
 
+  // Fetch Google contacts using Supabase provider_token
+  const fetchAndMatchGoogleContacts = async () => {
+    // Get session and access token from Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.provider_token;
+    if (!accessToken) {
+      toast({ title: 'Google sign-in required', description: 'Please sign in with Google to import contacts.', variant: 'destructive' });
+      return;
+    }
+    // Fetch contacts from Google People API
+    const response = await fetch(
+      'https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses',
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    const data = await response.json();
+    const contacts = (data.connections || []).map(contact => ({
+      name: contact.names?.[0]?.displayName ?? '',
+      email: contact.emailAddresses?.[0]?.value ?? '',
+    })).filter(c => c.email);
+    // Store contacts in Supabase contacts table
+    if (contacts.length > 0) {
+      const { error } = await supabase.from('contacts').insert(
+        contacts.map(contact => ({ ...contact, user_id: session.user.id }))
+      );
+      if (error) {
+        console.error('Error inserting contacts:', error);
+        toast({ title: 'Failed to save contacts', description: error.message, variant: 'destructive' });
+      } else {
+        console.log('Contacts inserted successfully');
+      }
+    }
+    // Match contacts to registered users
+    const contactEmails = contacts.map(c => c.email);
+    const { data: matchingUsers } = await supabase
+      .from('users')
+      .select('*')
+      .in('email', contactEmails);
+    setMatchedFriends(matchingUsers || []);
+    toast({ title: 'Contacts imported!', description: `${(matchingUsers || []).length} friends found.` });
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
       {/* Profile Header - formal, spaced, aligned */}
@@ -382,7 +441,7 @@ const Profile = () => {
           {/* Tabs */}
           <div className="bg-white rounded-2xl shadow mb-4 overflow-hidden border border-gray-100">
             <div className="flex overflow-x-auto justify-center gap-4 px-4 py-2 min-h-[60px]">
-              {['wishlist', 'saved', 'viewed', 'history'].map(tab => (
+              {['liked', 'saved', 'viewed', 'history'].map(tab => (
                 <button
                   key={tab}
                   className={`px-10 py-3 flex-1 text-center capitalize transition font-medium text-base tracking-wide rounded-lg ${activeTab === tab ? 'border-b-4 border-primary text-primary bg-neutral-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
@@ -396,17 +455,15 @@ const Profile = () => {
           </div>
           {/* Tab Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {activeTab === 'wishlist' && (
-              localWishlist.length > 0 ? localWishlist.map(exp => (
-                <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
-                  <ExperienceCard experience={exp} onWishlistChange={handleWishlistChange} isInWishlist={true} />
-                </div>
-              )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No wishlist experiences yet.</div>
+            {activeTab === 'liked' && (
+              (Array.isArray(localWishlist) && localWishlist.length > 0) ? localWishlist.map((exp, idx) => (
+                <ExperienceCard key={exp.id} experience={exp} index={idx} isInWishlist={true} />
+              )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No liked experiences yet.</div>
             )}
             {activeTab === 'saved' && (
-              savedExperiences.length > 0 ? savedExperiences.map(exp => (
-                <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
-                  <ExperienceCard experience={exp} />
+              (Array.isArray(savedExperiences) && savedExperiences.length > 0) ? savedExperiences.map((exp, idx) => (
+                <div key={exp.id} className="relative">
+                  <ExperienceCard experience={exp} index={idx} />
                   <Button size="icon" variant="ghost" className="absolute top-2 right-2 z-10" onClick={() => handleRemoveSaved(exp.id)} title="Remove from Saved">
                     <X className="h-5 w-5 text-gray-500" />
                   </Button>
@@ -414,10 +471,8 @@ const Profile = () => {
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No saved experiences yet.</div>
             )}
             {activeTab === 'viewed' && (
-              viewedExperiences.length > 0 ? viewedExperiences.map(exp => (
-                <div key={exp.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
-                  <ExperienceCard experience={exp} />
-                </div>
+              (Array.isArray(viewedExperiences) && viewedExperiences.length > 0) ? viewedExperiences.map((exp, idx) => (
+                <ExperienceCard key={exp.id} experience={exp} index={idx} />
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No viewed experiences yet.</div>
             )}
             {activeTab === 'history' && (
@@ -428,9 +483,9 @@ const Profile = () => {
               ) : bookingHistory.every(b => !b.items || b.items.length === 0) ? (
                 <div className="col-span-full text-center text-gray-400 py-12 text-lg">No booked experiences found.</div>
               ) : bookingHistory.map(booking => (
-                booking.items.map(item => (
-                  <div key={item.experience.id + booking.id} className="bg-white rounded-xl shadow-sm overflow-hidden experience-card aspect-[4/3] flex flex-col relative">
-                    <ExperienceCard experience={item.experience} />
+                booking.items.map((item, idx) => (
+                  <div key={item.experience.id + booking.id} className="relative">
+                    <ExperienceCard experience={item.experience} index={idx} />
                     <div className="absolute bottom-2 right-2 bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">Booked on {new Date(booking.booking_date).toLocaleDateString()}</div>
                   </div>
                 ))
@@ -478,15 +533,22 @@ const Profile = () => {
           </div>
           {/* People You May Know */}
           <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-5 border border-gray-100 min-h-[180px]">
-            <h2 className="font-semibold text-lg mb-2 text-gray-900">People You May Know</h2>
-            {mockPeople.map(person => (
-              <div key={person.id} className="flex items-center gap-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-semibold text-lg text-gray-900">People You May Know</h2>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={fetchAndMatchGoogleContacts}>
+                  Import from Contacts
+                </Button>
+              </div>
+            </div>
+            {matchedFriends.map(friend => (
+              <div key={friend.id} className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                  <img src={person.avatar} alt={person.name} className="h-full w-full rounded-full object-cover" />
+                  <img src={friend.avatar} alt={friend.name} className="h-full w-full rounded-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium mb-0.5 text-gray-800 truncate">{person.name}</p>
-                  <p className="text-gray-500 text-xs truncate">{person.mutual ? `${person.mutual} mutual connection${person.mutual !== 1 ? 's' : ''}` : 'Similar interests'}</p>
+                  <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.name}</p>
+                  <p className="text-gray-500 text-xs truncate">{friend.mutual ? `${friend.mutual} mutual connection${friend.mutual !== 1 ? 's' : ''}` : 'Similar interests'}</p>
                 </div>
                 <Button className="text-primary hover:bg-primary/10 px-4 py-1.5 rounded-full text-sm font-medium border border-primary/20 bg-white">Connect</Button>
               </div>
