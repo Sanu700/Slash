@@ -359,8 +359,7 @@ const ExperienceView = () => {
         {/* Hero Image Section */}
         <div className="relative h-[50vh] md:h-[60vh] w-full">
           <img 
-            src={getValidImgSrc(experience.imageUrl)} 
-
+            src={getValidImgSrc(imageUrls[currentImageIdx])}
             alt={experience.title}
             className="h-full w-full object-cover rounded-lg"
             style={{ maxHeight: '100%', maxWidth: '100%' }}

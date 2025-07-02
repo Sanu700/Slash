@@ -29,9 +29,7 @@ const ExperienceType = () => {
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children">
         {filtered.map(exp => (
-          <div key={exp.id} className="col-span-1 h-full w-full aspect-[4/3] flex flex-col">
-            <ExperienceCard experience={exp} />
-          </div>
+          <ExperienceCard key={exp.id} experience={exp} />
         ))}
       </div>
       {filtered.length === 0 && <div>No experiences found for this type.</div>}
