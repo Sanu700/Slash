@@ -52,11 +52,11 @@ interface ExperienceCardProps {
   experience: Experience;
   featured?: boolean;
   onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
+  isInWishlist?: boolean;
   index?: number;
 }
 
-const ExperienceCard = ({ experience, featured = false, onWishlistChange, index }: ExperienceCardProps) => {
-  const [isInWishlist, setIsInWishlist] = useState(false);
+const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWishlist = false, index }: ExperienceCardProps) => {
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
@@ -140,41 +140,14 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, index 
     }
   }, [experience.latitude, experience.longitude, experience.id, selectedCity, selectedAddress]);
 
-  useEffect(() => {
-    const checkWishlist = async () => {
-      if (!user) {
-        setIsInWishlist(false);
-        return;
-      }
-
-      try {
-        const { data } = await supabase
-          .from('wishlists')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('experience_id', experience.id)
-          .single();
-
-        setIsInWishlist(!!data);
-      } catch (error) {
-        console.error('Error checking wishlist status:', error);
-      }
-    };
-
-    checkWishlist();
-  }, [user, experience.id]);
-
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
       toast.error('Please log in to save to your wishlist');
       return;
     }
-
     await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, () => {
-      const newWishlistState = !isInWishlist;
-      setIsInWishlist(newWishlistState);
-      onWishlistChange?.(experience.id, newWishlistState);
+      onWishlistChange?.(experience.id, !isInWishlist);
     });
   };
 
