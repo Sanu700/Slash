@@ -16,7 +16,7 @@ const WishlistContent = ({ wishlistExperiences, handleExperienceClick, onWishlis
 
   return (
     <>
-      {wishlistExperiences.length > 0 ? (
+      {Array.isArray(wishlistExperiences) && wishlistExperiences.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {wishlistExperiences.map(experience => {
             const expWithClick = {
