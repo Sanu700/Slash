@@ -61,6 +61,7 @@ const ExperienceView = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -358,6 +359,27 @@ const ExperienceView = () => {
     }
   }, [user, experience]);
   
+  useEffect(() => {
+    // For guests, use wishlistLocal
+    if (!user) {
+      setWishlistIds(wishlistLocal);
+      return;
+    }
+    // For logged-in users, fetch wishlist from Supabase
+    const fetchWishlist = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('wishlists')
+          .select('experience_id');
+        if (error) throw error;
+        setWishlistIds(data ? data.map((item: any) => item.experience_id) : []);
+      } catch (err) {
+        setWishlistIds([]);
+      }
+    };
+    fetchWishlist();
+  }, [user, wishlistLocal]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -433,7 +455,6 @@ const ExperienceView = () => {
             {/* Left Column - Experience Details */}
             <div className="lg:col-span-2">
               <h1 className="text-3xl md:text-4xl font-medium mb-4">{experience.title}</h1>
-              
               <div className="flex flex-wrap gap-4 mb-6">
                 <div className="flex items-center gap-2 text-muted-foreground text-base">
                   <MapPin className="h-5 w-5" />
@@ -459,11 +480,9 @@ const ExperienceView = () => {
                   {experience.participants}
                 </div>
               </div>
-              
               <div className="prose prose-lg max-w-none mb-8">
                 <p>{experience.description}</p>
               </div>
-              
               {/* Experience Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="flex items-start">
@@ -503,7 +522,109 @@ const ExperienceView = () => {
                   </div>
                 </div>
               </div>
-              
+
+              {/* Mobile: Buy menu just above Similar Experiences */}
+              <div className="block lg:hidden mb-8 border-2 border-red-500 bg-yellow-50">
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Price per person</p>
+                      <p className="text-2xl font-medium">{formatRupees(experience.price)}</p>
+                    </div>
+                    <button
+                      onClick={toggleWishlist}
+                      className={cn(
+                        "p-2 rounded-full transition-colors",
+                        isInWishlist ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+                      )}
+                      disabled={isWishlistLoading}
+                    >
+                      <Heart className="h-6 w-6" fill={isInWishlist ? "currentColor" : "none"} />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm">Select Date</span>
+                      </div>
+                      <Popover open={showDatePopover} onOpenChange={setShowDatePopover}>
+                        <PopoverTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              if (!user) {
+                                setShowLoginModal(true);
+                                return;
+                              }
+                              setShowDatePopover(true);
+                            }}
+                          >
+                            {selectedDate ? format(selectedDate, 'PPP') : 'Choose Date'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-auto p-0">
+                          <DatePicker
+                            mode="single"
+                            selected={selectedDate as Date}
+                            onSelect={(date) => {
+                              setSelectedDate(date as Date);
+                              setShowDatePopover(false);
+                            }}
+                            initialFocus
+                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm">Number of People</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={handleDecreaseQuantity}
+                          className="p-1 rounded-full hover:bg-secondary"
+                          disabled={isCartLoading || quantityInCart <= 1}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="w-8 text-center">{quantityInCart}</span>
+                        <button
+                          onClick={handleIncreaseQuantity}
+                          className="p-1 rounded-full hover:bg-secondary"
+                          disabled={isCartLoading}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <Button 
+                      className="w-full"
+                      onClick={handleAddToCart}
+                      disabled={isCartLoading}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      {isCartLoading ? 'Processing...' : 'Add to Cart'}
+                    </Button>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={handleSaveForLater}
+                    >
+                      <Bookmark className="h-4 w-4 mr-2" />
+                      Save for Later
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               {/* Similar Experiences */}
               {similarExperiences.length > 0 && (
                 <div className="mt-12">
@@ -514,16 +635,24 @@ const ExperienceView = () => {
                         key={exp.id} 
                         experience={exp} 
                         index={idx} 
-                        isInWishlist={false} // or check if in wishlist if you have that info
+                        isInWishlist={wishlistIds.includes(exp.id)}
+                        onWishlistChange={(experienceId, newIsInWishlist) => {
+                          setWishlistIds(prev => {
+                            if (newIsInWishlist) {
+                              return [...prev, experienceId];
+                            } else {
+                              return prev.filter(id => id !== experienceId);
+                            }
+                          });
+                        }}
                       />
                     ))}
                   </div>
                 </div>
               )}
             </div>
-            
-            {/* Right Column - Booking Card */}
-            <div className="lg:col-span-1">
+            {/* Right Column - Booking Card (desktop) */}
+            <div className="lg:col-span-1 hidden lg:block">
               <div className="sticky top-24 bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>

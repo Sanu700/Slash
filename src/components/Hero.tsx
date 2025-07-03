@@ -115,7 +115,7 @@ const Hero = () => {
               <div className="flex items-center justify-center w-full mb-2">
                 <SuggestedExperiences />
               </div>
-              <div className="flex flex-row gap-4 justify-start w-full mb-2">
+              <div className="flex flex-col gap-4 justify-start w-full mb-2">
                 <NavLink to="/experiences" onClick={scrollToTop}>
                   <Button
                     size="lg"
@@ -129,7 +129,7 @@ const Hero = () => {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-2 border-primary text-primary bg-white rounded-full font-semibold text-lg hover:bg-primary/10 hover:text-primary hover:border-primary hover:scale-[1.03] transition-transform duration-200 h-12 px-8 flex items-center gap-2 shadow-md"
+                    className="border-2 border-primary text-primary bg-white rounded-full font-semibold text-lg hover:bg-primary/10 hover:text-primary hover:border-primary hover:scale-[1.03] transition-transform duration-200 h-12 px-8 flex items-center gap-2 shadow-md focus:bg-white active:bg-white focus:text-primary active:text-primary"
                   >
                     Gift Inspiration
                   </Button>
