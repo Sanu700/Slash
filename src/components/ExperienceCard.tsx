@@ -180,8 +180,6 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
     setImgSrc(experience.imageUrl || '/placeholder.svg');
   }, [experience.imageUrl]);
 
-  const navigate = useNavigate();
-
   return (
     <div
       className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer"
