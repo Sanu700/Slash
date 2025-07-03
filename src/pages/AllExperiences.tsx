@@ -323,20 +323,16 @@ const AllExperiences = () => {
   useEffect(() => {
     if (wishlistExperiences) {
       setLocalWishlist(wishlistExperiences.map(exp => exp.id));
-      console.log('Loaded wishlistExperiences:', wishlistExperiences);
     }
   }, [wishlistExperiences]);
 
   const handleWishlistChange = (experienceId: string, isNowInWishlist: boolean) => {
     setLocalWishlist(prev => {
-      if (isNowInWishlist) {
-        if (!prev.includes(experienceId)) return [...prev, experienceId];
-        return prev;
-      } else {
-        return prev.filter(id => id !== experienceId);
-      }
+      const updated = isNowInWishlist
+        ? (!prev.includes(experienceId) ? [...prev, experienceId] : prev)
+        : prev.filter(id => id !== experienceId);
+      return updated;
     });
-    console.log('Wishlist changed:', experienceId, isNowInWishlist);
   };
 
   // Helper for proximity fallback
@@ -349,11 +345,13 @@ const AllExperiences = () => {
       const experiencesArr = exps as Experience[];
       if (experiencesArr.length === 1) {
         // Standalone card
-        return { type: 'standalone', key: experiencesArr[0].id, content: (
+        const exp = experiencesArr[0];
+        const inWishlist = localWishlist.includes(exp.id);
+        return { type: 'standalone', key: exp.id, content: (
           <ExperienceCard 
-            key={experiencesArr[0].id} 
-            experience={{ ...experiencesArr[0] }}
-            isInWishlist={localWishlist.includes(experiencesArr[0].id)}
+            key={exp.id} 
+            experience={{ ...exp }}
+            isInWishlist={inWishlist}
             onWishlistChange={handleWishlistChange}
           />
         ) };
@@ -401,18 +399,21 @@ const AllExperiences = () => {
         </div>
       ) };
     });
-    const ungroupedCardEntries = ungroupedExperiences.map(exp => ({
-      type: 'standalone',
-      key: exp.id,
-      content: (
-        <ExperienceCard 
-          key={exp.id} 
-          experience={{ ...exp }}
-          isInWishlist={localWishlist.includes(exp.id)}
-          onWishlistChange={handleWishlistChange}
-        />
-      )
-    }));
+    const ungroupedCardEntries = ungroupedExperiences.map(exp => {
+      const inWishlist = localWishlist.includes(exp.id);
+      return {
+        type: 'standalone',
+        key: exp.id,
+        content: (
+          <ExperienceCard 
+            key={exp.id} 
+            experience={{ ...exp }}
+            isInWishlist={inWishlist}
+            onWishlistChange={handleWishlistChange}
+          />
+        )
+      };
+    });
     return [...groupCardEntries, ...ungroupedCardEntries];
   }, [groupedExperiences, ungroupedExperiences, navigate, localWishlist]);
 
