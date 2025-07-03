@@ -25,9 +25,17 @@ const WishlistContent = ({ wishlistExperiences, handleExperienceClick, onWishlis
           </div>
         ) : (Array.isArray(wishlistExperiences) && wishlistExperiences.length > 0) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            {wishlistExperiences.map((exp, idx) => (
-              <ExperienceCard key={exp.id} experience={exp} index={idx} isInWishlist={true} />
-            ))}
+            {wishlistExperiences.map((experience) => {
+              const expWithClick = {
+                ...experience,
+                onClick: () => handleExperienceClick(experience.id)
+              };
+              return (
+                <div key={experience.id} className="aspect-[4/3] h-full w-full flex flex-col col-span-1">
+                  <ExperienceCard experience={expWithClick} onWishlistChange={onWishlistChange} isInWishlist={true} />
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">
