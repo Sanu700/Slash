@@ -300,6 +300,7 @@ const Profile = () => {
         .or(
           `and(from_user_id.eq.${user.id},to_user_id.eq.${friend.id}),and(from_user_id.eq.${friend.id},to_user_id.eq.${user.id})`
         );
+      console.log('Checking connection between', user.id, 'and', friend.id, '=>', data, 'error:', error);
       if (error) {
         statuses[friend.id] = 'none';
         continue;
