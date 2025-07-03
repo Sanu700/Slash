@@ -123,9 +123,35 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
     const experiences = getSavedExperiences();
     const lowercaseQuery = searchQuery.toLowerCase();
-    
+
+    // Get selected location from localStorage
+    const selectedAddressRaw = typeof window !== 'undefined' ? localStorage.getItem('selected_address') : null;
+    let selectedAddress = null;
+    try {
+      selectedAddress = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      selectedAddress = selectedAddressRaw;
+    }
+    const isCityOnly = selectedAddress && typeof selectedAddress === 'object' &&
+      (!selectedAddress.lat || !selectedAddress.lon || isNaN(Number(selectedAddress.lat)) || isNaN(Number(selectedAddress.lon)));
+    const DEFAULT_RADIUS_KM = 40;
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const toRad = (x) => (x * Math.PI) / 180;
+      const R = 6371; // Earth radius in km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+          Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // Distance in km
+    }
+
     // Enhanced search with better matching logic
-    const results = experiences
+    let results = experiences
       .filter(exp => {
         const searchableText = [
           exp.title,
@@ -136,15 +162,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           exp.duration,
           exp.participants
         ].join(' ').toLowerCase();
-        
         // Check for exact matches first
         const exactMatch = exp.title.toLowerCase().includes(lowercaseQuery) ||
                           exp.location.toLowerCase().includes(lowercaseQuery) ||
                           exp.category.toLowerCase().includes(lowercaseQuery);
-        
         // Check for partial matches in any field
         const partialMatch = searchableText.includes(lowercaseQuery);
-        
         // Check for word boundary matches (better for multi-word queries)
         const words = lowercaseQuery.split(' ').filter(word => word.length > 0);
         const wordMatch = words.some(word => 
@@ -152,33 +175,85 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           exp.location.toLowerCase().includes(word) ||
           exp.category.toLowerCase().includes(word)
         );
-        
         return exactMatch || partialMatch || wordMatch;
-      })
-      .sort((a, b) => {
-        // Sort by relevance: exact title matches first, then location, then category
-        const aTitleMatch = a.title.toLowerCase().includes(lowercaseQuery);
-        const bTitleMatch = b.title.toLowerCase().includes(lowercaseQuery);
-        
-        if (aTitleMatch && !bTitleMatch) return -1;
-        if (!aTitleMatch && bTitleMatch) return 1;
-        
-        const aLocationMatch = a.location.toLowerCase().includes(lowercaseQuery);
-        const bLocationMatch = b.location.toLowerCase().includes(lowercaseQuery);
-        
-        if (aLocationMatch && !bLocationMatch) return -1;
-        if (!aLocationMatch && bLocationMatch) return 1;
-        
-        // If relevance is the same, sort by trending/featured status
-        if (a.trending && !b.trending) return -1;
-        if (!a.trending && b.trending) return 1;
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-        
-        return 0;
-      })
-      .slice(0, 8); // Show more results for better UX
-    
+      });
+
+    // Location filtering for search results
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon && !isCityOnly) {
+      // Proximity filtering (address with coordinates)
+      const lat = parseFloat(selectedAddress.lat);
+      const lon = parseFloat(selectedAddress.lon);
+      const normalizedCity = selectedAddress.address ? selectedAddress.address.trim().toLowerCase() : null;
+      results = results
+        .map(exp => {
+          if (typeof exp.latitude === 'number' && typeof exp.longitude === 'number') {
+            const distance = haversineDistance(lat, lon, exp.latitude, exp.longitude);
+            return { ...exp, _distance: distance };
+          }
+          return { ...exp, _distance: Infinity };
+        })
+        .filter(exp => exp._distance <= DEFAULT_RADIUS_KM)
+        .filter(exp => {
+          if (!normalizedCity) return true;
+          const expLoc = (exp.location || '').trim().toLowerCase();
+          return expLoc.includes(normalizedCity);
+        })
+        .sort((a, b) => (a._distance || 0) - (b._distance || 0));
+    } else if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.address && isCityOnly) {
+      // City-only selection: string match on location column
+      const normalizedCity = selectedAddress.address.trim().toLowerCase();
+      results = results.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        return expLoc === normalizedCity || expLoc.includes(normalizedCity) || normalizedCity.includes(expLoc);
+      });
+    }
+
+    // City strictness: if search query is a city name different from the selected city, show no results
+    const CITY_LIST = [
+      'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
+      'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
+      'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi',
+      'Srinagar', 'Aurangabad', 'Dhanbad', 'Amritsar', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur', 'Gwalior',
+      'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Guwahati', 'Chandigarh', 'Solapur', 'Hubli-Dharwad', 'Bareilly',
+      'Moradabad', 'Mysore', 'Gurgaon', 'Aligarh', 'Jalandhar', 'Tiruchirappalli', 'Bhubaneswar', 'Salem', 'Warangal',
+      'Mira-Bhayandar', 'Thiruvananthapuram', 'Bhiwandi', 'Saharanpur', 'Guntur', 'Amravati', 'Bikaner', 'Noida', 'Jamshedpur',
+      'Bhilai', 'Cuttack', 'Firozabad', 'Kochi', 'Nellore', 'Bhavnagar', 'Dehradun', 'Durgapur', 'Asansol', 'Rourkela',
+      'Nanded', 'Kolhapur', 'Ajmer', 'Akola', 'Gulbarga', 'Jamnagar', 'Ujjain', 'Loni', 'Siliguri', 'Jhansi', 'Ulhasnagar',
+      'Jammu', 'Sangli-Miraj', 'Mangalore', 'Erode', 'Belgaum', 'Ambattur', 'Tirunelveli', 'Malegaon', 'Gaya', 'Jalgaon',
+      'Udaipur', 'Maheshtala', 'Tirupur', 'Davanagere', 'Kozhikode', 'Kurnool', 'Rajpur Sonarpur', 'Bokaro', 'South Dumdum',
+      'Bellary', 'Patiala', 'Gopalpur', 'Agartala', 'Bhagalpur', 'Muzaffarnagar', 'Bhatpara', 'Panihati', 'Latur', 'Dhule',
+      'Rohtak', 'Korba', 'Bhilwara', 'Berhampur', 'Muzaffarpur', 'Ahmednagar', 'Mathura', 'Kollam', 'Avadi', 'Kadapa',
+      'Kamarhati', 'Bilaspur', 'Shahjahanpur', 'Satara', 'Bijapur', 'Rampur', 'Shivamogga', 'Chandrapur', 'Junagadh',
+      'Thrissur', 'Alwar', 'Bardhaman', 'Kulti', 'Kakinada', 'Nizamabad', 'Parbhani', 'Tumkur', 'Hisar', 'Ozhukarai',
+      'Bihar Sharif', 'Panipat', 'Darbhanga', 'Bally', 'Aizawl', 'Dewas', 'Ichalkaranji', 'Karnal', 'Bathinda', 'Jalna',
+      'Eluru', 'Barasat', 'Kirari Suleman Nagar', 'Purnia', 'Satna', 'Mau', 'Sonipat', 'Farrukhabad', 'Sagar', 'Durg',
+      'Imphal', 'Ratlam', 'Hapur', 'Arrah', 'Karimnagar', 'Anantapur', 'Etawah', 'Ambernath', 'North Dumdum', 'Bharatpur',
+      'Begusarai', 'New Delhi', 'Gandhidham', 'Baranagar', 'Tiruvottiyur', 'Puducherry', 'Sikar', 'Thoothukkudi', 'Rewa',
+      'Mirzapur', 'Raichur', 'Pali', 'Ramagundam', 'Haridwar', 'Vijayanagaram', 'Katihar', 'Nagercoil', 'Sri Ganganagar',
+      'Karawal Nagar', 'Mango', 'Thanjavur', 'Bulandshahr', 'Uluberia', 'Katni', 'Sambhal', 'Singrauli', 'Nadiad',
+      'Secunderabad', 'Naihati', 'Yamunanagar', 'Bidhan Nagar', 'Pallavaram', 'Bidar', 'Munger', 'Panchkula', 'Burhanpur',
+      'Raurkela Industrial Township', 'Kharagpur', 'Dindigul', 'Gandhinagar', 'Hospet', 'Nangloi Jat', 'Malda', 'Ongole',
+      'Deoghar', 'Chapra', 'Haldia', 'Khandwa', 'Nandyal', 'Morena', 'Amroha', 'Anand', 'Bhind', 'Bhalswa Jahangir Pur',
+      'Madhyamgram', 'Bhiwani', 'Berhampore', 'Ambala', 'Fatehpur', 'Raebareli', 'Khora', 'Chittoor', 'Bhusawal', 'Orai',
+      'Bahraich', 'Phusro', 'Vellore', 'Mehsana', 'Raiganj', 'Sirsa', 'Danapur', 'Serampore', 'Sultan Pur Majra', 'Guna',
+      'Jaunpur', 'Panvel', 'Shivpuri', 'Surendranagar Dudhrej', 'Unnao', 'Chinsurah', 'Alappuzha', 'Kottayam', 'Machilipatnam',
+      'Shimla', 'Adoni', 'Udupi', 'Tenali', 'Proddatur', 'Saharsa', 'Hindupur', 'Sasaram', 'Buxar', 'Krishnanagar',
+      'Fatehpur Sikri', 'Madhubani', 'Motihari', 'Rae Bareli', 'Baharampur', 'Baripada', 'Khammam', 'Bhimavaram', 'Mandsaur',
+      'Chittaranjan', 'Nalgonda', 'Baran', 'Panaji', 'Silchar', 'Haldwani', 'Gangtok', 'Shillong', 'Kohima', 'Itanagar'
+    ];
+    // If the search query is a city name and does not match the selected city, show no results
+    const queryCity = CITY_LIST.find(city => city.toLowerCase() === searchQuery.trim().toLowerCase());
+    let selectedCity = null;
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.address) {
+      selectedCity = CITY_LIST.find(city => city.toLowerCase() === selectedAddress.address.trim().toLowerCase());
+    }
+    if (queryCity && selectedCity && queryCity !== selectedCity) {
+      setSearchResults([]);
+      setSelectedResultIndex(-1);
+      return;
+    }
+
+    results = results.slice(0, 8); // Show more results for better UX
     setSearchResults(results);
     setSelectedResultIndex(-1); // Reset selection when results change
   }, [searchQuery]);
@@ -856,9 +931,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   >
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div className="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden">
-                        {experience.imageUrl && (
+                        {experience.imageUrl && experience.imageUrl.length > 0 && (
                           <img 
-                            src={experience.imageUrl} 
+                            src={experience.imageUrl[0]} 
                             alt={experience.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
