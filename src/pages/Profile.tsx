@@ -328,26 +328,28 @@ const Profile = () => {
   }, [fetchStatuses]);
 
   // Fetch accepted connections (friends)
-  useEffect(() => {
+  const fetchFriends = React.useCallback(async () => {
     if (!user?.id) return;
-    supabase
+    const { data } = await supabase
       .from('connections')
       .select('from_user_id, to_user_id')
       .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
-      .eq('status', 'accepted')
-      .then(async ({ data }) => {
-        if (!data) return setFriends([]);
-        const friendIds = data.map(conn =>
-          conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
-        );
-        if (friendIds.length === 0) return setFriends([]);
-        const { data: profiles } = await supabase
-          .from('profiles_with_email')
-          .select('id, full_name, avatar_url')
-          .in('id', friendIds);
-        setFriends(profiles || []);
-      });
+      .eq('status', 'accepted');
+    if (!data) return setFriends([]);
+    const friendIds = data.map(conn =>
+      conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
+    );
+    if (friendIds.length === 0) return setFriends([]);
+    const { data: profiles } = await supabase
+      .from('profiles_with_email')
+      .select('id, full_name, avatar_url')
+      .in('id', friendIds);
+    setFriends(profiles || []);
   }, [user?.id]);
+
+  React.useEffect(() => {
+    fetchFriends();
+  }, [fetchFriends]);
 
   // Remove from local wishlist when un-wishlisted
   const handleWishlistChange = (experienceId, isNowInWishlist) => {
@@ -689,6 +691,7 @@ const Profile = () => {
                           toast({ title: 'Failed to send request', description: error.message, variant: 'destructive' });
                         } else {
                           setConnectionStatuses(prev => ({ ...prev, [friend.id]: 'pending' }));
+                          await fetchFriends();
                           await fetchStatuses();
                           toast({ title: 'Connection request sent!' });
                         }
@@ -723,6 +726,7 @@ const Profile = () => {
                         [req.from_user?.id]: 'accepted',
                         [user.id]: 'accepted'
                       }));
+                      await fetchFriends();
                       await fetchStatuses();
                       toast({ title: 'Connection accepted!' });
                     }}
