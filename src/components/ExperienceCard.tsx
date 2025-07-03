@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Experience } from '@/lib/data';
 import { Heart, HeartIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -128,6 +128,8 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   // Debug log for image source and type
   console.log('ExperienceCard image:', { imgSrc, type: typeof imgSrc, experience, imageUrl: experience.imageUrl });
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     setDistance(null);
     setTravelTime(null);
@@ -179,7 +181,23 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   }, [experience.imageUrl]);
 
   return (
-    <div className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden">
+    <div
+      className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer"
+      onClick={e => {
+        // Prevent navigation if clicking on a button or link inside the card
+        const tag = (e.target as HTMLElement).tagName.toLowerCase();
+        if (['button', 'a', 'svg', 'path'].includes(tag)) return;
+        navigate(`/experience/${experience.id}`);
+      }}
+      tabIndex={0}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          navigate(`/experience/${experience.id}`);
+        }
+      }}
+      role="button"
+      aria-label={`View details for ${experience.title}`}
+    >
       {/* Image section */}
       <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
         <img

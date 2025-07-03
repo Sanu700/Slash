@@ -57,7 +57,7 @@ const removeSavedExperience = (id) => {
 };
 
 // Google People API config
-const GOOGLE_CLIENT_ID = '323651366685-2e8mvsumvrbokudl67f0bqmiqfddi1s8.apps.googleusercontent.com'; // <-- Replace with your client ID
+const GOOGLE_CLIENT_ID = '630365428319-iujdl046niv4hec0asllb3mcsluq9j3u.apps.googleusercontent.com'; // <-- Replace with your client ID
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/contacts.readonly';
 
 const Profile = () => {
@@ -229,9 +229,11 @@ const Profile = () => {
               .eq('id', item.experience_id)
               .single();
             if (expData) {
-              exps.push({ ...expData, imageUrl: expData.image_url });
+              exps.push({ ...expData, imageUrl: expData.image_url, viewed_at: item.viewed_at });
             }
           }
+          // Sort by viewed_at descending (most recent first)
+          exps.sort((a, b) => new Date(b.viewed_at).getTime() - new Date(a.viewed_at).getTime());
           setViewedExperiences(exps);
         } else {
           setViewedExperiences([]);

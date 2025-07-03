@@ -338,6 +338,24 @@ const ExperienceView = () => {
       if (arr.length > 50) arr = arr.slice(0, 50);
       localStorage.setItem('viewedExperiences', JSON.stringify(arr));
     }
+    // Add to Supabase for logged-in users
+    if (user && experience) {
+      // Upsert viewed experience in Supabase
+      supabase
+        .from('viewed_experiences')
+        .upsert({
+          user_id: user.id,
+          experience_id: experience.id,
+          viewed_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,experience_id' })
+        .then(({ error, data }) => {
+          if (error) {
+            console.error('Error upserting viewed experience:', error);
+          } else {
+            console.log('Viewed experience upserted:', data);
+          }
+        });
+    }
   }, [user, experience]);
   
   if (loading) {
@@ -490,11 +508,14 @@ const ExperienceView = () => {
               {similarExperiences.length > 0 && (
                 <div className="mt-12">
                   <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {similarExperiences.map((exp) => (
-                      <div key={exp.id} className="aspect-[4/3] h-full w-full flex">
-                        <ExperienceCard experience={exp} />
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                    {similarExperiences.map((exp, idx) => (
+                      <ExperienceCard 
+                        key={exp.id} 
+                        experience={exp} 
+                        index={idx} 
+                        isInWishlist={false} // or check if in wishlist if you have that info
+                      />
                     ))}
                   </div>
                 </div>
