@@ -24,6 +24,14 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 import CitySelector from './CitySelector';
 import LocationDropdown from './LocationDropdown';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '@/components/ui/dialog';
 
 
 interface NavbarProps {
@@ -59,6 +67,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [mobileLocationDialogOpen, setMobileLocationDialogOpen] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -482,49 +491,40 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
               Gift Personalizer
             </Link>
-            <div className="relative">
-              <DropdownMenu open={locationDropdownOpen} onOpenChange={setLocationDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)} onClick={() => setLocationDropdownOpen(true)}>
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                    <span
-                      className="max-w-[120px] truncate inline-block align-middle"
-                      title={
-                        selectedLocation && typeof selectedLocation === 'object' && selectedLocation.address
-                          ? selectedLocation.address
-                          : typeof selectedLocation === 'string'
-                            ? selectedLocation
-                            : getLocationLabel()
-                      }
-                      style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
-                    >
-                      {getLocationLabel()}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
-                  <LocationDropdown
-                    value={
-                      selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
-                        ? selectedLocation.address
-                        : typeof selectedLocation === 'string'
-                          ? selectedLocation
-                          : ''
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors", textClass)}
+                  aria-label="Select location"
+                >
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  <span className="max-w-[120px] truncate text-sm" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+                    {getLocationLabel()}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
+                <LocationDropdown
+                  value={
+                    selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                      ? selectedLocation.address
+                      : typeof selectedLocation === 'string'
+                        ? selectedLocation
+                        : ''
+                  }
+                  onChange={(val) => {
+                    setSelectedLocation(val);
+                    window.dispatchEvent(new Event('locationChanged'));
+                    if (window.location.pathname !== '/experiences') {
+                      navigate('/experiences');
                     }
-                    onChange={(val) => {
-                      setSelectedLocation(val);
-                      window.dispatchEvent(new Event('locationChanged'));
-                      if (window.location.pathname !== '/experiences') {
-                        navigate('/experiences');
-                      }
-                    }}
-                    standalone
-                    onClose={() => setLocationDropdownOpen(false)}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                  }}
+                  standalone
+                  onClose={() => setLocationDropdownOpen(false)}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="flex items-center gap-4">
@@ -659,14 +659,59 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden">
-          <div className="bg-white dark:bg-gray-900 w-4/5 max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden overflow-x-hidden">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
             <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
-            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">All Experiences</Link>
-            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gift Personalizer</Link>
-            <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Host an Experience</Link>
+            {/* Location selection in mobile menu (Dialog) */}
+            <div className="mb-4">
+              <Dialog open={mobileLocationDialogOpen} onOpenChange={setMobileLocationDialogOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full", textClass)}
+                    aria-label="Select location"
+                  >
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    <span className="max-w-[120px] truncate text-sm" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+                      {getLocationLabel()}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Select Location</DialogTitle>
+                  </DialogHeader>
+                  <LocationDropdown
+                    value={
+                      selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                        ? selectedLocation.address
+                        : typeof selectedLocation === 'string'
+                          ? selectedLocation
+                          : ''
+                    }
+                    onChange={(val) => {
+                      setSelectedLocation(val);
+                      window.dispatchEvent(new Event('locationChanged'));
+                      setMobileLocationDialogOpen(false);
+                      if (window.location.pathname !== '/experiences') {
+                        navigate('/experiences');
+                      }
+                    }}
+                    standalone
+                    onClose={() => setMobileLocationDialogOpen(false)}
+                  />
+                  <DialogClose asChild>
+                    <button className="mt-4 w-full py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
+                  </DialogClose>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {/* Main navigation options */}
+            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
+            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Host an Experience</Link>
             {/* Company Section */}
             <div>
               <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -700,7 +745,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               )}
             </div>
             <div className="mt-6 border-t pt-4">
-              <Link to="/admin/login" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Login as Admin</Link>
+              <Link to="/admin/login" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Login as Admin</Link>
             </div>
           </div>
           {/* Click outside to close */}
@@ -853,6 +898,42 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           )}
         </div>
       </div>
+
+      {/* Location Dropdown/Modal (shared for both desktop and mobile) */}
+      <DropdownMenu open={locationDropdownOpen} onOpenChange={setLocationDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors md:hidden", textClass)}
+            aria-label="Select location"
+          >
+            <MapPin className="h-5 w-5 text-blue-600" />
+            <span className="max-w-[90px] truncate text-sm" style={{ maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+              {getLocationLabel()}
+            </span>
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
+          <LocationDropdown
+            value={
+              selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                ? selectedLocation.address
+                : typeof selectedLocation === 'string'
+                  ? selectedLocation
+                  : ''
+            }
+            onChange={(val) => {
+              setSelectedLocation(val);
+              window.dispatchEvent(new Event('locationChanged'));
+              if (window.location.pathname !== '/experiences') {
+                navigate('/experiences');
+              }
+            }}
+            standalone
+            onClose={() => setLocationDropdownOpen(false)}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 };

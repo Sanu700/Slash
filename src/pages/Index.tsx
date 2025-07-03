@@ -205,114 +205,107 @@ const Index = () => {
                     </div>
                   )}
                 </div>
-                <div className="flex justify-center mt-8">
-                  <a href="/experiences">
-                    <Button size="lg" className="rounded-full font-medium text-base shadow-sm h-12 px-8">
-                      Explore More
-                    </Button>
-                  </a>
+                {/* Unified Gift Inspiration section for all devices */}
+                <div className="w-full mt-16">
+                  <hr className="my-6 border-t border-gray-200" />
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl md:text-3xl font-bold text-primary">Gift Inspiration</h2>
+                    <p className="text-base md:text-lg text-muted-foreground mt-2">Why gift an experience? See the science and inspiration below!</p>
+                  </div>
+                  <span id="gifting-guide" className="block" />
+                  <section ref={guideInViewRef} className="container max-w-[1152px] mx-auto px-4 py-8">
+                    <div className={cn(
+                      "space-y-16 transition-all duration-700 opacity-100",
+                    )}>
+                      <div className="text-center">
+                        <h2 className="text-3xl font-medium mb-6">Why Gift an Experience?</h2>
+                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                          Research shows that experiences create stronger emotional connections and more lasting happiness than material possessions. Let's explore why.
+                        </p>
+                      </div>
+                      <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+                        <div className="bg-secondary/30 p-8 rounded-2xl">
+                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                            <Gift className="h-6 w-6 text-primary" />
+                          </div>
+                          <h3 className="text-2xl font-medium mb-4">Material Gifts</h3>
+                          <ul className="space-y-4">
+                            <li className="flex items-start">
+                              <Clock className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                              <span>Quick enjoyment but excitement fades over time</span>
+                            </li>
+                            <li className="flex items-start">
+                              <Image className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                              <span>Takes up physical space and can contribute to clutter</span>
+                            </li>
+                            <li className="flex items-start">
+                              <CornerRightDown className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                              <span>Value and appreciation often decreases with time</span>
+                            </li>
+                            <li className="flex items-start">
+                              <Heart className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                              <span>Can be meaningful but often lacks personal touch</span>
+                            </li>
+                          </ul>
+                        </div>
+                        <div className="bg-primary/10 p-8 rounded-2xl">
+                          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-6">
+                            <CheckCircle className="h-6 w-6 text-white" />
+                          </div>
+                          <h3 className="text-2xl font-medium mb-4">Experience Gifts</h3>
+                          <ul className="space-y-4">
+                            <li className="flex items-start">
+                              <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                              <span>Creates lasting memories and stories to share</span>
+                            </li>
+                            <li className="flex items-start">
+                              <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                              <span>No physical clutter - only emotional richness</span>
+                            </li>
+                            <li className="flex items-start">
+                              <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                              <span>Appreciation increases over time as memories are cherished</span>
+                            </li>
+                            <li className="flex items-start">
+                              <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                              <span>Deepens relationships through shared moments</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="bg-secondary/20 rounded-2xl p-8 md:p-10">
+                        <h3 className="text-2xl font-medium mb-6 text-center">The Science Behind Experience Gifts</h3>
+                        <div className="grid sm:grid-cols-3 gap-8">
+                          <div className="text-center">
+                            <div className="text-4xl font-bold text-primary mb-2">78%</div>
+                            <p className="text-muted-foreground">of people prefer experiences over material items</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-4xl font-bold text-primary mb-2">3x</div>
+                            <p className="text-muted-foreground">longer lasting happiness from experiential purchases</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-4xl font-bold text-primary mb-2">85%</div>
+                            <p className="text-muted-foreground">stronger memory retention for experiences vs. objects</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative py-8">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                          <span className="text-9xl">"</span>
+                        </div>
+                        <blockquote className="text-xl md:text-2xl text-center italic relative z-10 max-w-3xl mx-auto">
+                          "We don't remember days, we remember moments. The richness of life lies in memories we have forgotten."
+                          <div className="text-base text-muted-foreground mt-4 not-italic">
+                            — Cesare Pavese
+                          </div>
+                        </blockquote>
+                      </div>
+                    </div>
+                  </section>
                 </div>
               </>
             )}
-          </div>
-        </section>
-
-        {/* Gifting Guide Content (moved from GiftingGuide.tsx) */}
-        {/* Anchor for smooth scroll to gifting guide */}
-        <span id="gifting-guide" className="block" />
-        <section ref={guideInViewRef} id="comparison" className="container max-w-[1152px] mx-auto px-4 md:px-10 py-8 md:py-24">
-          <div className={cn(
-            "space-y-16 transition-all duration-700",
-            guideInView ? "opacity-100" : "opacity-0 translate-y-8"
-          )}>
-            {/* Intro Section */}
-            <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-medium mb-6">Why Gift an Experience?</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Research shows that experiences create stronger emotional connections and more lasting happiness than material possessions. Let's explore why.
-              </p>
-            </div>
-            {/* Comparison Section */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-              <div className="bg-secondary/30 p-8 rounded-2xl">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <Gift className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-2xl font-medium mb-4">Material Gifts</h3>
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <Clock className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <span>Quick enjoyment but excitement fades over time</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Image className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <span>Takes up physical space and can contribute to clutter</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CornerRightDown className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <span>Value and appreciation often decreases with time</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Heart className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
-                    <span>Can be meaningful but often lacks personal touch</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="bg-primary/10 p-8 rounded-2xl">
-                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-6">
-                  <CheckCircle className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-2xl font-medium mb-4">Experience Gifts</h3>
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <span>Creates lasting memories and stories to share</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <span>No physical clutter - only emotional richness</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <span>Appreciation increases over time as memories are cherished</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 mr-3 mt-0.5 text-primary" />
-                    <span>Deepens relationships through shared moments</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            {/* Stats Section */}
-            <div className="bg-secondary/20 rounded-2xl p-8 md:p-10">
-              <h3 className="text-2xl font-medium mb-6 text-center">The Science Behind Experience Gifts</h3>
-              <div className="grid sm:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">78%</div>
-                  <p className="text-muted-foreground">of people prefer experiences over material items</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">3x</div>
-                  <p className="text-muted-foreground">longer lasting happiness from experiential purchases</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">85%</div>
-                  <p className="text-muted-foreground">stronger memory retention for experiences vs. objects</p>
-                </div>
-              </div>
-            </div>
-            {/* Quote Section */}
-            <div className="relative py-8">
-              <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                <span className="text-9xl">"</span>
-              </div>
-              <blockquote className="text-xl md:text-2xl text-center italic relative z-10 max-w-3xl mx-auto">
-                "We don't remember days, we remember moments. The richness of life lies in memories we have forgotten."
-                <div className="text-base text-muted-foreground mt-4 not-italic">
-                  — Cesare Pavese
-                </div>
-              </blockquote>
-            </div>
           </div>
         </section>
 
