@@ -49,7 +49,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
-const DEFAULT_RADIUS_KM = 10;
+const DEFAULT_RADIUS_KM = 40;
 
 const AllExperiences = () => {
   const { experiences, isLoading } = useExperiencesManager();
@@ -164,7 +164,7 @@ const AllExperiences = () => {
     
     let filtered = [...experiences];
     
-    // Proximity filtering logic
+    // Proximity and city filtering logic
     const selectedAddressRaw = localStorage.getItem('selected_address');
     let selectedAddress = null;
     try {
@@ -173,9 +173,15 @@ const AllExperiences = () => {
       selectedAddress = selectedAddressRaw;
     }
 
-    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon) {
+    // Helper: check if value is a city-only selection (no lat/lon or lat/lon are not numbers)
+    const isCityOnly = selectedAddress && typeof selectedAddress === 'object' &&
+      (!selectedAddress.lat || !selectedAddress.lon || isNaN(Number(selectedAddress.lat)) || isNaN(Number(selectedAddress.lon)));
+
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon && !isCityOnly) {
+      // Proximity filtering (address with coordinates)
       const lat = parseFloat(selectedAddress.lat);
       const lon = parseFloat(selectedAddress.lon);
+      const normalizedCity = selectedAddress.address ? selectedAddress.address.trim().toLowerCase() : null;
       filtered = filtered
         .map(exp => {
           if (typeof exp.latitude === 'number' && typeof exp.longitude === 'number') {
@@ -185,7 +191,20 @@ const AllExperiences = () => {
           return { ...exp, _distance: Infinity };
         })
         .filter(exp => exp._distance <= DEFAULT_RADIUS_KM)
+        // Only show those experiences which have the city name in their location column
+        .filter(exp => {
+          if (!normalizedCity) return true;
+          const expLoc = (exp.location || '').trim().toLowerCase();
+          return expLoc.includes(normalizedCity);
+        })
         .sort((a, b) => (a._distance || 0) - (b._distance || 0));
+    } else if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.address && isCityOnly) {
+      // City-only selection: string match on location column
+      const normalizedCity = selectedAddress.address.trim().toLowerCase();
+      filtered = filtered.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        return expLoc === normalizedCity || expLoc.includes(normalizedCity) || normalizedCity.includes(expLoc);
+      });
     }
 
     // Filter by location query param if present (fallback)
@@ -501,13 +520,29 @@ const AllExperiences = () => {
                 "mb-8 mt-8 transition-all duration-500",
                 isInView ? "opacity-100" : "opacity-0 translate-y-8"
               )}>
-                <SearchInput
-                  placeholder="Search experiences by title, description or location..."
-                  onSearch={handleSearchSubmit}
-                  onResultSelect={handleResultSelect}
-                  className="w-full"
-                  recentSearches={[]}
-                />
+                <div className="relative w-full">
+                  <SearchInput
+                    placeholder="Search experiences by title, description or location..."
+                    onSearch={handleSearchSubmit}
+                    onResultSelect={handleResultSelect}
+                    className="w-full"
+                    recentSearches={[]}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10"
+                      style={{ top: '50%', right: '10px', position: 'absolute', transform: 'translateY(-50%)' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Filters and Sorting */}

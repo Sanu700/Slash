@@ -9,7 +9,7 @@ import { CITY_COORDINATES } from './CitySelector';
 import { useLocation } from 'react-router-dom';
 import Fuse from 'fuse.js';
 
-const INDIAN_LOCATIONS = [
+export const INDIAN_LOCATIONS = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
   'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
   'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi',
