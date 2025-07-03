@@ -51,7 +51,8 @@ const ExperienceView = () => {
   const [quantityInCart, setQuantityInCart] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [showDatePopover, setShowDatePopover] = useState(false);
+  const [showDatePopoverMain, setShowDatePopoverMain] = useState(false);
+  const [showDatePopoverSidebar, setShowDatePopoverSidebar] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [wishlistLocal, setWishlistLocal] = useState<string[]>(() => {
@@ -151,7 +152,7 @@ const ExperienceView = () => {
     }
 
     if (!selectedDate) {
-      setShowDatePopover(true);
+      setShowDatePopoverMain(true);
       toast.error('Please select a date before adding to cart.');
       return;
     }
@@ -548,7 +549,7 @@ const ExperienceView = () => {
                         <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span className="text-sm">Select Date</span>
                       </div>
-                      <Popover open={showDatePopover} onOpenChange={setShowDatePopover}>
+                      <Popover open={showDatePopoverMain} onOpenChange={setShowDatePopoverMain}>
                         <PopoverTrigger asChild>
                           <Button 
                             variant="outline" 
@@ -558,7 +559,7 @@ const ExperienceView = () => {
                                 setShowLoginModal(true);
                                 return;
                               }
-                              setShowDatePopover(true);
+                              setShowDatePopoverMain(true);
                             }}
                           >
                             {selectedDate ? format(selectedDate, 'PPP') : 'Choose Date'}
@@ -569,8 +570,9 @@ const ExperienceView = () => {
                             mode="single"
                             selected={selectedDate as Date}
                             onSelect={(date) => {
+                              console.log('Date selected (main):', date);
                               setSelectedDate(date as Date);
-                              setShowDatePopover(false);
+                              setShowDatePopoverMain(false);
                             }}
                             initialFocus
                             disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
@@ -677,7 +679,7 @@ const ExperienceView = () => {
                       <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-sm">Select Date</span>
                     </div>
-                    <Popover open={showDatePopover} onOpenChange={setShowDatePopover}>
+                    <Popover open={showDatePopoverSidebar} onOpenChange={setShowDatePopoverSidebar}>
                       <PopoverTrigger asChild>
                         <Button 
                           variant="outline" 
@@ -687,7 +689,7 @@ const ExperienceView = () => {
                               setShowLoginModal(true);
                               return;
                             }
-                            setShowDatePopover(true);
+                            setShowDatePopoverSidebar(true);
                           }}
                         >
                           {selectedDate ? format(selectedDate, 'PPP') : 'Choose Date'}
@@ -698,8 +700,9 @@ const ExperienceView = () => {
                           mode="single"
                           selected={selectedDate as Date}
                           onSelect={(date) => {
+                            console.log('Date selected (sidebar):', date);
                             setSelectedDate(date as Date);
-                            setShowDatePopover(false);
+                            setShowDatePopoverSidebar(false);
                           }}
                           initialFocus
                           disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
