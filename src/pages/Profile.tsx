@@ -458,6 +458,16 @@ const Profile = () => {
     });
   };
 
+  // Merge matchedFriends and friends, always include all friends, remove duplicates by id
+  const allPeopleYouMayKnow = React.useMemo(() => {
+    const ids = new Set();
+    return [...matchedFriends, ...friends].filter(f => {
+      if (ids.has(f.id)) return false;
+      ids.add(f.id);
+      return true;
+    });
+  }, [matchedFriends, friends]);
+
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
       {/* Profile Header - formal, spaced, aligned */}
@@ -634,7 +644,7 @@ const Profile = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 <span className="ml-3 text-gray-500">Matching contacts...</span>
               </div>
-            ) : matchedFriends.map(friend => {
+            ) : allPeopleYouMayKnow.map(friend => {
               const connectionStatus = connectionStatuses[friend.id] || 'none';
               return (
                 <div key={friend.id} className="flex items-center gap-4">
