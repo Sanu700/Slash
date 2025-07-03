@@ -1,6 +1,7 @@
 import { useGoogleLogin } from '@react-oauth/google';
 import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
+import { config } from '@/config';
 
 const ImportContactsButton = ({ onContactsFetched }) => {
   const login = useGoogleLogin({

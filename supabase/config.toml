@@ -1,6 +1,6 @@
 project_id = "${SUPABASE_PROJECT_ID}"
 
 [auth.external.google]
-client_id = "630365428319-iujdl046niv4hec0asllb3mcsluq9j3u.apps.googleusercontent.com"
-secret = "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"
+client_id = "YOUR_CLIENT_ID"
+secret = "YOUR_CLIENT_SECRET"
 
