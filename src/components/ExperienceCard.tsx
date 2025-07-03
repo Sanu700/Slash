@@ -186,12 +186,12 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
       onClick={e => {
         // Prevent navigation if clicking on a button or link inside the card
         const tag = (e.target as HTMLElement).tagName.toLowerCase();
-        if (["button", "a", "svg", "path"].includes(tag)) return;
+        if (['button', 'a', 'svg', 'path'].includes(tag)) return;
         navigate(`/experience/${experience.id}`);
       }}
       tabIndex={0}
       onKeyDown={e => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           navigate(`/experience/${experience.id}`);
         }
       }}
