@@ -486,15 +486,15 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   return (
     <>
       <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-0 py-4', navbarBgClass)}>
-        <div className="max-w-screen-xl mx-auto flex items-center justify-between px-2">
-          <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
+        <div className="max-w-screen-xl mx-auto flex items-center justify-start px-2">
+          <Link to="/" className="flex items-center space-x-2 z-10" style={{ minWidth: 140 }} onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
             <span className={cn("font-medium text-xl", textClass)}>
               Slash
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-16">
+          <div className="hidden md:flex items-center space-x-4 ml-4 flex-1">
             <Link to="/experiences" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
               <span className="font-bold">All</span>
               <span className="text-base">Experiences</span>
@@ -604,7 +604,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-8">
             <button
               onClick={toggleSearch}
               className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
