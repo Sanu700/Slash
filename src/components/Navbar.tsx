@@ -494,9 +494,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
-              All Experiences
+          <div className="hidden md:flex items-center space-x-16">
+            <Link to="/experiences" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
+              <span className="font-bold">All</span>
+              <span className="text-base">Experiences</span>
             </Link>
             
             <DropdownMenu>
@@ -563,17 +564,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
-              Gift Personalizer
+            <Link to="/gift-personalizer" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
+              <span className="font-bold">Gift</span>
+              <span className="text-base">Personalizer</span>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors", textClass)}
+                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full", textClass)}
                   aria-label="Select location"
                 >
                   <MapPin className="h-5 w-5 text-blue-600" />
-                  <span className="max-w-[120px] truncate text-sm" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+                  <span className="max-w-[120px] truncate text-sm text-gray-900 md:text-white" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
                     {getLocationLabel()}
                   </span>
                   <ChevronDown className="h-4 w-4" />
@@ -748,7 +750,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     aria-label="Select location"
                   >
                     <MapPin className="h-5 w-5 text-blue-600" />
-                    <span className="max-w-[120px] truncate text-sm" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+                    <span className="max-w-[120px] truncate text-sm text-gray-900 md:text-white" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
                       {getLocationLabel()}
                     </span>
                     <ChevronDown className="h-4 w-4" />
@@ -982,7 +984,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             aria-label="Select location"
           >
             <MapPin className="h-5 w-5 text-blue-600" />
-            <span className="max-w-[90px] truncate text-sm" style={{ maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+            <span className="max-w-[90px] truncate text-sm text-gray-900 md:text-white" style={{ maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
               {getLocationLabel()}
             </span>
             <ChevronDown className="h-4 w-4" />

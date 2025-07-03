@@ -115,7 +115,7 @@ const Hero = () => {
               <div className="flex items-center justify-center w-full mb-2">
                 <SuggestedExperiences />
               </div>
-              <div className="flex flex-col gap-4 justify-start w-full mb-2">
+              <div className="flex flex-col md:flex-row gap-4 justify-start w-full mb-2">
                 <NavLink to="/experiences" onClick={scrollToTop}>
                   <Button
                     size="lg"
