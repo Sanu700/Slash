@@ -79,7 +79,7 @@ const TrendingSection = () => {
             "relative overflow-visible",
             isInView ? "opacity-100" : "opacity-0"
           )}>
-            <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
+            <Carousel opts={{ align: 'center', slidesToScroll: 1, breakpoints: { '(min-width: 768px)': { slidesToScroll: 3 } } }}>
               <CarouselContent className="-ml-2">
                 {trendingExperiences.map((experience) => (
                   <CarouselItem

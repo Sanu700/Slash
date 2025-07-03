@@ -33,9 +33,9 @@ const WishlistContent = ({ wishlistExperiences, handleExperienceClick, onWishlis
         </div>
       ) : (
         <div className="text-center py-12">
-          <Heart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
-          <p className="text-gray-500 mb-6">Save your favorite experiences to revisit later</p>
+          <Heart className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
+          <p className="text-sm sm:text-base text-gray-500 mb-6">Save your favorite experiences to revisit later</p>
           <Button onClick={() => navigate('/experiences')}>Browse Experiences</Button>
         </div>
       )}
