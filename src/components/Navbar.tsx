@@ -604,7 +604,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
             <button
               onClick={toggleSearch}
               className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
@@ -741,6 +741,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
+            {/* Profile/Account option for mobile */}
+            {isAuthenticated ? (
+              <Link to="/profile" onClick={toggleMobileMenu} className="text-lg font-medium text-primary w-full mb-2">Profile</Link>
+            ) : (
+              <button onClick={handleSignIn} className="text-lg font-medium text-primary w-full mb-2">Sign In</button>
+            )}
             {/* Location selection in mobile menu (Dialog) */}
             <div className="mb-4">
               <Dialog open={mobileLocationDialogOpen} onOpenChange={setMobileLocationDialogOpen}>
