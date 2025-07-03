@@ -3,9 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function Terms() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Terms of Service</h1>
+    <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
+      <div className="max-w-full md:max-w-4xl mx-auto">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8">Terms of Service</h1>
         
         <div className="space-y-6">
           <Card>
