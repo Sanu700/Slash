@@ -61,6 +61,7 @@ const ExperienceView = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -358,6 +359,27 @@ const ExperienceView = () => {
     }
   }, [user, experience]);
   
+  useEffect(() => {
+    // For guests, use wishlistLocal
+    if (!user) {
+      setWishlistIds(wishlistLocal);
+      return;
+    }
+    // For logged-in users, fetch wishlist from Supabase
+    const fetchWishlist = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('wishlists')
+          .select('experience_id');
+        if (error) throw error;
+        setWishlistIds(data ? data.map((item: any) => item.experience_id) : []);
+      } catch (err) {
+        setWishlistIds([]);
+      }
+    };
+    fetchWishlist();
+  }, [user, wishlistLocal]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -514,7 +536,16 @@ const ExperienceView = () => {
                         key={exp.id} 
                         experience={exp} 
                         index={idx} 
-                        isInWishlist={false} // or check if in wishlist if you have that info
+                        isInWishlist={wishlistIds.includes(exp.id)}
+                        onWishlistChange={(experienceId, newIsInWishlist) => {
+                          setWishlistIds(prev => {
+                            if (newIsInWishlist) {
+                              return [...prev, experienceId];
+                            } else {
+                              return prev.filter(id => id !== experienceId);
+                            }
+                          });
+                        }}
                       />
                     ))}
                   </div>
