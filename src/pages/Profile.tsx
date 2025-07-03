@@ -85,6 +85,9 @@ const Profile = () => {
   const { toast } = useToast();
   const [matchedFriends, setMatchedFriends] = useState([]);
   const [contactsLoading, setContactsLoading] = useState(false);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [connectionStatuses, setConnectionStatuses] = useState({});
+  const [friends, setFriends] = useState([]);
 
   const mockPeople = [
     {
@@ -247,6 +250,102 @@ const Profile = () => {
   useEffect(() => {
     setLocalWishlist(Array.isArray(wishlistExperiences) ? wishlistExperiences : []);
   }, [wishlistExperiences]);
+
+  // Load matchedFriends from localStorage on mount and when user changes
+  useEffect(() => {
+    if (user?.id) {
+      const stored = localStorage.getItem(`matchedFriends_${user.id}`);
+      if (stored) {
+        setMatchedFriends(JSON.parse(stored));
+      } else {
+        setMatchedFriends([]);
+      }
+    } else {
+      setMatchedFriends([]);
+    }
+  }, [user?.id]);
+
+  // Load incoming connection requests (no join, fetch sender profiles separately)
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('connections')
+      .select('id, from_user_id, status, created_at')
+      .eq('to_user_id', user.id)
+      .eq('status', 'pending')
+      .then(async ({ data }) => {
+        if (!data) return setIncomingRequests([]);
+        const senderIds = data.map(r => r.from_user_id);
+        if (senderIds.length === 0) return setIncomingRequests([]);
+        const { data: profiles } = await supabase
+          .from('profiles_with_email')
+          .select('id, full_name, avatar_url')
+          .in('id', senderIds);
+        const requests = data.map(r => ({
+          ...r,
+          from_user: profiles?.find(p => p.id === r.from_user_id)
+        }));
+        setIncomingRequests(requests);
+      });
+  }, [user?.id]);
+
+  // Fetch connection statuses for all matched friends and friends
+  const fetchStatuses = React.useCallback(async () => {
+    if (!user?.id || !matchedFriends.length) return;
+    const statuses = {};
+    for (const friend of matchedFriends) {
+      const { data, error } = await supabase
+        .from('connections')
+        .select('from_user_id, to_user_id, status')
+        .or(
+          `and(from_user_id.eq.${user.id},to_user_id.eq.${friend.id}),and(from_user_id.eq.${friend.id},to_user_id.eq.${user.id})`
+        );
+      if (error) {
+        statuses[friend.id] = 'none';
+        continue;
+      }
+      if (data && data.length > 0) {
+        if (data.some(conn => conn.status === 'accepted')) {
+          statuses[friend.id] = 'accepted';
+        } else if (data.some(conn => conn.status === 'pending' && conn.from_user_id === user.id)) {
+          statuses[friend.id] = 'pending';
+        } else if (data.some(conn => conn.status === 'pending' && conn.to_user_id === user.id)) {
+          statuses[friend.id] = 'incoming';
+        } else {
+          statuses[friend.id] = 'none';
+        }
+      } else {
+        statuses[friend.id] = 'none';
+      }
+    }
+    setConnectionStatuses(statuses);
+  }, [user?.id, matchedFriends]);
+
+  React.useEffect(() => {
+    fetchStatuses();
+  }, [fetchStatuses]);
+
+  // Fetch accepted connections (friends)
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('connections')
+      .select('from_user_id, to_user_id')
+      .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
+      .eq('status', 'accepted')
+      .then(async ({ data }) => {
+        if (!data) return setFriends([]);
+        const friendIds = data.map(conn =>
+          conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
+        );
+        if (friendIds.length === 0) return setFriends([]);
+        const { data: profiles } = await supabase
+          .from('profiles_with_email')
+          .select('id, full_name, avatar_url')
+          .in('id', friendIds);
+        setFriends(profiles || []);
+      });
+  }, [user?.id]);
 
   // Remove from local wishlist when un-wishlisted
   const handleWishlistChange = (experienceId, isNowInWishlist) => {
@@ -514,6 +613,9 @@ const Profile = () => {
                     toast({ title: 'Error matching contacts', description: error.message, variant: 'destructive' });
                   } else {
                     setMatchedFriends(matchingProfiles || []);
+                    if (user?.id) {
+                      localStorage.setItem(`matchedFriends_${user.id}`, JSON.stringify(matchingProfiles || []));
+                    }
                     toast({ title: 'Contacts imported!', description: `${(matchingProfiles || []).length} friends found.` });
                   }
                   setContactsLoading(false);
@@ -525,19 +627,100 @@ const Profile = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 <span className="ml-3 text-gray-500">Matching contacts...</span>
               </div>
-            ) : matchedFriends.map(friend => (
-              <div key={friend.id} className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                  <img src={friend.avatar} alt={friend.name} className="h-full w-full rounded-full object-cover" />
+            ) : matchedFriends.map(friend => {
+              const connectionStatus = connectionStatuses[friend.id] || 'none';
+              return (
+                <div key={friend.id} className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                    <img src={friend.avatar_url} alt={friend.full_name} className="h-full w-full rounded-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.full_name}</p>
+                  </div>
+                  {connectionStatus === 'accepted' ? (
+                    <Button disabled className="bg-green-100 text-green-700">Connected</Button>
+                  ) : connectionStatus === 'pending' ? (
+                    <Button disabled className="bg-yellow-100 text-yellow-700">Pending</Button>
+                  ) : connectionStatus === 'incoming' ? (
+                    <Button disabled className="bg-blue-100 text-blue-700">Requested You</Button>
+                  ) : (
+                    <Button
+                      className="text-primary hover:bg-primary/10 px-4 py-1.5 rounded-full text-sm font-medium border border-primary/20 bg-white"
+                      onClick={async () => {
+                        if (!user?.id) return;
+                        // Prevent duplicate requests
+                        const { data: existing } = await supabase
+                          .from('connections')
+                          .select('*')
+                          .or(
+                            `and(from_user_id.eq.${user.id},to_user_id.eq.${friend.id}),and(from_user_id.eq.${friend.id},to_user_id.eq.${user.id})`
+                          )
+                          .maybeSingle();
+                        if (existing) {
+                          toast({ title: 'Request already sent!' });
+                          return;
+                        }
+                        const { error } = await supabase.from('connections').insert([
+                          { from_user_id: user.id, to_user_id: friend.id, status: 'pending' }
+                        ]);
+                        if (error) {
+                          toast({ title: 'Failed to send request', description: error.message, variant: 'destructive' });
+                        } else {
+                          setConnectionStatuses(prev => ({ ...prev, [friend.id]: 'pending' }));
+                          await fetchStatuses();
+                          toast({ title: 'Connection request sent!' });
+                        }
+                      }}
+                    >
+                      Connect
+                    </Button>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.name}</p>
-                  <p className="text-gray-500 text-xs truncate">{friend.mutual ? `${friend.mutual} mutual connection${friend.mutual !== 1 ? 's' : ''}` : 'Similar interests'}</p>
-                </div>
-                <Button className="text-primary hover:bg-primary/10 px-4 py-1.5 rounded-full text-sm font-medium border border-primary/20 bg-white">Connect</Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
+          {/* Incoming Connection Requests */}
+          {incomingRequests.length > 0 && (
+            <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-5 border border-gray-100 min-h-[120px]">
+              <h2 className="font-semibold text-lg text-gray-900 mb-2">Incoming Connection Requests</h2>
+              {incomingRequests.map(req => (
+                <div key={req.id} className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                    <img src={req.from_user?.avatar_url} alt={req.from_user?.full_name} className="h-full w-full rounded-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium mb-0.5 text-gray-800 truncate">{req.from_user?.full_name}</p>
+                  </div>
+                  <Button
+                    className="bg-green-100 text-green-700 mr-2"
+                    onClick={async () => {
+                      await supabase.from('connections').update({ status: 'accepted' }).eq('id', req.id);
+                      setIncomingRequests(incomingRequests.filter(r => r.id !== req.id));
+                      setConnectionStatuses(prev => ({
+                        ...prev,
+                        [req.from_user?.id]: 'accepted',
+                        [user.id]: 'accepted'
+                      }));
+                      await fetchStatuses();
+                      toast({ title: 'Connection accepted!' });
+                    }}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    className="bg-red-100 text-red-700"
+                    onClick={async () => {
+                      await supabase.from('connections').delete().eq('id', req.id);
+                      setIncomingRequests(incomingRequests.filter(r => r.id !== req.id));
+                      toast({ title: 'Connection rejected.' });
+                    }}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
