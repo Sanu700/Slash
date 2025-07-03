@@ -1,6 +1,11 @@
+# Supabase config file
+# Do NOT store secrets here if you are using src/config.ts for local/dev keys
+
 project_id = "${SUPABASE_PROJECT_ID}"
 
 [auth.external.google]
-client_id = "YOUR_CLIENT_ID"
-secret = "YOUR_CLIENT_SECRET"
+client_id = "YOUR_GOOGLE_CLIENT_ID"  # Managed in src/config.ts for local/dev
+secret = "YOUR_GOOGLE_CLIENT_SECRET" # Managed in src/config.ts for local/dev
+
+# Remove any real secrets before committing this file
 
