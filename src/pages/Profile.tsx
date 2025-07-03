@@ -291,6 +291,7 @@ const Profile = () => {
 
   // Fetch connection statuses for all matched friends and friends
   const fetchStatuses = React.useCallback(async () => {
+    console.log('fetchStatuses called', { userId: user?.id, allPeopleYouMayKnow });
     if (!user?.id || !matchedFriends.length) return;
     const statuses = {};
     for (const friend of matchedFriends) {
@@ -468,6 +469,9 @@ const Profile = () => {
       return true;
     });
   }, [matchedFriends, friends]);
+
+  // Before rendering the people you may know list
+  console.log('allPeopleYouMayKnow:', allPeopleYouMayKnow);
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
