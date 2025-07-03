@@ -18,6 +18,7 @@ import { categories } from '@/lib/data/categories';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useToast } from '@/components/ui/use-toast';
 import Papa from 'papaparse';
+import ImportContactsButton from '@/components/ImportContactsButton';
 
 // Add this at the top of your file (or before using window.gapi)
 declare global {
@@ -83,6 +84,7 @@ const Profile = () => {
   const [allExperiences, setAllExperiences] = useState([]);
   const { toast } = useToast();
   const [matchedFriends, setMatchedFriends] = useState([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
 
   const mockPeople = [
     {
@@ -357,49 +359,6 @@ const Profile = () => {
     });
   };
 
-  // Fetch Google contacts using Supabase provider_token
-  const fetchAndMatchGoogleContacts = async () => {
-    // Get session and access token from Supabase
-    const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.provider_token;
-    if (!accessToken) {
-      toast({ title: 'Google sign-in required', description: 'Please sign in with Google to import contacts.', variant: 'destructive' });
-      return;
-    }
-    // Fetch contacts from Google People API
-    const response = await fetch(
-      'https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses',
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    const data = await response.json();
-    const contacts = (data.connections || []).map(contact => ({
-      name: contact.names?.[0]?.displayName ?? '',
-      email: contact.emailAddresses?.[0]?.value ?? '',
-    })).filter(c => c.email);
-    // Store contacts in Supabase contacts table
-    if (contacts.length > 0) {
-      const { error } = await supabase.from('contacts').insert(
-        contacts.map(contact => ({ ...contact, user_id: session.user.id }))
-      );
-      if (error) {
-        console.error('Error inserting contacts:', error);
-        toast({ title: 'Failed to save contacts', description: error.message, variant: 'destructive' });
-      } else {
-        console.log('Contacts inserted successfully');
-      }
-    }
-    // Match contacts to registered users
-    const contactEmails = contacts.map(c => c.email);
-    const { data: matchingUsers } = await supabase
-      .from('users')
-      .select('*')
-      .in('email', contactEmails);
-    setMatchedFriends(matchingUsers || []);
-    toast({ title: 'Contacts imported!', description: `${(matchingUsers || []).length} friends found.` });
-  };
-
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
       {/* Profile Header - formal, spaced, aligned */}
@@ -538,12 +497,35 @@ const Profile = () => {
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold text-lg text-gray-900">People You May Know</h2>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={fetchAndMatchGoogleContacts}>
-                  Import from Contacts
-                </Button>
+                <ImportContactsButton onContactsFetched={async (contacts) => {
+                  setContactsLoading(true);
+                  const emails = contacts.map(c => c.email);
+                  if (emails.length === 0) {
+                    toast({ title: 'No contacts found', description: 'No contacts with email addresses were found in your Google account.', variant: 'destructive' });
+                    setContactsLoading(false);
+                    return;
+                  }
+                  // Query Supabase for matching profiles with email
+                  const { data: matchingProfiles, error } = await supabase
+                    .from('profiles_with_email')
+                    .select('*')
+                    .in('email', emails);
+                  if (error) {
+                    toast({ title: 'Error matching contacts', description: error.message, variant: 'destructive' });
+                  } else {
+                    setMatchedFriends(matchingProfiles || []);
+                    toast({ title: 'Contacts imported!', description: `${(matchingProfiles || []).length} friends found.` });
+                  }
+                  setContactsLoading(false);
+                }} />
               </div>
             </div>
-            {matchedFriends.map(friend => (
+            {contactsLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-gray-500">Matching contacts...</span>
+              </div>
+            ) : matchedFriends.map(friend => (
               <div key={friend.id} className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
                   <img src={friend.avatar} alt={friend.name} className="h-full w-full rounded-full object-cover" />

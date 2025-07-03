@@ -86,13 +86,11 @@ const TrendingSection = () => {
                     key={experience.id}
                     className="basis-full sm:basis-1/2 md:basis-1/3 pl-2"
                   >
-                    <div className="w-[346.66px] h-[240px]">
-                      <ExperienceCard 
-                        experience={experience} 
-                        index={idx} 
-                        isInWishlist={false}
-                      />
-                    </div>
+                    <ExperienceCard 
+                      experience={experience} 
+                      index={idx} 
+                      isInWishlist={false}
+                    />
                   </CarouselItem>
                 ))}
               </CarouselContent>
