@@ -494,9 +494,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
-              All Experiences
+          <div className="hidden md:flex items-center space-x-16">
+            <Link to="/experiences" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
+              <span className="font-bold">All</span>
+              <span className="text-base">Experiences</span>
             </Link>
             
             <DropdownMenu>
@@ -563,8 +564,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
-              Gift Personalizer
+            <Link to="/gift-personalizer" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
+              <span className="font-bold">Gift</span>
+              <span className="text-base">Personalizer</span>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
