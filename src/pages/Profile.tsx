@@ -1,5 +1,5 @@
 // src/pages/Profile.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
 import WishlistContent from '@/components/profile/WishlistContent';
@@ -400,13 +400,20 @@ const Profile = () => {
             ))}
           </div>
           {/* Tabs */}
-          <div className="bg-white rounded-2xl shadow mb-4 overflow-hidden border border-gray-100">
-            <div className="flex overflow-x-auto justify-center gap-4 px-4 py-2 min-h-[60px]">
+          <div className="bg-white rounded-2xl shadow mb-4 overflow-hidden border border-gray-100 relative">
+            {/* Left gradient scroll indicator for mobile */}
+            <div className="pointer-events-none absolute left-0 top-0 h-full w-6 z-10 bg-gradient-to-r from-white via-white/80 to-transparent md:hidden" />
+            <div
+              className="flex overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 gap-4 pl-0 pr-4 py-2 min-h-[60px]"
+              ref={el => {
+                if (el) el.scrollLeft = 0;
+              }}
+            >
               {['liked', 'saved', 'viewed', 'history'].map(tab => (
                 <button
                   key={tab}
                   className={`px-10 py-3 flex-1 text-center capitalize transition font-medium text-base tracking-wide rounded-lg ${activeTab === tab ? 'border-b-4 border-primary text-primary bg-neutral-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
-                  style={{ minWidth: 140, maxWidth: 220 }}
+                  style={{ minWidth: 140, maxWidth: 220, flexShrink: 0 }}
                   onClick={() => setActiveTab(tab)}
                 >
                   {tab === 'viewed' ? 'Viewed' : tab.charAt(0).toUpperCase() + tab.slice(1)}
