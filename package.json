@@ -42,6 +42,7 @@
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@react-google-maps/api": "^2.20.7",
+    "@react-oauth/google": "^0.12.2",
     "@supabase/supabase-js": "^2.50.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tanstack/react-query": "^5.56.2",

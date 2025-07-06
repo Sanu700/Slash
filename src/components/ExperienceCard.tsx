@@ -226,10 +226,10 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
         </button>
       </div>
       {/* Info section */}
-      <div className="p-4">
+      <div className="p-4 w-full max-w-full">
         {/* Proximity info: time and distance */}
         {(travelTime || distance) && (
-          <div className="flex items-center gap-2 text-base text-gray-700 font-semibold mb-2 bg-white/80 px-3 py-1 rounded-lg shadow-sm" style={{display: 'inline-flex'}}>
+          <div className="flex items-center gap-2 text-sm md:text-base text-gray-700 font-semibold mb-2 bg-white/80 px-3 py-1 rounded-lg shadow-sm w-full max-w-full truncate">
             {travelTime && <><Clock className="h-4 w-4 mr-1 text-primary" />{travelTime}</>}
             {travelTime && distance && <span className="mx-1">|</span>}
             {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}

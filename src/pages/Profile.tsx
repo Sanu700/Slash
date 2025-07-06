@@ -1,5 +1,5 @@
 // src/pages/Profile.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
 import WishlistContent from '@/components/profile/WishlistContent';
@@ -18,6 +18,7 @@ import { categories } from '@/lib/data/categories';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useToast } from '@/components/ui/use-toast';
 import Papa from 'papaparse';
+import ImportContactsButton from '@/components/ImportContactsButton';
 
 // Add this at the top of your file (or before using window.gapi)
 declare global {
@@ -83,6 +84,10 @@ const Profile = () => {
   const [allExperiences, setAllExperiences] = useState([]);
   const { toast } = useToast();
   const [matchedFriends, setMatchedFriends] = useState([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [connectionStatuses, setConnectionStatuses] = useState({});
+  const [friends, setFriends] = useState([]);
 
   const mockPeople = [
     {
@@ -246,6 +251,106 @@ const Profile = () => {
     setLocalWishlist(Array.isArray(wishlistExperiences) ? wishlistExperiences : []);
   }, [wishlistExperiences]);
 
+  // Load matchedFriends from localStorage on mount and when user changes
+  useEffect(() => {
+    if (user?.id) {
+      const stored = localStorage.getItem(`matchedFriends_${user.id}`);
+      if (stored) {
+        setMatchedFriends(JSON.parse(stored));
+      } else {
+        setMatchedFriends([]);
+      }
+    } else {
+      setMatchedFriends([]);
+    }
+  }, [user?.id]);
+
+  // Load incoming connection requests (no join, fetch sender profiles separately)
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('connections')
+      .select('id, from_user_id, status, created_at')
+      .eq('to_user_id', user.id)
+      .eq('status', 'pending')
+      .then(async ({ data }) => {
+        if (!data) return setIncomingRequests([]);
+        const senderIds = data.map(r => r.from_user_id);
+        if (senderIds.length === 0) return setIncomingRequests([]);
+        const { data: profiles } = await supabase
+          .from('profiles_with_email')
+          .select('id, full_name, avatar_url')
+          .in('id', senderIds);
+        const requests = data.map(r => ({
+          ...r,
+          from_user: profiles?.find(p => p.id === r.from_user_id)
+        }));
+        setIncomingRequests(requests);
+      });
+  }, [user?.id]);
+
+  // Fetch connection statuses for all matched friends and friends
+  const fetchStatuses = React.useCallback(async () => {
+    console.log('fetchStatuses called', { userId: user?.id, allPeopleYouMayKnow });
+    if (!user?.id || !matchedFriends.length) return;
+    const statuses = {};
+    for (const friend of matchedFriends) {
+      const { data, error } = await supabase
+        .from('connections')
+        .select('from_user_id, to_user_id, status')
+        .or(
+          `and(from_user_id.eq.${user.id},to_user_id.eq.${friend.id}),and(from_user_id.eq.${friend.id},to_user_id.eq.${user.id})`
+        );
+      console.log('Checking connection between', user.id, 'and', friend.id, '=>', data, 'error:', error);
+      if (error) {
+        statuses[friend.id] = 'none';
+        continue;
+      }
+      if (data && data.length > 0) {
+        if (data.some(conn => conn.status === 'accepted')) {
+          statuses[friend.id] = 'accepted';
+        } else if (data.some(conn => conn.status === 'pending' && conn.from_user_id === user.id)) {
+          statuses[friend.id] = 'pending';
+        } else if (data.some(conn => conn.status === 'pending' && conn.to_user_id === user.id)) {
+          statuses[friend.id] = 'incoming';
+        } else {
+          statuses[friend.id] = 'none';
+        }
+      } else {
+        statuses[friend.id] = 'none';
+      }
+    }
+    setConnectionStatuses(statuses);
+  }, [user?.id, matchedFriends]);
+
+  React.useEffect(() => {
+    fetchStatuses();
+  }, [fetchStatuses]);
+
+  // Fetch accepted connections (friends)
+  const fetchFriends = React.useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('connections')
+      .select('from_user_id, to_user_id')
+      .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
+      .eq('status', 'accepted');
+    if (!data) return setFriends([]);
+    const friendIds = data.map(conn =>
+      conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
+    );
+    if (friendIds.length === 0) return setFriends([]);
+    const { data: profiles } = await supabase
+      .from('profiles_with_email')
+      .select('id, full_name, avatar_url')
+      .in('id', friendIds);
+    setFriends(profiles || []);
+  }, [user?.id]);
+
+  React.useEffect(() => {
+    fetchFriends();
+  }, [fetchFriends]);
+
   // Remove from local wishlist when un-wishlisted
   const handleWishlistChange = (experienceId, isNowInWishlist) => {
     setLocalWishlist(prev => {
@@ -357,48 +462,18 @@ const Profile = () => {
     });
   };
 
-  // Fetch Google contacts using Supabase provider_token
-  const fetchAndMatchGoogleContacts = async () => {
-    // Get session and access token from Supabase
-    const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.provider_token;
-    if (!accessToken) {
-      toast({ title: 'Google sign-in required', description: 'Please sign in with Google to import contacts.', variant: 'destructive' });
-      return;
-    }
-    // Fetch contacts from Google People API
-    const response = await fetch(
-      'https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses',
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    const data = await response.json();
-    const contacts = (data.connections || []).map(contact => ({
-      name: contact.names?.[0]?.displayName ?? '',
-      email: contact.emailAddresses?.[0]?.value ?? '',
-    })).filter(c => c.email);
-    // Store contacts in Supabase contacts table
-    if (contacts.length > 0) {
-      const { error } = await supabase.from('contacts').insert(
-        contacts.map(contact => ({ ...contact, user_id: session.user.id }))
-      );
-      if (error) {
-        console.error('Error inserting contacts:', error);
-        toast({ title: 'Failed to save contacts', description: error.message, variant: 'destructive' });
-      } else {
-        console.log('Contacts inserted successfully');
-      }
-    }
-    // Match contacts to registered users
-    const contactEmails = contacts.map(c => c.email);
-    const { data: matchingUsers } = await supabase
-      .from('users')
-      .select('*')
-      .in('email', contactEmails);
-    setMatchedFriends(matchingUsers || []);
-    toast({ title: 'Contacts imported!', description: `${(matchingUsers || []).length} friends found.` });
-  };
+  // Merge matchedFriends and friends, always include all friends, remove duplicates by id
+  const allPeopleYouMayKnow = React.useMemo(() => {
+    const ids = new Set();
+    return [...matchedFriends, ...friends].filter(f => {
+      if (ids.has(f.id)) return false;
+      ids.add(f.id);
+      return true;
+    });
+  }, [matchedFriends, friends]);
+
+  // Before rendering the people you may know list
+  console.log('allPeopleYouMayKnow:', allPeopleYouMayKnow);
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
@@ -441,13 +516,20 @@ const Profile = () => {
             ))}
           </div>
           {/* Tabs */}
-          <div className="bg-white rounded-2xl shadow mb-4 overflow-hidden border border-gray-100">
-            <div className="flex overflow-x-auto justify-center gap-4 px-4 py-2 min-h-[60px]">
+          <div className="bg-white rounded-2xl shadow mb-4 overflow-hidden border border-gray-100 relative">
+            {/* Left gradient scroll indicator for mobile */}
+            <div className="pointer-events-none absolute left-0 top-0 h-full w-6 z-10 bg-gradient-to-r from-white via-white/80 to-transparent md:hidden" />
+            <div
+              className="flex overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 gap-4 pl-0 pr-4 py-2 min-h-[60px]"
+              ref={el => {
+                if (el) el.scrollLeft = 0;
+              }}
+            >
               {['liked', 'saved', 'viewed', 'history'].map(tab => (
                 <button
                   key={tab}
                   className={`px-10 py-3 flex-1 text-center capitalize transition font-medium text-base tracking-wide rounded-lg ${activeTab === tab ? 'border-b-4 border-primary text-primary bg-neutral-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
-                  style={{ minWidth: 140, maxWidth: 220 }}
+                  style={{ minWidth: 140, maxWidth: 220, flexShrink: 0 }}
                   onClick={() => setActiveTab(tab)}
                 >
                   {tab === 'viewed' ? 'Viewed' : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -538,24 +620,133 @@ const Profile = () => {
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold text-lg text-gray-900">People You May Know</h2>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={fetchAndMatchGoogleContacts}>
-                  Import from Contacts
-                </Button>
+                <ImportContactsButton onContactsFetched={async (contacts) => {
+                  setContactsLoading(true);
+                  const emails = contacts.map(c => c.email);
+                  if (emails.length === 0) {
+                    toast({ title: 'No contacts found', description: 'No contacts with email addresses were found in your Google account.', variant: 'destructive' });
+                    setContactsLoading(false);
+                    return;
+                  }
+                  // Query Supabase for matching profiles with email
+                  const { data: matchingProfiles, error } = await supabase
+                    .from('profiles_with_email')
+                    .select('*')
+                    .in('email', emails);
+                  if (error) {
+                    toast({ title: 'Error matching contacts', description: error.message, variant: 'destructive' });
+                  } else {
+                    setMatchedFriends(matchingProfiles || []);
+                    if (user?.id) {
+                      localStorage.setItem(`matchedFriends_${user.id}`, JSON.stringify(matchingProfiles || []));
+                    }
+                    toast({ title: 'Contacts imported!', description: `${(matchingProfiles || []).length} friends found.` });
+                  }
+                  setContactsLoading(false);
+                }} />
               </div>
             </div>
-            {matchedFriends.map(friend => (
-              <div key={friend.id} className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                  <img src={friend.avatar} alt={friend.name} className="h-full w-full rounded-full object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.name}</p>
-                  <p className="text-gray-500 text-xs truncate">{friend.mutual ? `${friend.mutual} mutual connection${friend.mutual !== 1 ? 's' : ''}` : 'Similar interests'}</p>
-                </div>
-                <Button className="text-primary hover:bg-primary/10 px-4 py-1.5 rounded-full text-sm font-medium border border-primary/20 bg-white">Connect</Button>
+            {contactsLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-gray-500">Matching contacts...</span>
               </div>
-            ))}
+            ) : allPeopleYouMayKnow.map(friend => {
+              const connectionStatus = connectionStatuses[friend.id] || 'none';
+              return (
+                <div key={friend.id} className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                    <img src={friend.avatar_url} alt={friend.full_name} className="h-full w-full rounded-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.full_name}</p>
+                  </div>
+                  {connectionStatus === 'accepted' ? (
+                    <Button disabled className="bg-green-100 text-green-700">Connected</Button>
+                  ) : connectionStatus === 'pending' ? (
+                    <Button disabled className="bg-yellow-100 text-yellow-700">Pending</Button>
+                  ) : connectionStatus === 'incoming' ? (
+                    <Button disabled className="bg-blue-100 text-blue-700">Requested You</Button>
+                  ) : (
+                    <Button
+                      className="text-primary hover:bg-primary/10 px-4 py-1.5 rounded-full text-sm font-medium border border-primary/20 bg-white"
+                      onClick={async () => {
+                        if (!user?.id) return;
+                        // Prevent duplicate requests
+                        const { data: existing } = await supabase
+                          .from('connections')
+                          .select('*')
+                          .or(
+                            `and(from_user_id.eq.${user.id},to_user_id.eq.${friend.id}),and(from_user_id.eq.${friend.id},to_user_id.eq.${user.id})`
+                          )
+                          .maybeSingle();
+                        if (existing) {
+                          toast({ title: 'Request already sent!' });
+                          return;
+                        }
+                        const { error } = await supabase.from('connections').insert([
+                          { from_user_id: user.id, to_user_id: friend.id, status: 'pending' }
+                        ]);
+                        if (error) {
+                          toast({ title: 'Failed to send request', description: error.message, variant: 'destructive' });
+                        } else {
+                          setConnectionStatuses(prev => ({ ...prev, [friend.id]: 'pending' }));
+                          await fetchFriends();
+                          await fetchStatuses();
+                          toast({ title: 'Connection request sent!' });
+                        }
+                      }}
+                    >
+                      Connect
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
           </div>
+          {/* Incoming Connection Requests */}
+          {incomingRequests.length > 0 && (
+            <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-5 border border-gray-100 min-h-[120px]">
+              <h2 className="font-semibold text-lg text-gray-900 mb-2">Incoming Connection Requests</h2>
+              {incomingRequests.map(req => (
+                <div key={req.id} className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                    <img src={req.from_user?.avatar_url} alt={req.from_user?.full_name} className="h-full w-full rounded-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium mb-0.5 text-gray-800 truncate">{req.from_user?.full_name}</p>
+                  </div>
+                  <Button
+                    className="bg-green-100 text-green-700 mr-2"
+                    onClick={async () => {
+                      await supabase.from('connections').update({ status: 'accepted' }).eq('id', req.id);
+                      setIncomingRequests(incomingRequests.filter(r => r.id !== req.id));
+                      setConnectionStatuses(prev => ({
+                        ...prev,
+                        [req.from_user?.id]: 'accepted',
+                        [user.id]: 'accepted'
+                      }));
+                      await fetchFriends();
+                      await fetchStatuses();
+                      toast({ title: 'Connection accepted!' });
+                    }}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    className="bg-red-100 text-red-700"
+                    onClick={async () => {
+                      await supabase.from('connections').delete().eq('id', req.id);
+                      setIncomingRequests(incomingRequests.filter(r => r.id !== req.id));
+                      toast({ title: 'Connection rejected.' });
+                    }}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
