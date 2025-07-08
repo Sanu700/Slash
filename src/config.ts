@@ -41,7 +41,7 @@ export const config: Config = {
     }
   },
   google: {
-    clientId: '630365428319-iujdl046niv4hec0asllb3mcsluq9j3u.apps.googleusercontent.com',
-    clientSecret: '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'
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+    clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || '',
   }
 };
