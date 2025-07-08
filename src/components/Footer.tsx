@@ -216,7 +216,7 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Slash. All rights reserved.
           </div>
           <div className="flex flex-wrap gap-4">
-            <Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link to="/privacy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link to="/terms-of-service" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
             <Link to="/cookie-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Cookie Policy</Link>
           </div>
