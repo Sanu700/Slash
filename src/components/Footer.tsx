@@ -217,7 +217,7 @@ const Footer = () => {
           </div>
           <div className="flex flex-wrap gap-4">
             <Link to="/privacy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link to="/terms" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
             <Link to="/cookie-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Cookie Policy</Link>
           </div>
         </div>

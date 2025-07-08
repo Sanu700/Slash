@@ -36,6 +36,7 @@ import Testimonials from "./pages/Testimonials";
 import Careers from "./pages/Careers";
 import Press from "./pages/Press";
 import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 // Support Pages
 import ContactUs from "./pages/ContactUs";
@@ -123,6 +124,7 @@ function App() {
                     <Route path="/careers" element={<Layout><Careers /></Layout>} />
                     <Route path="/press" element={<Layout><Press /></Layout>} />
                     <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+                    <Route path="/terms" element={<Layout><Terms /></Layout>} />
 
                     {/* Support Pages */}
                     <Route path="/contact" element={<Layout><ContactUs /></Layout>} />
