@@ -181,98 +181,100 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   }, [experience.imageUrl]);
 
   return (
-    <div
-      className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer"
-      onClick={e => {
-        // Prevent navigation if clicking on a button or link inside the card
-        const tag = (e.target as HTMLElement).tagName.toLowerCase();
-        if (['button', 'a', 'svg', 'path'].includes(tag)) return;
-        navigate(`/experience/${experience.id}`);
-      }}
-      tabIndex={0}
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') {
+    <>
+      <div
+        className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer"
+        onClick={e => {
+          // Prevent navigation if clicking on a button or link inside the card
+          const tag = (e.target as HTMLElement).tagName.toLowerCase();
+          if (['button', 'a', 'svg', 'path'].includes(tag)) return;
           navigate(`/experience/${experience.id}`);
-        }
-      }}
-      role="button"
-      aria-label={`View details for ${experience.title}`}
-    >
-      {/* Image section */}
-      <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
-        <img
-          src={getValidImgSrc(imgSrc)}
-          alt={experience.title}
-          className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
-          onError={e => {
-            e.currentTarget.onerror = null;
-            setImgSrc('/placeholder.svg');
-            setImgError(true);
-          }}
-          onLoad={() => setImgError(false)}
-        />
-        {/* Wishlist icon, only visible on hover */}
-        <button
-          className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-          onClick={handleToggleWishlist}
-          disabled={isProcessing}
-        >
-          {isInWishlist ? (
-            <HeartIcon className="h-5 w-5 text-red-500 fill-red-500 transition" />
-          ) : (
-            <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500 transition" />
-          )}
-        </button>
-      </div>
-      {/* Info section */}
-      <div className="p-4 w-full max-w-full">
-        {/* Proximity info: time and distance */}
-        {(travelTime || distance) && (
-          <div className="flex items-center gap-2 text-sm md:text-base text-gray-700 font-semibold mb-2 bg-white/80 px-3 py-1 rounded-lg shadow-sm w-full max-w-full truncate">
-            {travelTime && <><Clock className="h-4 w-4 mr-1 text-primary" />{travelTime}</>}
-            {travelTime && distance && <span className="mx-1">|</span>}
-            {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
-          </div>
-        )}
-        {/* Name and price row */}
-        <div className="flex justify-between items-center mb-1">
-          <h3 className="font-semibold text-lg truncate flex items-center" title={experience.title}>
-            {experience.title}
-          </h3>
-          <span className="font-bold text-primary text-base ml-2 whitespace-nowrap">₹{experience.price}</span>
-        </div>
-        {/* Address and Show Map row */}
-        <div className="flex justify-between items-center text-sm text-gray-500 mb-1 truncate">
-          <div className="flex items-center truncate">
-            <MapPin className="inline-block h-4 w-4 mr-1 text-gray-400" />
-            <span className="truncate" title={experience.location}>{experience.location}</span>
-          </div>
+        }}
+        tabIndex={0}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            navigate(`/experience/${experience.id}`);
+          }
+        }}
+        role="button"
+        aria-label={`View details for ${experience.title}`}
+      >
+        {/* Image section */}
+        <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
+          <img
+            src={getValidImgSrc(imgSrc)}
+            alt={experience.title}
+            className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
+            onError={e => {
+              e.currentTarget.onerror = null;
+              setImgSrc('/placeholder.svg');
+              setImgError(true);
+            }}
+            onLoad={() => setImgError(false)}
+          />
+          {/* Wishlist icon, only visible on hover */}
           <button
-            className="text-primary underline text-xs ml-2"
-            type="button"
-            onClick={() => setIsMapOpen(true)}
-            tabIndex={0}
+            className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            onClick={handleToggleWishlist}
+            disabled={isProcessing}
           >
-            Show Map
+            {isInWishlist ? (
+              <HeartIcon className="h-5 w-5 text-red-500 fill-red-500 transition" />
+            ) : (
+              <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500 transition" />
+            )}
           </button>
         </div>
-        <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Location Map</DialogTitle>
-            </DialogHeader>
-            <ExperienceMap locationName={experience.location} />
-          </DialogContent>
-        </Dialog>
-        {/* Minimal View Experience button */}
-        <Link to={`/experience/${experience.id}`}>
-          <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
-            View Experience
-          </Button>
-        </Link>
+        {/* Info section */}
+        <div className="p-4 w-full max-w-full">
+          {/* Proximity info: time and distance */}
+          {(travelTime || distance) && (
+            <div className="flex items-center gap-2 text-sm md:text-base text-gray-700 font-semibold mb-2 bg-white/80 px-3 py-1 rounded-lg shadow-sm w-full max-w-full truncate">
+              {travelTime && <><Clock className="h-4 w-4 mr-1 text-primary" />{travelTime}</>}
+              {travelTime && distance && <span className="mx-1">|</span>}
+              {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
+            </div>
+          )}
+          {/* Name and price row */}
+          <div className="flex justify-between items-center mb-1">
+            <h3 className="font-semibold text-lg truncate flex items-center" title={experience.title}>
+              {experience.title}
+            </h3>
+            <span className="font-bold text-primary text-base ml-2 whitespace-nowrap">₹{experience.price}</span>
+          </div>
+          {/* Address and Show Map row */}
+          <div className="flex justify-between items-center text-sm text-gray-500 mb-1 truncate">
+            <div className="flex items-center truncate">
+              <MapPin className="inline-block h-4 w-4 mr-1 text-gray-400" />
+              <span className="truncate" title={experience.location}>{experience.location}</span>
+            </div>
+            <button
+              className="text-primary underline text-xs ml-2"
+              type="button"
+              onClick={() => setIsMapOpen(true)}
+              tabIndex={0}
+            >
+              Show Map
+            </button>
+          </div>
+          <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Location Map</DialogTitle>
+              </DialogHeader>
+              <ExperienceMap locationName={experience.location} />
+            </DialogContent>
+          </Dialog>
+          {/* Minimal View Experience button */}
+          <Link to={`/experience/${experience.id}`}>
+            <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
+              View Experience
+            </Button>
+          </Link>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
