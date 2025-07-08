@@ -495,14 +495,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           </Link>
 
           <div className="hidden md:flex items-center space-x-4 ml-4 flex-1">
-            <Link to="/experiences" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
-              <span className="font-bold">All</span>
-              <span className="text-base">Experiences</span>
+            <Link to="/experiences" className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
+              <span>All Experiences</span>
             </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium flex items-center", textClass)}>
+                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -534,7 +533,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium flex items-center", textClass)}>
+                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -564,18 +563,23 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
-              <span className="font-bold">Gift</span>
-              <span className="text-base">Personalizer</span>
+            <Link to="/gift-personalizer" className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
+              <span>Gift Personalizer</span>
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full", textClass)}
+                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
                   aria-label="Select location"
                 >
                   <MapPin className="h-5 w-5 text-blue-600" />
-                  <span className="max-w-[120px] truncate text-sm text-gray-900 md:text-white" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+                  <span
+                    className={cn(
+                      "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                      isDarkPage ? "text-white" : "text-gray-900"
+                    )}
+                    style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
+                  >
                     {getLocationLabel()}
                   </span>
                   <ChevronDown className="h-4 w-4" />
@@ -752,11 +756,17 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <Dialog open={mobileLocationDialogOpen} onOpenChange={setMobileLocationDialogOpen}>
                 <DialogTrigger asChild>
                   <button
-                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full", textClass)}
+                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
                     aria-label="Select location"
                   >
                     <MapPin className="h-5 w-5 text-blue-600" />
-                    <span className="max-w-[120px] truncate text-sm text-gray-900 md:text-white" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+                    <span
+                      className={cn(
+                        "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                        isDarkPage ? "text-white" : "text-gray-900"
+                      )}
+                      style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
+                    >
                       {getLocationLabel()}
                     </span>
                     <ChevronDown className="h-4 w-4" />
