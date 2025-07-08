@@ -19,6 +19,7 @@ import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
 import { useToast } from '@/components/ui/use-toast';
 import Papa from 'papaparse';
 import ImportContactsButton from '@/components/ImportContactsButton';
+import { Heart as HeartIcon } from 'lucide-react';
 
 // Add this at the top of your file (or before using window.gapi)
 declare global {
@@ -88,6 +89,21 @@ const Profile = () => {
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [connectionStatuses, setConnectionStatuses] = useState({});
   const [friends, setFriends] = useState([]);
+  const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
+
+  // Merge matchedFriends and friends for People You May Know, ensuring uniqueness
+  const allPeopleYouMayKnow = React.useMemo(() => {
+    const all = [...matchedFriends, ...friends];
+    const unique = [];
+    const seen = new Set();
+    for (const person of all) {
+      if (!seen.has(person.id)) {
+        unique.push(person);
+        seen.add(person.id);
+      }
+    }
+    return unique;
+  }, [matchedFriends, friends]);
 
   const mockPeople = [
     {
@@ -289,12 +305,12 @@ const Profile = () => {
       });
   }, [user?.id]);
 
-  // Fetch connection statuses for all matched friends and friends
+  // Fetch connection statuses for all people you may know (contacts + friends)
   const fetchStatuses = React.useCallback(async () => {
     console.log('fetchStatuses called', { userId: user?.id, allPeopleYouMayKnow });
-    if (!user?.id || !matchedFriends.length) return;
+    if (!user?.id || !allPeopleYouMayKnow.length) return;
     const statuses = {};
-    for (const friend of matchedFriends) {
+    for (const friend of allPeopleYouMayKnow) {
       const { data, error } = await supabase
         .from('connections')
         .select('from_user_id, to_user_id, status')
@@ -321,7 +337,7 @@ const Profile = () => {
       }
     }
     setConnectionStatuses(statuses);
-  }, [user?.id, matchedFriends]);
+  }, [user?.id, allPeopleYouMayKnow]);
 
   React.useEffect(() => {
     fetchStatuses();
@@ -344,12 +360,44 @@ const Profile = () => {
       .from('profiles_with_email')
       .select('id, full_name, avatar_url')
       .in('id', friendIds);
+    console.log('Fetched friends:', profiles); // DEBUG LOG
     setFriends(profiles || []);
   }, [user?.id]);
 
   React.useEffect(() => {
     fetchFriends();
   }, [fetchFriends]);
+
+  // After fetching friends, fetch their liked experiences
+  useEffect(() => {
+    async function fetchFriendsLikes() {
+      if (!friends.length) {
+        setFriendsLikedExperiences({});
+        return;
+      }
+      const allLikes = {};
+      for (const friend of friends) {
+        // Fetch wishlist experience IDs for this friend
+        const { data: wishlist } = await supabase
+          .from('wishlists')
+          .select('experience_id')
+          .eq('user_id', friend.id);
+        const expIds = (wishlist || []).map(w => w.experience_id).filter(Boolean);
+        if (expIds.length > 0) {
+          // Fetch experience details for these IDs
+          const { data: experiences } = await supabase
+            .from('experiences')
+            .select('id, title')
+            .in('id', expIds);
+          allLikes[friend.id] = experiences || [];
+        } else {
+          allLikes[friend.id] = [];
+        }
+      }
+      setFriendsLikedExperiences(allLikes);
+    }
+    fetchFriendsLikes();
+  }, [friends]);
 
   // Remove from local wishlist when un-wishlisted
   const handleWishlistChange = (experienceId, isNowInWishlist) => {
@@ -462,19 +510,7 @@ const Profile = () => {
     });
   };
 
-  // Merge matchedFriends and friends, always include all friends, remove duplicates by id
-  const allPeopleYouMayKnow = React.useMemo(() => {
-    const ids = new Set();
-    return [...matchedFriends, ...friends].filter(f => {
-      if (ids.has(f.id)) return false;
-      ids.add(f.id);
-      return true;
-    });
-  }, [matchedFriends, friends]);
-
   // Before rendering the people you may know list
-  console.log('allPeopleYouMayKnow:', allPeopleYouMayKnow);
-
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
       {/* Profile Header - formal, spaced, aligned */}
@@ -749,6 +785,35 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* Liked by Your Friends - Basic Version */}
+      {Object.keys(friendsLikedExperiences).length > 0 && (
+        <div className="bg-white rounded-2xl shadow p-8 mt-10 mb-8 border border-gray-100 max-w-6xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <HeartIcon className="h-6 w-6 text-pink-500" />
+            <h2 className="font-semibold text-2xl text-gray-900">Liked by Your Friends</h2>
+          </div>
+          <div className="flex flex-col gap-10">
+            {friends.map(friend => (
+              <div key={friend.id} className="border-b last:border-b-0 border-gray-100 pb-8 mb-8 last:mb-0 last:pb-0">
+                <div className="flex items-center gap-3 mb-4">
+                  <img src={friend.avatar_url || '/placeholder.svg'} alt={friend.full_name} className="h-10 w-10 rounded-full object-cover border border-gray-200" />
+                  <span className="font-medium text-lg text-gray-800">{friend.full_name}</span>
+                </div>
+                {(friendsLikedExperiences[friend.id] && friendsLikedExperiences[friend.id].length > 0) ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {friendsLikedExperiences[friend.id].map(exp => (
+                      <ExperienceCard key={exp.id} experience={exp} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-400 italic">No liked experiences yet.</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Edit Profile Modal with avatar upload */}
       {showEditModal && (
