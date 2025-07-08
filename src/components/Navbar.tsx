@@ -580,6 +580,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <div className="font-medium">Privacy Policy</div>
                   <p className="text-sm text-muted-foreground">Read our privacy policy</p>
                 </Link>
+                <Link to="/terms" className="block p-3 rounded-md hover:bg-accent">
+                  <div className="font-medium">Terms &amp; Conditions</div>
+                  <p className="text-sm text-muted-foreground">Read our terms and conditions</p>
+                </Link>
               </DropdownMenuContent>
             </DropdownMenu>
             <Link to="/gift-personalizer" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
@@ -867,6 +871,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               {supportDropdownOpen && (
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
+                  <Link to="/terms" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Terms &amp; Conditions</Link>
                 </div>
               )}
             </div>
