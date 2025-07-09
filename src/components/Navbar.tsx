@@ -485,18 +485,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   return (
     <>
-      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-0 py-4', navbarBgClass)}>
-        <div className="max-w-screen-xl mx-auto flex items-center justify-start px-2">
-          <Link to="/" className="flex items-center space-x-2 z-10" style={{ minWidth: 140 }} onClick={scrollToTop}>
+      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4', navbarBgClass)}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
             <span className={cn("font-medium text-xl", textClass)}>
               Slash
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-4 ml-4 flex-1">
-            <Link to="/experiences" className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
-              <span>All Experiences</span>
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
+              All Experiences
             </Link>
             
             <DropdownMenu>
@@ -566,6 +566,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
             <Link to="/gift-personalizer" className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
               <span>Gift Personalizer</span>
+            </Link>
 
             {/* Learn More Dropdown */}
             <DropdownMenu>
@@ -579,10 +580,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 <Link to="/privacy" className="block p-3 rounded-md hover:bg-accent">
                   <div className="font-medium">Privacy Policy</div>
                   <p className="text-sm text-muted-foreground">Read our privacy policy</p>
-                </Link>
-                <Link to="/terms" className="block p-3 rounded-md hover:bg-accent">
-                  <div className="font-medium">Terms &amp; Conditions</div>
-                  <p className="text-sm text-muted-foreground">Read our terms and conditions</p>
                 </Link>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -633,7 +630,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-4">
             <button
               onClick={toggleSearch}
               className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
@@ -871,7 +868,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               {supportDropdownOpen && (
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
-                  <Link to="/terms" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Terms &amp; Conditions</Link>
                 </div>
               )}
             </div>
