@@ -494,8 +494,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
+          <div className="hidden md:flex items-center space-x-3">
+            <Link to="/experiences" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               All Experiences
             </Link>
             
@@ -527,6 +527,10 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <Link to="/press" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">Press</div>
                     <p className="text-sm text-muted-foreground">Media coverage and press releases</p>
+                  </Link>
+                  <Link to="/privacy" className="block p-3 rounded-md hover:bg-accent">
+                    <div className="font-medium">Privacy Policy</div>
+                    <p className="text-sm text-muted-foreground">Read our privacy policy</p>
                   </Link>
                 </div>
               </DropdownMenuContent>
@@ -568,26 +572,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <span>Gift Personalizer</span>
             </Link>
 
-            {/* Learn More Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium flex items-center whitespace-nowrap", textClass)}>
-                  Learn More
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-[220px] p-2">
-                <Link to="/privacy" className="block p-3 rounded-md hover:bg-accent">
-                  <div className="font-medium">Privacy Policy</div>
-                  <p className="text-sm text-muted-foreground">Read our privacy policy</p>
-                </Link>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium flex items-center gap-1", textClass)}>
-              <span className="font-bold">Gift</span>
-              <span className="text-base">Personalizer</span>
-
-            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -840,6 +824,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
                   <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
                   <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
+                  <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
                 </div>
               )}
             </div>
@@ -856,18 +841,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <Link to="/gift-rules" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Gift Rules</Link>
                   <Link to="/shipping" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Shipping</Link>
                   <Link to="/returns" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Returns</Link>
-                </div>
-              )}
-            </div>
-            {/* Learn More Section */}
-            <div>
-              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
-                Learn More
-                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")} />
-              </button>
-              {supportDropdownOpen && (
-                <div className="pl-4 flex flex-col space-y-2 mt-2">
-                  <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
                 </div>
               )}
             </div>
