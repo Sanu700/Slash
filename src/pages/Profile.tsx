@@ -476,12 +476,11 @@ const Profile = () => {
   }, []);
 
   // Stats (use local state for instant UI update)
-  const totalBookedExperiences = bookingHistory.reduce((sum, booking) => sum + (booking.items?.length || 0), 0);
+  // Remove 'Bookings' stat and bookingHistory logic for stats
   const stats = [
     { label: 'Experiences', value: viewedExperiences.length },
     { label: 'Wishlist', value: localWishlist.length },
     { label: 'Saved', value: savedExperiences.length },
-    { label: 'Bookings', value: totalBookedExperiences },
     { label: 'Referrals', value: referralCount },
   ];
 
@@ -561,7 +560,7 @@ const Profile = () => {
                 if (el) el.scrollLeft = 0;
               }}
             >
-              {['liked', 'saved', 'viewed', 'history'].map(tab => (
+              {['liked', 'saved', 'viewed'].map(tab => (
                 <button
                   key={tab}
                   className={`px-10 py-3 flex-1 text-center capitalize transition font-medium text-base tracking-wide rounded-lg ${activeTab === tab ? 'border-b-4 border-primary text-primary bg-neutral-100 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
@@ -594,22 +593,6 @@ const Profile = () => {
               (Array.isArray(viewedExperiences) && viewedExperiences.length > 0) ? viewedExperiences.map((exp, idx) => (
                 <ExperienceCard key={exp.id} experience={exp} index={idx} />
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No viewed experiences yet.</div>
-            )}
-            {activeTab === 'history' && (
-              isBookingHistoryLoading ? (
-                <div className="col-span-full text-center text-gray-400 py-12 text-lg">Loading bookings...</div>
-              ) : bookingHistory.length === 0 ? (
-                <div className="col-span-full text-center text-gray-400 py-12 text-lg">No bookings yet.</div>
-              ) : bookingHistory.every(b => !b.items || b.items.length === 0) ? (
-                <div className="col-span-full text-center text-gray-400 py-12 text-lg">No booked experiences found.</div>
-              ) : bookingHistory.map(booking => (
-                booking.items.map((item, idx) => (
-                  <div key={item.experience.id + booking.id} className="relative">
-                    <ExperienceCard experience={item.experience} index={idx} />
-                    <div className="absolute bottom-2 right-2 bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">Booked on {new Date(booking.booking_date).toLocaleDateString()}</div>
-                  </div>
-                ))
-              ))
             )}
           </div>
         </div>

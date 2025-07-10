@@ -485,18 +485,21 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   return (
     <>
-      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-10 py-4', navbarBgClass)}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
+      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-8 py-5', navbarBgClass)}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center space-x-3 z-10" onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
             <span className={cn("font-medium text-xl", textClass)}>
               Slash
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-6 ml-4">
             <Link to="/experiences" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               All Experiences
+            </Link>
+            <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Gift Personalizer
             </Link>
             
             <DropdownMenu>
@@ -511,10 +514,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <Link to="/about-us" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">About Us</div>
                     <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
-                  </Link>
-                  <Link to="/how-it-works" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">How It Works</div>
-                    <p className="text-sm text-muted-foreground">The process of booking and gifting experiences</p>
                   </Link>
                   <Link to="/testimonials" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">Testimonials</div>
@@ -552,26 +551,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <div className="font-medium">FAQ</div>
                     <p className="text-sm text-muted-foreground">Frequently asked questions</p>
                   </Link>
-                  <Link to="/gift-rules" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Gift Rules</div>
-                    <p className="text-sm text-muted-foreground">Understanding our gifting policies</p>
-                  </Link>
-                  <Link to="/shipping" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Shipping</div>
-                    <p className="text-sm text-muted-foreground">Information about delivery options</p>
-                  </Link>
-                  <Link to="/returns" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Returns</div>
-                    <p className="text-sm text-muted-foreground">Our return and refund policy</p>
-                  </Link>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Link to="/gift-personalizer" className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
-              <span>Gift Personalizer</span>
-            </Link>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -614,7 +596,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </DropdownMenu>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <button
               onClick={toggleSearch}
               className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
@@ -622,8 +604,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <Search className="h-5 w-5" />
             </button>
             
-            {isAuthenticated && (
-              <Link to="/wishlist">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className={iconClass}>
                   <div className="relative">
                     <Heart className="h-5 w-5" />
@@ -634,46 +616,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     )}
                   </div>
                 </Button>
-              </Link>
-            )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={iconClass}>
-                  <div className="relative">
-                    <ShoppingCart className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {itemCount}
-                      </span>
-                    )}
-                  </div>
-                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 {isAuthenticated ? (
                   <>
-                    <DropdownMenuItem onClick={() => navigate('/cart')}>
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      View Cart
+                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      Wishlist
                     </DropdownMenuItem>
                   </>
-                ) : (
-                  <div className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Please sign in to view your cart</p>
-                    <Button onClick={handleSignIn} className="w-full">
-                      Sign In
-                    </Button>
-                  </div>
-                )}
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Link to="/host-experience">
-              <Button variant="default" className="hidden md:flex">
-                Host an Experience
-              </Button>
-            </Link>
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -705,10 +659,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <Heart className="mr-2 h-4 w-4" />
                     Wishlist
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/cart')}>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Cart
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -727,10 +677,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <DropdownMenuItem onClick={handleSignIn}>
                     <User className="mr-2 h-4 w-4" />
                     Sign in with Google
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/admin/login')}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Admin Login
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -810,17 +756,15 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {/* Main navigation options */}
             <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
             <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
-            <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Host an Experience</Link>
             {/* Company Section */}
             <div>
               <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
                 Company
-                <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")} />
+                <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")}/>
               </button>
               {companyDropdownOpen && (
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
-                  <Link to="/how-it-works" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">How It Works</Link>
                   <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
                   <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
                   <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
@@ -832,20 +776,14 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <div>
               <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
                 Support
-                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")} />
+                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")}/>
               </button>
               {supportDropdownOpen && (
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/contact" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Contact Us</Link>
                   <Link to="/faq" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">FAQ</Link>
-                  <Link to="/gift-rules" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Gift Rules</Link>
-                  <Link to="/shipping" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Shipping</Link>
-                  <Link to="/returns" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Returns</Link>
                 </div>
               )}
-            </div>
-            <div className="mt-6 border-t pt-4">
-              <Link to="/admin/login" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Login as Admin</Link>
             </div>
           </div>
           {/* Click outside to close */}
