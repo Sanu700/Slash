@@ -451,12 +451,12 @@ const ExperienceView = () => {
         </div>
         
         {/* Main Content Section */}
-        <div className="container max-w-6xl mx-auto px-4 md:px-10 py-8 md:py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="container max-w-6xl mx-auto px-4 md:px-10 py-8 md:py-12 flex flex-col items-center ml-32 md:ml-64">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 w-full justify-center">
             {/* Left Column - Experience Details */}
-            <div className="lg:col-span-2">
-              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center md:text-left">{experience.title}</h1>
-              <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center md:justify-start items-center">
+            <div className="lg:col-span-2 mx-auto text-center">
+              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center">{experience.title}</h1>
+              <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
                 <Button
                   onClick={toggleWishlist}
                   className={cn(
@@ -476,7 +476,7 @@ const ExperienceView = () => {
                   Save for Later
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex flex-wrap gap-4 mb-6 justify-center items-center text-center">
                 <div className="flex items-center gap-2 text-muted-foreground text-base">
                   <MapPin className="h-5 w-5" />
                   <span>{experience.location}</span>
@@ -501,46 +501,38 @@ const ExperienceView = () => {
                   {experience.participants}
                 </div>
               </div>
-              <div className="prose prose-lg max-w-none mb-8">
+              <div className="prose prose-lg max-w-none mb-8 mx-auto text-center">
                 <p>{experience.description}</p>
               </div>
               {/* Experience Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="flex items-start">
-                  <div className="bg-primary/10 p-2 rounded-lg mr-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-center">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium mb-1">Duration</h3>
-                    <p className="text-muted-foreground text-sm">{experience.duration}</p>
-                  </div>
+                  <h3 className="font-medium mb-1">Duration</h3>
+                  <p className="text-muted-foreground text-sm">{experience.duration}</p>
                 </div>
-                <div className="flex items-start">
-                  <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Users className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium mb-1">Group Size</h3>
-                    <p className="text-muted-foreground text-sm">{experience.participants}</p>
-                  </div>
+                  <h3 className="font-medium mb-1">Group Size</h3>
+                  <p className="text-muted-foreground text-sm">{experience.participants}</p>
                 </div>
-                <div className="flex items-start">
-                  <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium mb-1">Date</h3>
-                    <p className="text-muted-foreground text-sm">{experience.date}</p>
-                  </div>
+                  <h3 className="font-medium mb-1">Date</h3>
+                  <p className="text-muted-foreground text-sm">{experience.date}</p>
                 </div>
-                <div className="flex items-start">
-                  <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-medium mb-1">Location</h3>
-                    <p className="text-muted-foreground text-sm">{experience.location}</p>
-                  </div>
+                  <h3 className="font-medium mb-1">Location</h3>
+                  <p className="text-muted-foreground text-sm">{experience.location}</p>
                 </div>
               </div>
 

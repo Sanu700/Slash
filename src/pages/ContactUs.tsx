@@ -79,22 +79,8 @@ const ContactUs = () => {
               </div>
               <h2 className="text-xl font-medium mb-2">Business Hours</h2>
               <p className="text-muted-foreground mb-4">
-                Our support team is available to assist you at the following times:
+                You can contact us anytime. Always there to help.
               </p>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Monday - Friday:</span>
-                  <span className="font-medium">9:00 AM - 8:00 PM EST</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Saturday:</span>
-                  <span className="font-medium">10:00 AM - 6:00 PM EST</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sunday:</span>
-                  <span className="font-medium">12:00 PM - 5:00 PM EST</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
