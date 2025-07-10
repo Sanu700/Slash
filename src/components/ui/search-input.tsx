@@ -5,6 +5,7 @@ import { Input } from './input';
 import { Experience } from '@/lib/data/types';
 import { getSavedExperiences } from '@/lib/data';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { INDIAN_LOCATIONS } from '../LocationDropdown';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -15,6 +16,8 @@ interface SearchInputProps {
   maxResults?: number;
   recentSearches?: string[];
   onRecentSearchClick?: (search: string) => void;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -25,9 +28,11 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   showSuggestions = true,
   maxResults = 8,
   recentSearches = [],
-  onRecentSearchClick
+  onRecentSearchClick,
+  value,
+  onChange
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(value || '');
   const [results, setResults] = useState<Experience[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +46,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const displayRecentSearches = recentSearches.length > 0 ? recentSearches : userRecentSearches;
 
   useEffect(() => {
+    if (typeof value === 'string' && value !== query) {
+      setQuery(value);
+    }
+    // eslint-disable-next-line
+  }, [value]);
+
+  useEffect(() => {
     if (query.length < 2) {
       setResults([]);
       setSelectedIndex(-1);
@@ -50,9 +62,36 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
     const experiences = getSavedExperiences();
     const lowercaseQuery = query.toLowerCase();
-    
+
+    // --- City strictness logic ---
+    let selectedAddress = null;
+    try {
+      selectedAddress = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('selected_address')) : null;
+    } catch {
+      selectedAddress = null;
+    }
+    const cityList = INDIAN_LOCATIONS.map(c => c.toLowerCase());
+    const selectedCity = selectedAddress && selectedAddress.address ? selectedAddress.address.trim().toLowerCase() : null;
+    const isQueryCity = cityList.includes(lowercaseQuery.trim());
+    // If search query is a city name different from the selected city, show no results
+    if (isQueryCity && selectedCity && lowercaseQuery.trim() !== selectedCity) {
+      setResults([]);
+      setSelectedIndex(-1);
+      setIsOpen(false);
+      return;
+    }
+
+    // Only show results in the selected city if a city is selected
+    let filteredExperiences = experiences;
+    if (selectedCity) {
+      filteredExperiences = experiences.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        return expLoc.includes(selectedCity);
+      });
+    }
+
     // Enhanced search with better matching logic
-    const searchResults = experiences
+    const searchResults = filteredExperiences
       .filter(exp => {
         const searchableText = [
           exp.title,
@@ -179,6 +218,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
+    if (onChange) onChange(e);
   };
 
   const clearQuery = () => {
@@ -244,9 +284,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             >
               <div className="flex items-center space-x-3 flex-1 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden">
-                  {experience.imageUrl && (
+                  {experience.imageUrl && experience.imageUrl.length > 0 && (
                     <img 
-                      src={experience.imageUrl} 
+                      src={experience.imageUrl[0]} 
                       alt={experience.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,7 @@ import { CITY_COORDINATES } from './CitySelector';
 import { useLocation } from 'react-router-dom';
 import Fuse from 'fuse.js';
 
-const INDIAN_LOCATIONS = [
+export const INDIAN_LOCATIONS = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
   'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
   'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi',
@@ -450,6 +451,24 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </div>
             )}
 
+            {/* Clear Location Button */}
+            <Button
+              variant="ghost"
+              className="w-full text-red-600 border border-red-200 mb-2"
+              onClick={() => {
+                setAddress('');
+                setSelectedLocation(null);
+                localStorage.removeItem('selected_address');
+                localStorage.removeItem('selected_city');
+                if (onChange) onChange(null);
+                if (onClose) onClose();
+                window.dispatchEvent(new Event('locationCleared'));
+              }}
+              disabled={!address && !selectedLocation}
+            >
+              Clear Location
+            </Button>
+
             {/* Find Experiences button */}
             {selectedLocation && (
               <div className="pt-2">
@@ -649,6 +668,24 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                 </div>
               </div>
             )}
+
+            {/* Clear Location Button */}
+            <Button
+              variant="ghost"
+              className="w-full text-red-600 border border-red-200 mb-2"
+              onClick={() => {
+                setAddress('');
+                setSelectedLocation(null);
+                localStorage.removeItem('selected_address');
+                localStorage.removeItem('selected_city');
+                if (onChange) onChange(null);
+                if (onClose) onClose();
+                window.dispatchEvent(new Event('locationCleared'));
+              }}
+              disabled={!address && !selectedLocation}
+            >
+              Clear Location
+            </Button>
 
             {/* Find Experiences button */}
             {selectedLocation && (

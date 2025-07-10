@@ -13,7 +13,7 @@ import { SearchInput } from '@/components/ui/search-input';
 
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import Navbar from '@/components/Navbar';
-import { Filter, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, MapPin, ChevronDown } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -22,6 +22,8 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+import { useWishlistExperiences } from '@/hooks/useDataLoaders';
+import { useAuth } from '@/lib/auth';
 
 // Add distance filter options
 const DISTANCE_FILTERS = [
@@ -47,7 +49,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
-const DEFAULT_RADIUS_KM = 10;
+const DEFAULT_RADIUS_KM = 40;
 
 const AllExperiences = () => {
   const { experiences, isLoading } = useExperiencesManager();
@@ -63,6 +65,17 @@ const AllExperiences = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [locationClearedCount, setLocationClearedCount] = useState(0);
+  const { user: rawUser } = useAuth();
+  // Debug log for user
+  console.log('Current user:', rawUser);
+  // Use fallback user ID if not logged in or invalid
+  function isValidUUID(id) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  }
+  const fallbackUserId = '00000000-0000-0000-0000-000000000000'; // Replace with a real UUID from your Supabase users table for testing
+  const user = rawUser && isValidUUID(rawUser.id) ? rawUser : { id: fallbackUserId };
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const [localWishlist, setLocalWishlist] = useState<string[]>([]);
 
   // Get location from query param
   const query = new URLSearchParams(location.search);
@@ -130,13 +143,28 @@ const AllExperiences = () => {
     return () => window.removeEventListener('locationChanged', handler);
   }, []);
 
+  // Sync currentPage with URL on mount and when location.search changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const page = parseInt(params.get('page') || '1', 10);
+    setCurrentPage(page);
+  }, [location.search]);
+
+  // Update the URL when changing pages
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    const params = new URLSearchParams(location.search);
+    params.set('page', page);
+    navigate({ search: params.toString() }, { replace: true });
+  };
+
   // Memoize filtered and sorted experiences
   const filteredExperiences = useMemo(() => {
     if (isLoading) return [];
     
     let filtered = [...experiences];
     
-    // Proximity filtering logic
+    // Proximity and city filtering logic
     const selectedAddressRaw = localStorage.getItem('selected_address');
     let selectedAddress = null;
     try {
@@ -145,9 +173,15 @@ const AllExperiences = () => {
       selectedAddress = selectedAddressRaw;
     }
 
-    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon) {
+    // Helper: check if value is a city-only selection (no lat/lon or lat/lon are not numbers)
+    const isCityOnly = selectedAddress && typeof selectedAddress === 'object' &&
+      (!selectedAddress.lat || !selectedAddress.lon || isNaN(Number(selectedAddress.lat)) || isNaN(Number(selectedAddress.lon)));
+
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon && !isCityOnly) {
+      // Proximity filtering (address with coordinates)
       const lat = parseFloat(selectedAddress.lat);
       const lon = parseFloat(selectedAddress.lon);
+      const normalizedCity = selectedAddress.address ? selectedAddress.address.trim().toLowerCase() : null;
       filtered = filtered
         .map(exp => {
           if (typeof exp.latitude === 'number' && typeof exp.longitude === 'number') {
@@ -157,7 +191,20 @@ const AllExperiences = () => {
           return { ...exp, _distance: Infinity };
         })
         .filter(exp => exp._distance <= DEFAULT_RADIUS_KM)
+        // Only show those experiences which have the city name in their location column
+        .filter(exp => {
+          if (!normalizedCity) return true;
+          const expLoc = (exp.location || '').trim().toLowerCase();
+          return expLoc.includes(normalizedCity);
+        })
         .sort((a, b) => (a._distance || 0) - (b._distance || 0));
+    } else if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.address && isCityOnly) {
+      // City-only selection: string match on location column
+      const normalizedCity = selectedAddress.address.trim().toLowerCase();
+      filtered = filtered.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        return expLoc === normalizedCity || expLoc.includes(normalizedCity) || normalizedCity.includes(expLoc);
+      });
     }
 
     // Filter by location query param if present (fallback)
@@ -292,42 +339,68 @@ const AllExperiences = () => {
     );
   }, [filteredExperiences]);
 
-  const [expandedType, setExpandedType] = useState<string | null>(null);
+  useEffect(() => {
+    if (wishlistExperiences) {
+      setLocalWishlist(wishlistExperiences.map(exp => exp.id));
+    }
+  }, [wishlistExperiences]);
+
+  const handleWishlistChange = (experienceId: string, isNowInWishlist: boolean) => {
+    setLocalWishlist(prev => {
+      const updated = isNowInWishlist
+        ? (!prev.includes(experienceId) ? [...prev, experienceId] : prev)
+        : prev.filter(id => id !== experienceId);
+      return updated;
+    });
+  };
+
+  // Helper for proximity fallback
+  const defaultCity = 'Bangalore';
+  const defaultCoords = { latitude: 12.9716, longitude: 77.5946 };
 
   // Prepare a combined list of cards (grouped and ungrouped) for pagination
   const allCards = useMemo(() => {
     const groupCardEntries = Object.entries(groupedExperiences).map(([type, exps], idx) => {
       const experiencesArr = exps as Experience[];
       if (experiencesArr.length === 1) {
-        // Show single experience as normal, visually match group card
-        return { type: 'standalone', key: experiencesArr[0].id, content: (
-          <div key={experiencesArr[0].id} className="col-span-1 h-full w-full aspect-[4/3] flex flex-col">
-            <ExperienceCard experience={experiencesArr[0]} />
-          </div>
+        // Standalone card
+        const exp = experiencesArr[0];
+        const inWishlist = localWishlist.includes(exp.id);
+        return { type: 'standalone', key: exp.id, content: (
+          <ExperienceCard 
+            key={exp.id} 
+            experience={{ ...exp }}
+            isInWishlist={inWishlist}
+            onWishlistChange={handleWishlistChange}
+          />
         ) };
       }
       // Group card
       const groupColors = [
-        'bg-blue-100 text-blue-900',
-        'bg-green-100 text-green-900',
-        'bg-yellow-100 text-yellow-900',
-        'bg-pink-100 text-pink-900',
-        'bg-purple-100 text-purple-900',
-        'bg-orange-100 text-orange-900',
-        'bg-teal-100 text-teal-900',
-        'bg-red-100 text-red-900',
+        'bg-blue-100',
+        'bg-green-100',
+        'bg-yellow-100',
+        'bg-pink-100',
+        'bg-purple-100',
+        'bg-orange-100',
+        'bg-teal-100',
+        'bg-red-100',
+        'bg-indigo-100',
+        'bg-emerald-100',
+        'bg-fuchsia-100',
+        'bg-cyan-100',
       ];
       const colorClass = groupColors[idx % groupColors.length];
       return { type: 'group', key: type, content: (
-        <div key={type} className="col-span-1 h-full w-full aspect-[4/3]">
+        <div key={type} className="col-span-1">
           <div
-            className={`group relative overflow-hidden rounded-xl hover-lift transition-all duration-300 h-full w-full flex flex-col items-center justify-center cursor-pointer ${colorClass}`}
+            className={`rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer ${colorClass}`}
             onClick={() => navigate(`/experiences/type/${encodeURIComponent(type)}`)}
           >
             {/* Show image from the first experience in the group */}
-            <div className="aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-white/30 mb-4">
+            <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
               <img
-                src={Array.isArray(experiencesArr[0].imageUrl) ? (experiencesArr[0].imageUrl[0] || '/placeholder.svg') : (experiencesArr[0].imageUrl || '/placeholder.svg')}
+                src={Array.isArray(experiencesArr[0].imageUrl) ? experiencesArr[0].imageUrl[0] : experiencesArr[0].imageUrl}
                 alt={type}
                 className="w-full h-full object-cover object-center transition-transform duration-700 ease-out"
                 style={{ minHeight: '200px' }}
@@ -337,26 +410,31 @@ const AllExperiences = () => {
                 }}
               />
             </div>
-            {/* Name and ellipse stacked below image */}
-            <div className="flex flex-col items-center justify-center w-full min-h-[80px] gap-2 pb-2 mt-0">
-              <span className="font-bold text-2xl text-center">{type}</span>
-              <span className="text-xs bg-white/80 text-black rounded-full px-3 py-1 font-semibold">{experiencesArr.length} experiences</span>
+            <div className="p-4 flex flex-col items-center justify-center w-full gap-2 min-h-[184px]">
+              <span className="font-extrabold text-3xl text-center text-gray-900">{type}</span>
+              <span className="text-base bg-white/80 text-gray-900 rounded-full px-4 py-2 font-bold">{experiencesArr.length} experiences</span>
             </div>
           </div>
         </div>
       ) };
     });
-    const ungroupedCardEntries = ungroupedExperiences.map(exp => ({
-      type: 'standalone',
-      key: exp.id,
-      content: (
-        <div key={exp.id} className="col-span-1 h-full w-full aspect-[4/3] flex flex-col">
-          <ExperienceCard experience={exp} />
-        </div>
-      )
-    }));
+    const ungroupedCardEntries = ungroupedExperiences.map(exp => {
+      const inWishlist = localWishlist.includes(exp.id);
+      return {
+        type: 'standalone',
+        key: exp.id,
+        content: (
+          <ExperienceCard 
+            key={exp.id} 
+            experience={{ ...exp }}
+            isInWishlist={inWishlist}
+            onWishlistChange={handleWishlistChange}
+          />
+        )
+      };
+    });
     return [...groupCardEntries, ...ungroupedCardEntries];
-  }, [groupedExperiences, ungroupedExperiences, navigate]);
+  }, [groupedExperiences, ungroupedExperiences, navigate, localWishlist]);
 
   // Pagination for all cards
   const cardsPerPage = 9;
@@ -386,7 +464,7 @@ const AllExperiences = () => {
       <div className="flex justify-center mt-8 space-x-2">
         <Button
           variant="outline"
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
           disabled={currentPage === 1}
         >
           Previous
@@ -396,7 +474,7 @@ const AllExperiences = () => {
             <Button
               key={page}
               variant={currentPage === page ? "default" : "outline"}
-              onClick={() => setCurrentPage(page)}
+              onClick={() => handlePageChange(page)}
               className="w-10"
             >
               {page}
@@ -405,7 +483,7 @@ const AllExperiences = () => {
         </div>
         <Button
           variant="outline"
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
           disabled={currentPage === totalPages}
         >
           Next
@@ -430,7 +508,7 @@ const AllExperiences = () => {
       <main className="flex-1 bg-background pt-24">
         <div 
           ref={ref}
-          className="container max-w-6xl mx-auto px-4 md:px-10 py-12"
+          className="container max-w-6xl mx-auto px-6 md:px-10 py-12"
         >
           {isLoading ? (
             <div className="flex justify-center items-center py-24">
@@ -443,13 +521,29 @@ const AllExperiences = () => {
                 "mb-8 mt-8 transition-all duration-500",
                 isInView ? "opacity-100" : "opacity-0 translate-y-8"
               )}>
-                <SearchInput
-                  placeholder="Search experiences by title, description or location..."
-                  onSearch={handleSearchSubmit}
-                  onResultSelect={handleResultSelect}
-                  className="w-full"
-                  recentSearches={[]}
-                />
+                <div className="relative w-full">
+                  <SearchInput
+                    placeholder="Search experiences by title, description or location..."
+                    onSearch={handleSearchSubmit}
+                    onResultSelect={handleResultSelect}
+                    className="w-full"
+                    recentSearches={[]}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10"
+                      style={{ top: '50%', right: '10px', position: 'absolute', transform: 'translateY(-50%)' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Filters and Sorting */}
@@ -521,7 +615,7 @@ const AllExperiences = () => {
               {/* Experiences Grid */}
               {allCards.length > 0 ? (
                 <div className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children",
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children pt-16",
                   isInView ? "opacity-100" : "opacity-0"
                 )}>
                   {paginatedCards.map(card => card.content)}

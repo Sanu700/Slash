@@ -24,6 +24,14 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 import CitySelector from './CitySelector';
 import LocationDropdown from './LocationDropdown';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '@/components/ui/dialog';
 
 
 interface NavbarProps {
@@ -59,6 +67,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [mobileLocationDialogOpen, setMobileLocationDialogOpen] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -114,9 +123,35 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
     const experiences = getSavedExperiences();
     const lowercaseQuery = searchQuery.toLowerCase();
-    
+
+    // Get selected location from localStorage
+    const selectedAddressRaw = typeof window !== 'undefined' ? localStorage.getItem('selected_address') : null;
+    let selectedAddress = null;
+    try {
+      selectedAddress = selectedAddressRaw ? JSON.parse(selectedAddressRaw) : selectedAddressRaw;
+    } catch {
+      selectedAddress = selectedAddressRaw;
+    }
+    const isCityOnly = selectedAddress && typeof selectedAddress === 'object' &&
+      (!selectedAddress.lat || !selectedAddress.lon || isNaN(Number(selectedAddress.lat)) || isNaN(Number(selectedAddress.lon)));
+    const DEFAULT_RADIUS_KM = 40;
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const toRad = (x) => (x * Math.PI) / 180;
+      const R = 6371; // Earth radius in km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+          Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // Distance in km
+    }
+
     // Enhanced search with better matching logic
-    const results = experiences
+    let results = experiences
       .filter(exp => {
         const searchableText = [
           exp.title,
@@ -127,15 +162,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           exp.duration,
           exp.participants
         ].join(' ').toLowerCase();
-        
         // Check for exact matches first
         const exactMatch = exp.title.toLowerCase().includes(lowercaseQuery) ||
                           exp.location.toLowerCase().includes(lowercaseQuery) ||
                           exp.category.toLowerCase().includes(lowercaseQuery);
-        
         // Check for partial matches in any field
         const partialMatch = searchableText.includes(lowercaseQuery);
-        
         // Check for word boundary matches (better for multi-word queries)
         const words = lowercaseQuery.split(' ').filter(word => word.length > 0);
         const wordMatch = words.some(word => 
@@ -143,33 +175,85 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           exp.location.toLowerCase().includes(word) ||
           exp.category.toLowerCase().includes(word)
         );
-        
         return exactMatch || partialMatch || wordMatch;
-      })
-      .sort((a, b) => {
-        // Sort by relevance: exact title matches first, then location, then category
-        const aTitleMatch = a.title.toLowerCase().includes(lowercaseQuery);
-        const bTitleMatch = b.title.toLowerCase().includes(lowercaseQuery);
-        
-        if (aTitleMatch && !bTitleMatch) return -1;
-        if (!aTitleMatch && bTitleMatch) return 1;
-        
-        const aLocationMatch = a.location.toLowerCase().includes(lowercaseQuery);
-        const bLocationMatch = b.location.toLowerCase().includes(lowercaseQuery);
-        
-        if (aLocationMatch && !bLocationMatch) return -1;
-        if (!aLocationMatch && bLocationMatch) return 1;
-        
-        // If relevance is the same, sort by trending/featured status
-        if (a.trending && !b.trending) return -1;
-        if (!a.trending && b.trending) return 1;
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-        
-        return 0;
-      })
-      .slice(0, 8); // Show more results for better UX
-    
+      });
+
+    // Location filtering for search results
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.lat && selectedAddress.lon && !isCityOnly) {
+      // Proximity filtering (address with coordinates)
+      const lat = parseFloat(selectedAddress.lat);
+      const lon = parseFloat(selectedAddress.lon);
+      const normalizedCity = selectedAddress.address ? selectedAddress.address.trim().toLowerCase() : null;
+      results = results
+        .map(exp => {
+          if (typeof exp.latitude === 'number' && typeof exp.longitude === 'number') {
+            const distance = haversineDistance(lat, lon, exp.latitude, exp.longitude);
+            return { ...exp, _distance: distance };
+          }
+          return { ...exp, _distance: Infinity };
+        })
+        .filter(exp => exp._distance <= DEFAULT_RADIUS_KM)
+        .filter(exp => {
+          if (!normalizedCity) return true;
+          const expLoc = (exp.location || '').trim().toLowerCase();
+          return expLoc.includes(normalizedCity);
+        })
+        .sort((a, b) => (a._distance || 0) - (b._distance || 0));
+    } else if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.address && isCityOnly) {
+      // City-only selection: string match on location column
+      const normalizedCity = selectedAddress.address.trim().toLowerCase();
+      results = results.filter(exp => {
+        const expLoc = (exp.location || '').trim().toLowerCase();
+        return expLoc === normalizedCity || expLoc.includes(normalizedCity) || normalizedCity.includes(expLoc);
+      });
+    }
+
+    // City strictness: if search query is a city name different from the selected city, show no results
+    const CITY_LIST = [
+      'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
+      'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
+      'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi',
+      'Srinagar', 'Aurangabad', 'Dhanbad', 'Amritsar', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur', 'Gwalior',
+      'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Guwahati', 'Chandigarh', 'Solapur', 'Hubli-Dharwad', 'Bareilly',
+      'Moradabad', 'Mysore', 'Gurgaon', 'Aligarh', 'Jalandhar', 'Tiruchirappalli', 'Bhubaneswar', 'Salem', 'Warangal',
+      'Mira-Bhayandar', 'Thiruvananthapuram', 'Bhiwandi', 'Saharanpur', 'Guntur', 'Amravati', 'Bikaner', 'Noida', 'Jamshedpur',
+      'Bhilai', 'Cuttack', 'Firozabad', 'Kochi', 'Nellore', 'Bhavnagar', 'Dehradun', 'Durgapur', 'Asansol', 'Rourkela',
+      'Nanded', 'Kolhapur', 'Ajmer', 'Akola', 'Gulbarga', 'Jamnagar', 'Ujjain', 'Loni', 'Siliguri', 'Jhansi', 'Ulhasnagar',
+      'Jammu', 'Sangli-Miraj', 'Mangalore', 'Erode', 'Belgaum', 'Ambattur', 'Tirunelveli', 'Malegaon', 'Gaya', 'Jalgaon',
+      'Udaipur', 'Maheshtala', 'Tirupur', 'Davanagere', 'Kozhikode', 'Kurnool', 'Rajpur Sonarpur', 'Bokaro', 'South Dumdum',
+      'Bellary', 'Patiala', 'Gopalpur', 'Agartala', 'Bhagalpur', 'Muzaffarnagar', 'Bhatpara', 'Panihati', 'Latur', 'Dhule',
+      'Rohtak', 'Korba', 'Bhilwara', 'Berhampur', 'Muzaffarpur', 'Ahmednagar', 'Mathura', 'Kollam', 'Avadi', 'Kadapa',
+      'Kamarhati', 'Bilaspur', 'Shahjahanpur', 'Satara', 'Bijapur', 'Rampur', 'Shivamogga', 'Chandrapur', 'Junagadh',
+      'Thrissur', 'Alwar', 'Bardhaman', 'Kulti', 'Kakinada', 'Nizamabad', 'Parbhani', 'Tumkur', 'Hisar', 'Ozhukarai',
+      'Bihar Sharif', 'Panipat', 'Darbhanga', 'Bally', 'Aizawl', 'Dewas', 'Ichalkaranji', 'Karnal', 'Bathinda', 'Jalna',
+      'Eluru', 'Barasat', 'Kirari Suleman Nagar', 'Purnia', 'Satna', 'Mau', 'Sonipat', 'Farrukhabad', 'Sagar', 'Durg',
+      'Imphal', 'Ratlam', 'Hapur', 'Arrah', 'Karimnagar', 'Anantapur', 'Etawah', 'Ambernath', 'North Dumdum', 'Bharatpur',
+      'Begusarai', 'New Delhi', 'Gandhidham', 'Baranagar', 'Tiruvottiyur', 'Puducherry', 'Sikar', 'Thoothukkudi', 'Rewa',
+      'Mirzapur', 'Raichur', 'Pali', 'Ramagundam', 'Haridwar', 'Vijayanagaram', 'Katihar', 'Nagercoil', 'Sri Ganganagar',
+      'Karawal Nagar', 'Mango', 'Thanjavur', 'Bulandshahr', 'Uluberia', 'Katni', 'Sambhal', 'Singrauli', 'Nadiad',
+      'Secunderabad', 'Naihati', 'Yamunanagar', 'Bidhan Nagar', 'Pallavaram', 'Bidar', 'Munger', 'Panchkula', 'Burhanpur',
+      'Raurkela Industrial Township', 'Kharagpur', 'Dindigul', 'Gandhinagar', 'Hospet', 'Nangloi Jat', 'Malda', 'Ongole',
+      'Deoghar', 'Chapra', 'Haldia', 'Khandwa', 'Nandyal', 'Morena', 'Amroha', 'Anand', 'Bhind', 'Bhalswa Jahangir Pur',
+      'Madhyamgram', 'Bhiwani', 'Berhampore', 'Ambala', 'Fatehpur', 'Raebareli', 'Khora', 'Chittoor', 'Bhusawal', 'Orai',
+      'Bahraich', 'Phusro', 'Vellore', 'Mehsana', 'Raiganj', 'Sirsa', 'Danapur', 'Serampore', 'Sultan Pur Majra', 'Guna',
+      'Jaunpur', 'Panvel', 'Shivpuri', 'Surendranagar Dudhrej', 'Unnao', 'Chinsurah', 'Alappuzha', 'Kottayam', 'Machilipatnam',
+      'Shimla', 'Adoni', 'Udupi', 'Tenali', 'Proddatur', 'Saharsa', 'Hindupur', 'Sasaram', 'Buxar', 'Krishnanagar',
+      'Fatehpur Sikri', 'Madhubani', 'Motihari', 'Rae Bareli', 'Baharampur', 'Baripada', 'Khammam', 'Bhimavaram', 'Mandsaur',
+      'Chittaranjan', 'Nalgonda', 'Baran', 'Panaji', 'Silchar', 'Haldwani', 'Gangtok', 'Shillong', 'Kohima', 'Itanagar'
+    ];
+    // If the search query is a city name and does not match the selected city, show no results
+    const queryCity = CITY_LIST.find(city => city.toLowerCase() === searchQuery.trim().toLowerCase());
+    let selectedCity = null;
+    if (selectedAddress && typeof selectedAddress === 'object' && selectedAddress.address) {
+      selectedCity = CITY_LIST.find(city => city.toLowerCase() === selectedAddress.address.trim().toLowerCase());
+    }
+    if (queryCity && selectedCity && queryCity !== selectedCity) {
+      setSearchResults([]);
+      setSelectedResultIndex(-1);
+      return;
+    }
+
+    results = results.slice(0, 8); // Show more results for better UX
     setSearchResults(results);
     setSelectedResultIndex(-1); // Reset selection when results change
   }, [searchQuery]);
@@ -401,23 +485,26 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
   return (
     <>
-      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-0 py-4', navbarBgClass)}>
-        <div className="max-w-screen-xl mx-auto flex items-center justify-between px-2">
-          <Link to="/" className="flex items-center space-x-2 z-10" onClick={scrollToTop}>
+      <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 md:px-8 py-5', navbarBgClass)}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center space-x-3 z-10" onClick={scrollToTop}>
             <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Slash logo" className="h-8 w-8" />
             <span className={cn("font-medium text-xl", textClass)}>
               Slash
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/experiences" className={cn("text-sm font-medium", textClass)}>
+          <div className="hidden md:flex items-center space-x-6 ml-4">
+            <Link to="/experiences" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               All Experiences
+            </Link>
+            <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Gift Personalizer
             </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium flex items-center", textClass)}>
+                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -427,10 +514,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <Link to="/about-us" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">About Us</div>
                     <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
-                  </Link>
-                  <Link to="/how-it-works" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">How It Works</div>
-                    <p className="text-sm text-muted-foreground">The process of booking and gifting experiences</p>
                   </Link>
                   <Link to="/testimonials" className="block p-3 rounded-md hover:bg-accent">
                     <div className="font-medium">Testimonials</div>
@@ -444,12 +527,16 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <div className="font-medium">Press</div>
                     <p className="text-sm text-muted-foreground">Media coverage and press releases</p>
                   </Link>
+                  <Link to="/privacy" className="block p-3 rounded-md hover:bg-accent">
+                    <div className="font-medium">Privacy Policy</div>
+                    <p className="text-sm text-muted-foreground">Read our privacy policy</p>
+                  </Link>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-sm font-medium flex items-center", textClass)}>
+                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -464,70 +551,52 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <div className="font-medium">FAQ</div>
                     <p className="text-sm text-muted-foreground">Frequently asked questions</p>
                   </Link>
-                  <Link to="/gift-rules" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Gift Rules</div>
-                    <p className="text-sm text-muted-foreground">Understanding our gifting policies</p>
-                  </Link>
-                  <Link to="/shipping" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Shipping</div>
-                    <p className="text-sm text-muted-foreground">Information about delivery options</p>
-                  </Link>
-                  <Link to="/returns" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Returns</div>
-                    <p className="text-sm text-muted-foreground">Our return and refund policy</p>
-                  </Link>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/gift-personalizer" className={cn("text-sm font-medium", textClass)}>
-              Gift Personalizer
-            </Link>
-            <div className="relative">
-              <DropdownMenu open={locationDropdownOpen} onOpenChange={setLocationDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <button className={cn("text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors mr-4", textClass)} onClick={() => setLocationDropdownOpen(true)}>
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                    <span
-                      className="max-w-[120px] truncate inline-block align-middle"
-                      title={
-                        selectedLocation && typeof selectedLocation === 'object' && selectedLocation.address
-                          ? selectedLocation.address
-                          : typeof selectedLocation === 'string'
-                            ? selectedLocation
-                            : getLocationLabel()
-                      }
-                      style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
-                    >
-                      {getLocationLabel()}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
-                  <LocationDropdown
-                    value={
-                      selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
-                        ? selectedLocation.address
-                        : typeof selectedLocation === 'string'
-                          ? selectedLocation
-                          : ''
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
+                  aria-label="Select location"
+                >
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  <span
+                    className={cn(
+                      "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                      isDarkPage ? "text-white" : "text-gray-900"
+                    )}
+                    style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
+                  >
+                    {getLocationLabel()}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
+                <LocationDropdown
+                  value={
+                    selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                      ? selectedLocation.address
+                      : typeof selectedLocation === 'string'
+                        ? selectedLocation
+                        : ''
+                  }
+                  onChange={(val) => {
+                    setSelectedLocation(val);
+                    window.dispatchEvent(new Event('locationChanged'));
+                    if (window.location.pathname !== '/experiences') {
+                      navigate('/experiences');
                     }
-                    onChange={(val) => {
-                      setSelectedLocation(val);
-                      window.dispatchEvent(new Event('locationChanged'));
-                      if (window.location.pathname !== '/experiences') {
-                        navigate('/experiences');
-                      }
-                    }}
-                    standalone
-                    onClose={() => setLocationDropdownOpen(false)}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                  }}
+                  standalone
+                  onClose={() => setLocationDropdownOpen(false)}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-6">
             <button
               onClick={toggleSearch}
               className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", iconClass)}
@@ -535,8 +604,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <Search className="h-5 w-5" />
             </button>
             
-            {isAuthenticated && (
-              <Link to="/wishlist">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className={iconClass}>
                   <div className="relative">
                     <Heart className="h-5 w-5" />
@@ -547,46 +616,18 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     )}
                   </div>
                 </Button>
-              </Link>
-            )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={iconClass}>
-                  <div className="relative">
-                    <ShoppingCart className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {itemCount}
-                      </span>
-                    )}
-                  </div>
-                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 {isAuthenticated ? (
                   <>
-                    <DropdownMenuItem onClick={() => navigate('/cart')}>
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      View Cart
+                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      Wishlist
                     </DropdownMenuItem>
                   </>
-                ) : (
-                  <div className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Please sign in to view your cart</p>
-                    <Button onClick={handleSignIn} className="w-full">
-                      Sign In
-                    </Button>
-                  </div>
-                )}
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Link to="/host-experience">
-              <Button variant="default" className="hidden md:flex">
-                Host an Experience
-              </Button>
-            </Link>
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -618,10 +659,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <Heart className="mr-2 h-4 w-4" />
                     Wishlist
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/cart')}>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Cart
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -641,10 +678,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <User className="mr-2 h-4 w-4" />
                     Sign in with Google
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/admin/login')}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Admin Login
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -659,27 +692,83 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden">
-          <div className="bg-white dark:bg-gray-900 w-4/5 max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden overflow-x-hidden">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
             <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
-            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">All Experiences</Link>
-            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Gift Personalizer</Link>
-            <Link to="/host-experience" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Host an Experience</Link>
+            {/* Profile/Account option for mobile */}
+            {isAuthenticated ? (
+              <Link to="/profile" onClick={toggleMobileMenu} className="text-lg font-medium text-primary w-full mb-2">Profile</Link>
+            ) : (
+              <button onClick={handleSignIn} className="text-lg font-medium text-primary w-full mb-2">Sign In</button>
+            )}
+            {/* Location selection in mobile menu (Dialog) */}
+            <div className="mb-4">
+              <Dialog open={mobileLocationDialogOpen} onOpenChange={setMobileLocationDialogOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
+                    aria-label="Select location"
+                  >
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    <span
+                      className={cn(
+                        "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                        isDarkPage ? "text-white" : "text-gray-900"
+                      )}
+                      style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
+                    >
+                      {getLocationLabel()}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Select Location</DialogTitle>
+                  </DialogHeader>
+                  <LocationDropdown
+                    value={
+                      selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                        ? selectedLocation.address
+                        : typeof selectedLocation === 'string'
+                          ? selectedLocation
+                          : ''
+                    }
+                    onChange={(val) => {
+                      setSelectedLocation(val);
+                      window.dispatchEvent(new Event('locationChanged'));
+                      setMobileLocationDialogOpen(false);
+                      if (window.location.pathname !== '/experiences') {
+                        navigate('/experiences');
+                      }
+                    }}
+                    standalone
+                    onClose={() => setMobileLocationDialogOpen(false)}
+                  />
+                  <DialogClose asChild>
+                    <button className="mt-4 w-full py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800">Cancel</button>
+                  </DialogClose>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {/* Main navigation options */}
+            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
+            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
             {/* Company Section */}
             <div>
               <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
                 Company
-                <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")} />
+                <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")}/>
               </button>
               {companyDropdownOpen && (
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
-                  <Link to="/how-it-works" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">How It Works</Link>
                   <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
                   <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
                   <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
+                  <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
                 </div>
               )}
             </div>
@@ -687,20 +776,14 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <div>
               <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
                 Support
-                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")} />
+                <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")}/>
               </button>
               {supportDropdownOpen && (
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/contact" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Contact Us</Link>
                   <Link to="/faq" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">FAQ</Link>
-                  <Link to="/gift-rules" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Gift Rules</Link>
-                  <Link to="/shipping" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Shipping</Link>
-                  <Link to="/returns" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Returns</Link>
                 </div>
               )}
-            </div>
-            <div className="mt-6 border-t pt-4">
-              <Link to="/admin/login" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100">Login as Admin</Link>
             </div>
           </div>
           {/* Click outside to close */}
@@ -811,9 +894,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   >
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div className="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden">
-                        {experience.imageUrl && (
+                        {experience.imageUrl && experience.imageUrl.length > 0 && (
                           <img 
-                            src={experience.imageUrl} 
+                            src={experience.imageUrl[0]} 
                             alt={experience.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -853,6 +936,42 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
           )}
         </div>
       </div>
+
+      {/* Location Dropdown/Modal (shared for both desktop and mobile) */}
+      <DropdownMenu open={locationDropdownOpen} onOpenChange={setLocationDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors md:hidden", textClass)}
+            aria-label="Select location"
+          >
+            <MapPin className="h-5 w-5 text-blue-600" />
+            <span className="max-w-[90px] truncate text-sm text-gray-900 md:text-white" style={{ maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}>
+              {getLocationLabel()}
+            </span>
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="bottom" sideOffset={0} className="w-auto min-w-[320px] max-w-[95vw] p-0 rounded-xl shadow-2xl border border-gray-200 bg-white overflow-x-hidden">
+          <LocationDropdown
+            value={
+              selectedLocation && typeof selectedLocation === 'object' && 'address' in selectedLocation
+                ? selectedLocation.address
+                : typeof selectedLocation === 'string'
+                  ? selectedLocation
+                  : ''
+            }
+            onChange={(val) => {
+              setSelectedLocation(val);
+              window.dispatchEvent(new Event('locationChanged'));
+              if (window.location.pathname !== '/experiences') {
+                navigate('/experiences');
+              }
+            }}
+            standalone
+            onClose={() => setLocationDropdownOpen(false)}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 };

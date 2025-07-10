@@ -37,14 +37,15 @@ export const useExperienceInteractions = (userId: string | undefined) => {
     setIsProcessing(true);
     
     try {
+      console.log('toggleWishlist called:', { userId, experienceId, isInWishlist }); // DEBUG LOG
       if (isInWishlist) {
         // Remove from wishlist
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('wishlists')
           .delete()
           .eq('user_id', userId)
           .eq('experience_id', experienceId);
-          
+        console.log('Supabase delete result:', { error, data }); // DEBUG LOG
         if (error) throw error;
         
         toast.success('Removed from wishlist');
@@ -65,14 +66,14 @@ export const useExperienceInteractions = (userId: string | undefined) => {
         }
       } else {
         // Add to wishlist
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('wishlists')
           .insert({
             user_id: userId,
             experience_id: experienceId,
             added_at: new Date().toISOString()
           });
-          
+        console.log('Supabase insert result:', { error, data }); // DEBUG LOG
         if (error) throw error;
         
         // Get the experience details
@@ -96,7 +97,7 @@ export const useExperienceInteractions = (userId: string | undefined) => {
         }
       }
     } catch (error) {
-      console.error('Error toggling wishlist:', error);
+      console.error('Error toggling wishlist:', error); // DEBUG LOG
       toast.error('Failed to update wishlist');
     } finally {
       setIsProcessing(false);

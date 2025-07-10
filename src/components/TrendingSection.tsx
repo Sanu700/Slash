@@ -79,16 +79,18 @@ const TrendingSection = () => {
             "relative overflow-visible",
             isInView ? "opacity-100" : "opacity-0"
           )}>
-            <Carousel opts={{ align: 'center', slidesToScroll: 3 }}>
+            <Carousel opts={{ align: 'center', slidesToScroll: 1, breakpoints: { '(min-width: 768px)': { slidesToScroll: 3 } } }}>
               <CarouselContent className="-ml-2">
-                {trendingExperiences.map((experience) => (
+                {trendingExperiences.map((experience, idx) => (
                   <CarouselItem
                     key={experience.id}
                     className="basis-full sm:basis-1/2 md:basis-1/3 pl-2"
                   >
-                    <div className="w-[346.66px] h-[240px]">
-                      <ExperienceCard experience={experience} />
-                    </div>
+                    <ExperienceCard 
+                      experience={experience} 
+                      index={idx} 
+                      isInWishlist={false}
+                    />
                   </CarouselItem>
                 ))}
               </CarouselContent>

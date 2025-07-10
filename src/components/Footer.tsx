@@ -67,7 +67,6 @@ const Footer = () => {
       title: "Company",
       links: [
         { name: "About Us", href: "/about-us" },
-        { name: "How It Works", href: "/how-it-works" },
         { name: "Testimonials", href: "/testimonials" },
         { name: "Careers", href: "/careers" },
         { name: "Press", href: "/press" }
@@ -77,10 +76,7 @@ const Footer = () => {
       title: "Support",
       links: [
         { name: "Contact Us", href: "/contact" },
-        { name: "FAQ", href: "/faq" },
-        { name: "Gift Rules", href: "/gift-rules" },
-        { name: "Shipping", href: "/shipping" },
-        { name: "Returns", href: "/returns" }
+        { name: "FAQ", href: "/faq" }
       ]
     }
   ];
@@ -216,8 +212,8 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Slash. All rights reserved.
           </div>
           <div className="flex flex-wrap gap-4">
-            <Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link to="/privacy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link to="/terms" onClick={scrollToTop} className="hover:text-foreground transition-colors">Terms of Service</Link>
             <Link to="/cookie-policy" onClick={scrollToTop} className="hover:text-foreground transition-colors">Cookie Policy</Link>
           </div>
         </div>

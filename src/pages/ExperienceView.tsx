@@ -21,6 +21,24 @@ import ExperienceMap from '@/components/ExperienceMap';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CITY_COORDINATES } from '../components/CitySelector';
 
+function getValidImgSrc(src: any) {
+  if (!src) return '/placeholder.svg';
+  if (Array.isArray(src)) {
+    return getValidImgSrc(src[0]);
+  }
+  if (typeof src === 'object') {
+    if (src.url && typeof src.url === 'string') return src.url;
+    if (src.path && typeof src.path === 'string') return src.path;
+    return '/placeholder.svg';
+  }
+  if (typeof src !== 'string') return '/placeholder.svg';
+  if (src.startsWith('data:image/')) return src;
+  if (/^[A-Za-z0-9+/=]+={0,2}$/.test(src) && src.length > 100) {
+    return `data:image/jpeg;base64,${src}`;
+  }
+  return src;
+}
+
 const ExperienceView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -33,7 +51,8 @@ const ExperienceView = () => {
   const [quantityInCart, setQuantityInCart] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [showDatePopover, setShowDatePopover] = useState(false);
+  const [showDatePopoverMain, setShowDatePopoverMain] = useState(false);
+  const [showDatePopoverSidebar, setShowDatePopoverSidebar] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [wishlistLocal, setWishlistLocal] = useState<string[]>(() => {
@@ -43,6 +62,7 @@ const ExperienceView = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -132,7 +152,7 @@ const ExperienceView = () => {
     }
 
     if (!selectedDate) {
-      setShowDatePopover(true);
+      setShowDatePopoverMain(true);
       toast.error('Please select a date before adding to cart.');
       return;
     }
@@ -307,6 +327,60 @@ const ExperienceView = () => {
   const handlePrevImage = () => setCurrentImageIdx(idx => (idx - 1 + imageUrls.length) % imageUrls.length);
   const handleNextImage = () => setCurrentImageIdx(idx => (idx + 1) % imageUrls.length);
   
+  // Add to localStorage for guests
+  useEffect(() => {
+    if (!user && experience) {
+      // Add to viewedExperiences in localStorage
+      let viewed = localStorage.getItem('viewedExperiences');
+      let arr = viewed ? JSON.parse(viewed) : [];
+      // Remove if already present (to re-add at front)
+      arr = arr.filter((exp) => exp && exp.id !== experience.id);
+      arr.unshift({ ...experience });
+      // Limit to 50
+      if (arr.length > 50) arr = arr.slice(0, 50);
+      localStorage.setItem('viewedExperiences', JSON.stringify(arr));
+    }
+    // Add to Supabase for logged-in users
+    if (user && experience) {
+      // Upsert viewed experience in Supabase
+      supabase
+        .from('viewed_experiences')
+        .upsert({
+          user_id: user.id,
+          experience_id: experience.id,
+          viewed_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,experience_id' })
+        .then(({ error, data }) => {
+          if (error) {
+            console.error('Error upserting viewed experience:', error);
+          } else {
+            console.log('Viewed experience upserted:', data);
+          }
+        });
+    }
+  }, [user, experience]);
+  
+  useEffect(() => {
+    // For guests, use wishlistLocal
+    if (!user) {
+      setWishlistIds(wishlistLocal);
+      return;
+    }
+    // For logged-in users, fetch wishlist from Supabase
+    const fetchWishlist = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('wishlists')
+          .select('experience_id');
+        if (error) throw error;
+        setWishlistIds(data ? data.map((item: any) => item.experience_id) : []);
+      } catch (err) {
+        setWishlistIds([]);
+      }
+    };
+    fetchWishlist();
+  }, [user, wishlistLocal]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -322,11 +396,11 @@ const ExperienceView = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
-        {/* Gallery Section */}
-        <div className="relative h-[50vh] md:h-[60vh] w-full flex flex-col items-center justify-center">
-          {/* Main Image */}
-          <img
-            src={imageUrls[currentImageIdx]}
+
+        {/* Hero Image Section */}
+        <div className="relative h-[50vh] md:h-[60vh] w-full">
+          <img 
+            src={getValidImgSrc(imageUrls[currentImageIdx])}
             alt={experience.title}
             className="h-full w-full object-cover rounded-lg"
             style={{ maxHeight: '100%', maxWidth: '100%' }}
@@ -377,12 +451,31 @@ const ExperienceView = () => {
         </div>
         
         {/* Main Content Section */}
-        <div className="container max-w-6xl mx-auto px-6 md:px-10 py-8 md:py-12">
+        <div className="container max-w-6xl mx-auto px-4 md:px-10 py-8 md:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Left Column - Experience Details */}
             <div className="lg:col-span-2">
-              <h1 className="text-3xl md:text-4xl font-medium mb-4">{experience.title}</h1>
-              
+              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center md:text-left">{experience.title}</h1>
+              <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center md:justify-start items-center">
+                <Button
+                  onClick={toggleWishlist}
+                  className={cn(
+                    "p-2 rounded-lg flex items-center gap-2 font-medium",
+                    isInWishlist ? "text-red-500 bg-red-50" : "text-gray-700 bg-gray-100 hover:text-red-500"
+                  )}
+                  disabled={isWishlistLoading}
+                >
+                  <Heart className="h-5 w-5" fill={isInWishlist ? "currentColor" : "none"} />
+                  {isInWishlist ? 'Liked' : 'Like'}
+                </Button>
+                <Button
+                  onClick={handleSaveForLater}
+                  className="p-2 rounded-lg flex items-center gap-2 font-medium text-gray-700 bg-gray-100 hover:text-primary"
+                >
+                  <Bookmark className="h-5 w-5" />
+                  Save for Later
+                </Button>
+              </div>
               <div className="flex flex-wrap gap-4 mb-6">
                 <div className="flex items-center gap-2 text-muted-foreground text-base">
                   <MapPin className="h-5 w-5" />
@@ -408,11 +501,9 @@ const ExperienceView = () => {
                   {experience.participants}
                 </div>
               </div>
-              
               <div className="prose prose-lg max-w-none mb-8">
                 <p>{experience.description}</p>
               </div>
-              
               {/* Experience Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="flex items-start">
@@ -452,127 +543,35 @@ const ExperienceView = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Similar Experiences */}
               {similarExperiences.length > 0 && (
                 <div className="mt-12">
                   <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {similarExperiences.map((exp) => (
-                      <div key={exp.id} className="aspect-[4/3] h-full w-full flex">
-                        <ExperienceCard experience={exp} />
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                    {similarExperiences.map((exp, idx) => (
+                      <ExperienceCard 
+                        key={exp.id} 
+                        experience={exp} 
+                        index={idx} 
+                        isInWishlist={wishlistIds.includes(exp.id)}
+                        onWishlistChange={(experienceId, newIsInWishlist) => {
+                          setWishlistIds(prev => {
+                            if (newIsInWishlist) {
+                              return [...prev, experienceId];
+                            } else {
+                              return prev.filter(id => id !== experienceId);
+                            }
+                          });
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
               )}
             </div>
-            
-            {/* Right Column - Booking Card */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Price per person</p>
-                    <p className="text-2xl font-medium">{formatRupees(experience.price)}</p>
-                  </div>
-                  <button
-                    onClick={toggleWishlist}
-                    className={cn(
-                      "p-2 rounded-full transition-colors",
-                      isInWishlist ? "text-red-500" : "text-muted-foreground hover:text-red-500"
-                    )}
-                    disabled={isWishlistLoading}
-                  >
-                    <Heart className="h-6 w-6" fill={isInWishlist ? "currentColor" : "none"} />
-                  </button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm">Select Date</span>
-                    </div>
-                    <Popover open={showDatePopover} onOpenChange={setShowDatePopover}>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            if (!user) {
-                              setShowLoginModal(true);
-                              return;
-                            }
-                            setShowDatePopover(true);
-                          }}
-                        >
-                          {selectedDate ? format(selectedDate, 'PPP') : 'Choose Date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-auto p-0">
-                        <DatePicker
-                          mode="single"
-                          selected={selectedDate as Date}
-                          onSelect={(date) => {
-                            setSelectedDate(date as Date);
-                            setShowDatePopover(false);
-                          }}
-                          initialFocus
-                          disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm">Number of People</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={handleDecreaseQuantity}
-                        className="p-1 rounded-full hover:bg-secondary"
-                        disabled={isCartLoading || quantityInCart <= 1}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <span className="w-8 text-center">{quantityInCart}</span>
-                      <button
-                        onClick={handleIncreaseQuantity}
-                        className="p-1 rounded-full hover:bg-secondary"
-                        disabled={isCartLoading}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-6">
-                  <Button 
-                    className="w-full"
-                    onClick={handleAddToCart}
-                    disabled={isCartLoading /* Don't disable for !selectedDate, handle in logic */}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    {isCartLoading ? 'Processing...' : 'Add to Cart'}
-                  </Button>
-                </div>
-                
-                <div className="mt-4 text-center">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handleSaveForLater}
-                  >
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    Save for Later
-                  </Button>
-                </div>
-              </div>
-            </div>
+            {/* Right Column - Booking Card (desktop) */}
+            {/* Removed right column booking card */}
           </div>
         </div>
       </div>

@@ -13,6 +13,10 @@ interface Config {
       color: string;
     };
   };
+  google: {
+    clientId: string;
+    clientSecret: string;
+  };
 }
 
 // Development credentials (only used if environment variables are not set)
@@ -35,5 +39,9 @@ export const config: Config = {
     theme: {
       color: '#F37254'
     }
+  },
+  google: {
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+    clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || '',
   }
 };
