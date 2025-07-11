@@ -26,15 +26,29 @@ const SwipeAISuggestions = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/start`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: user.id })
+        const res = await fetch(`${API_BASE}/start?user_id=${user.id}`, {
+          method: "GET"
         });
         if (!res.ok) throw new Error("Failed to start session");
         const data = await res.json();
+        const normalizedExperiences = (data.experiences || []).map(exp => ({
+          ...exp,
+          imageUrl: Array.isArray(exp.imageUrl)
+            ? exp.imageUrl
+            : exp.image_url
+              ? [exp.image_url]
+              : exp.image
+                ? [exp.image]
+                : exp.img
+                  ? [exp.img]
+                  : exp.photo
+                    ? [exp.photo]
+                    : exp.thumbnail
+                      ? [exp.thumbnail]
+                      : ['/placeholder.svg'],
+        }));
         setSessionId(data.session_id);
-        setExperiences(data.experiences || []);
+        setExperiences(normalizedExperiences);
         setCurrentIdx(0);
         setLiked([]);
         setDisliked([]);
@@ -122,9 +136,33 @@ const SwipeAISuggestions = () => {
         )}
         <div className="mt-8">
           <h3 className="font-bold mb-2">Your Swipes</h3>
-          <div className="text-sm mb-1">Liked: {liked.join(", ")}</div>
-          <div className="text-sm mb-1">Disliked: {disliked.join(", ")}</div>
-          <div className="text-sm mb-1">Skipped: {skipped.join(", ")}</div>
+          <div className="mb-2">
+            <span className="font-semibold">Liked:</span>
+            <ul className="list-disc ml-6">
+              {liked.map(id => {
+                const exp = experiences.find(e => e.id === id);
+                return <li key={id}>{exp ? exp.title : id}</li>;
+              })}
+            </ul>
+          </div>
+          <div className="mb-2">
+            <span className="font-semibold">Disliked:</span>
+            <ul className="list-disc ml-6">
+              {disliked.map(id => {
+                const exp = experiences.find(e => e.id === id);
+                return <li key={id}>{exp ? exp.title : id}</li>;
+              })}
+            </ul>
+          </div>
+          <div className="mb-2">
+            <span className="font-semibold">Skipped:</span>
+            <ul className="list-disc ml-6">
+              {skipped.map(id => {
+                const exp = experiences.find(e => e.id === id);
+                return <li key={id}>{exp ? exp.title : id}</li>;
+              })}
+            </ul>
+          </div>
         </div>
       </div>
     </div>
