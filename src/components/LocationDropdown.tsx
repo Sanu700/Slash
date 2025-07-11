@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { CITY_COORDINATES } from './CitySelector';
 import { useLocation } from 'react-router-dom';
 import Fuse from 'fuse.js';
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 
 export const INDIAN_LOCATIONS = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
@@ -91,6 +92,13 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
   // Store user's coordinates if available
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
+  const [autocomplete, setAutocomplete] = useState<any>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ['places'],
+  });
+
   useEffect(() => {
     // Always read the latest value from localStorage when the route changes
     const selectedAddressRaw = localStorage.getItem('selected_address');
@@ -150,11 +158,11 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           didRespond = true;
           clearTimeout(geoTimeout);
           const { latitude, longitude } = position.coords;
-          setUserCoords({ lat: latitude, lon: longitude }); // <-- update here
+          setUserCoords({ lat: latitude, lon: longitude });
           let fetchTimeout;
           let didFetch = false;
           try {
-            // Reverse geocode to get address
+            // Reverse geocode to get address using Google Maps Geocoding API
             fetchTimeout = setTimeout(() => {
               if (!didFetch) {
                 setIsGettingLocation(false);
@@ -162,20 +170,20 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               }
             }, 5000); // 5 seconds timeout
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
             );
             const data = await response.json();
             didFetch = true;
             clearTimeout(fetchTimeout);
-            const addressText = data.display_name;
-            setAddress(addressText);
-            setSelectedLocation(addressText);
+            const addressText = data.results && data.results[0] && data.results[0].formatted_address;
+            setAddress(addressText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setSelectedLocation(addressText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
             localStorage.setItem('selected_address', JSON.stringify({
-              address: addressText,
+              address: addressText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
               lat: latitude.toString(),
               lon: longitude.toString()
             }));
-          } catch (error) {
+          } catch {
             setIsGettingLocation(false);
             setError('Could not resolve your address. Please try again.');
             // Fallback to coordinates
@@ -204,6 +212,25 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
     } else {
       setIsGettingLocation(false);
       setError('Geolocation is not supported by this browser.');
+    }
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      setAddress(place.formatted_address || '');
+      setSelectedLocation(place.formatted_address || '');
+      if (place.geometry && place.geometry.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        localStorage.setItem('selected_address', JSON.stringify({
+          address: place.formatted_address,
+          lat: lat,
+          lon: lng
+        }));
+      }
+      setAddressResults([]);
+      setCityResults([]);
     }
   };
 
@@ -330,12 +357,20 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
-                  value={address}
-                  onChange={handleAddressChange}
-                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                {isLoaded && (
+                  <Autocomplete
+                    onLoad={setAutocomplete}
+                    onPlaceChanged={onPlaceChanged}
+                  >
+                    <input
+                      type="text"
+                      placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
+                      value={address}
+                      onChange={e => setAddress(e.target.value)}
+                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </Autocomplete>
+                )}
               </div>
             </div>
 
@@ -548,12 +583,20 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
-                  value={address}
-                  onChange={handleAddressChange}
-                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                {isLoaded && (
+                  <Autocomplete
+                    onLoad={setAutocomplete}
+                    onPlaceChanged={onPlaceChanged}
+                  >
+                    <input
+                      type="text"
+                      placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
+                      value={address}
+                      onChange={e => setAddress(e.target.value)}
+                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </Autocomplete>
+                )}
               </div>
             </div>
 
