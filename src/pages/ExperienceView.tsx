@@ -398,7 +398,7 @@ const ExperienceView = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
 
         {/* Hero Image Section */}
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
+        <div className="relative w-full h-48 md:h-[50vh] lg:h-[60vh]">
           <img 
             src={getValidImgSrc(imageUrls[currentImageIdx])}
             alt={experience.title}
@@ -436,13 +436,13 @@ const ExperienceView = () => {
           </div>
           {/* Thumbnails (future support for multiple images) */}
           {imageUrls.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 rounded-lg px-3 py-2">
+            <div className="absolute bottom-4 left-0 w-full flex justify-center overflow-x-auto gap-2 bg-black/30 rounded-lg px-2 py-2">
               {imageUrls.map((img, idx) => (
                 <img
                   key={img}
                   src={img}
                   alt={`Thumbnail ${idx + 1}`}
-                  className={`w-16 h-12 object-cover rounded cursor-pointer border-2 ${currentImageIdx === idx ? 'border-primary' : 'border-transparent'} hover:border-primary`}
+                  className={`w-12 h-9 md:w-16 md:h-12 object-cover rounded cursor-pointer border-2 ${currentImageIdx === idx ? 'border-primary' : 'border-transparent'} hover:border-primary flex-shrink-0`}
                   onClick={() => setCurrentImageIdx(idx)}
                 />
               ))}
@@ -451,11 +451,9 @@ const ExperienceView = () => {
         </div>
         
         {/* Main Content Section */}
-        <div className="container max-w-6xl mx-auto px-4 md:px-10 py-8 md:py-12 flex flex-col items-center ml-32 md:ml-64">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 w-full justify-center">
-            {/* Left Column - Experience Details */}
-            <div className="lg:col-span-2 mx-auto text-center">
-              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center">{experience.title}</h1>
+        <div className="container max-w-3xl mx-auto px-4 py-8 flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center w-full text-center">
+              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center break-words">{experience.title}</h1>
               <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
                 <Button
                   onClick={toggleWishlist}
@@ -501,7 +499,7 @@ const ExperienceView = () => {
                   {experience.participants}
                 </div>
               </div>
-              <div className="prose prose-lg max-w-none mb-8 mx-auto text-center">
+              <div className="prose prose-lg max-w-full sm:max-w-none mb-8 mx-auto text-center">
                 <p>{experience.description}</p>
               </div>
               {/* Experience Details */}
@@ -562,9 +560,6 @@ const ExperienceView = () => {
                 </div>
               )}
             </div>
-            {/* Right Column - Booking Card (desktop) */}
-            {/* Removed right column booking card */}
-          </div>
         </div>
       </div>
       <LoginModal 
