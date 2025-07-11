@@ -614,12 +614,21 @@ const AllExperiences = () => {
 
               {/* Experiences Grid */}
               {allCards.length > 0 ? (
-                <div className={cn(
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children pt-16",
-                  isInView ? "opacity-100" : "opacity-0"
-                )}>
-                  {paginatedCards.map(card => card.content)}
-                </div>
+                locationParam ? (
+                  <div className={cn(
+                    "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children pt-16",
+                    isInView ? "opacity-100" : "opacity-0"
+                  )}>
+                    {paginatedCards.map(card => card.content)}
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "flex flex-wrap justify-center gap-6 max-w-4xl mx-auto pt-16 stagger-children",
+                    isInView ? "opacity-100" : "opacity-0"
+                  )}>
+                    {paginatedCards.map(card => card.content)}
+                  </div>
+                )
               ) : (
                 <div className="text-center py-16">
                   <h3 className="text-xl mb-2">
