@@ -54,9 +54,10 @@ interface ExperienceCardProps {
   onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
   isInWishlist?: boolean;
   index?: number;
+  openInNewTab?: boolean;
 }
 
-const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWishlist = false, index }: ExperienceCardProps) => {
+const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWishlist = false, index, openInNewTab = false }: ExperienceCardProps) => {
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
@@ -267,11 +268,27 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
             </DialogContent>
           </Dialog>
           {/* Minimal View Experience button */}
-          <Link to={`/experience/${experience.id}`}>
-            <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
+          {openInNewTab ? (
+            <a
+              href={`/experience/${experience.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block', width: '100%' }}
+            >
+              <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
+                View Experience
+              </Button>
+            </a>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full mt-3 font-medium"
+              onClick={() => navigate(`/experience/${experience.id}`)}
+            >
               View Experience
             </Button>
-          </Link>
+          )}
         </div>
       </div>
     </>
