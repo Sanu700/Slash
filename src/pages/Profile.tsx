@@ -387,9 +387,12 @@ const Profile = () => {
           // Fetch experience details for these IDs
           const { data: experiences } = await supabase
             .from('experiences')
-            .select('id, title')
+            .select('id, title, image_url')
             .in('id', expIds);
-          allLikes[friend.id] = experiences || [];
+          allLikes[friend.id] = (experiences || []).map(exp => ({
+            ...exp,
+            imageUrl: exp.image_url,
+          }));
         } else {
           allLikes[friend.id] = [];
         }
@@ -419,7 +422,6 @@ const Profile = () => {
   // Profile info for header
   const profile = {
     name: user?.user_metadata?.full_name || editName || 'Jamie Smith',
-    username: user?.username || 'jamiesmith',
     avatar: user?.user_metadata?.avatar_url || editAvatar || '/placeholder.svg',
     email: user?.email || '',
   };
@@ -450,7 +452,7 @@ const Profile = () => {
   };
 
   const handleShareProfile = async () => {
-    const url = `${window.location.origin}/profile/${user?.username || user?.email?.split('@')[0]}`;
+    const url = `${window.location.origin}/profile/${user?.email?.split('@')[0]}`;
     try {
       await navigator.clipboard.writeText(url);
       toast({ title: 'Profile link copied!', description: url });
@@ -520,7 +522,6 @@ const Profile = () => {
           </div>
           <div className="flex-1 flex flex-col items-center md:items-start gap-1">
             <h1 className="text-2xl md:text-3xl font-bold mb-0 text-gray-900 tracking-tight leading-tight">{user?.user_metadata?.full_name || editName || 'Your Name'}</h1>
-            {user?.username && <p className="text-gray-500 text-base font-medium">@{user.username}</p>}
           </div>
           <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-center">
             <Button className="bg-white text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-gray-100 transition shadow-sm border border-gray-300 text-sm" onClick={() => {
@@ -675,7 +676,7 @@ const Profile = () => {
               return (
                 <div key={friend.id} className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                    <img src={friend.avatar_url} alt={friend.full_name} className="h-full w-full rounded-full object-cover" />
+                    <img src={friend.avatar_url || '/placeholder.svg'} alt={friend.full_name} className="h-full w-full rounded-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.full_name}</p>
@@ -844,7 +845,7 @@ const Profile = () => {
             <div className="mb-6">
               <p className="text-gray-600 mb-4">Share your profile with friends</p>
               <div className="flex items-center bg-gray-100 rounded-lg p-3 mb-4">
-                <input type="text" value={`https://slash-experiences.netlify.app/profile/${profile.username}`} className="bg-transparent flex-1 outline-none text-gray-700" readOnly />
+                <input type="text" value={`https://slash-experiences.netlify.app/profile/${user?.email?.split('@')[0]}`} className="bg-transparent flex-1 outline-none text-gray-700" readOnly />
                 <Button className="ml-2 text-primary" onClick={handleShareProfile}>Copy</Button>
               </div>
             </div>
