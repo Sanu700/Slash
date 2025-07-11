@@ -210,7 +210,7 @@ const Index = () => {
                   <hr className="my-6 border-t border-gray-200" />
                   <div className="text-center mb-6">
                     <h2 className="text-2xl md:text-3xl font-bold text-primary">Gift Inspiration</h2>
-                    <p className="text-base md:text-lg text-muted-foreground mt-2">Why gift an experience? See the science and inspiration below!</p>
+                    
                   </div>
                   <span id="gifting-guide" className="block" />
                   <section ref={guideInViewRef} className="container max-w-[1152px] mx-auto px-4 py-8">

@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import WishlistContent from '@/components/profile/WishlistContent';
 import ExperienceCard from '@/components/ExperienceCard';

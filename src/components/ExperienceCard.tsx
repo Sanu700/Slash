@@ -4,7 +4,7 @@ import { Experience } from '@/lib/data';
 import { Heart, HeartIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { createPayment, verifyPayment } from '@/lib/payment';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';

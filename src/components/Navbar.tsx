@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { getSavedExperiences } from '@/lib/data';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -57,13 +57,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, user, logout, signInWithGoogle, login } = useAuth();
+  const { isAuthenticated, user, logout, signInWithGoogle } = useAuth();
   const { toast } = useToast();
-  const [showLoginDropdown, setShowLoginDropdown] = useState(false);
-  const [adminId, setAdminId] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [adminCredentials, setAdminCredentials] = useState({ id: '', password: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
@@ -411,31 +406,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     document.body.style.overflow = '';
   };
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const success = await login(adminCredentials.id, adminCredentials.password);
-      if (success) {
-        setShowLoginDropdown(false);
-        toast({
-          title: "Signed in successfully",
-          description: "You have been signed in to your account.",
-        });
-      }
-    } catch (error) {
-      console.error('Error signing in:', error);
-      toast({
-        title: "Error signing in",
-        description: "There was a problem signing in. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-
   // Add a function to get the display label for the location button
   const getLocationLabel = () => {
     if (selectedLocation) {
@@ -500,6 +470,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </Link>
             <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               Gift Personalizer
+            </Link>
+            <Link to="/swipe-ai" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Swipe AI
             </Link>
             
             <DropdownMenu>
@@ -646,15 +619,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  {user?.user_metadata?.role === 'admin' && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/admin')}>
-                        <Shield className="mr-2 h-4 w-4" />
-                        Admin Dashboard
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
                     Wishlist
@@ -667,7 +631,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <DropdownMenu open={showLoginDropdown} onOpenChange={setShowLoginDropdown}>
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className={iconClass}>
                     <User className="h-5 w-5" />
@@ -756,6 +720,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {/* Main navigation options */}
             <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
             <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/swipe-ai" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Swipe AI</Link>
             {/* Company Section */}
             <div>
               <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">

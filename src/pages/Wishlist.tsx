@@ -5,7 +5,7 @@ import ExperienceCard from '@/components/ExperienceCard';
 import { Experience } from '@/lib/data';
 import { Heart } from 'lucide-react';
 import { useWishlistExperiences } from '@/hooks/useDataLoaders';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Wishlist = () => {
   const { user } = useAuth();

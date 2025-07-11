@@ -10,7 +10,7 @@ import { Experience } from '@/lib/data';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import useTrackExperienceView from '@/hooks/useTrackExperienceView';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { LoginModal } from '@/components/LoginModal';

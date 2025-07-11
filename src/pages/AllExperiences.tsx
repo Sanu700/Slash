@@ -23,7 +23,7 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { useWishlistExperiences } from '@/hooks/useDataLoaders';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Add distance filter options
 const DISTANCE_FILTERS = [

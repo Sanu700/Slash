@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useExperiencesManager } from "@/lib/data";
 import ExperienceCard from "@/components/ExperienceCard";
 import { useWishlistExperiences } from '@/hooks/useDataLoaders';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ExperienceType = () => {
   const { type } = useParams();

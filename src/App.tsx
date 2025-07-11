@@ -7,7 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import ScrollToTop from "@/components/ScrollToTop";
 
 
-import { AuthProvider, requireAuth } from "@/lib/auth";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import Layout from "@/components/Layout";
 
@@ -23,6 +23,7 @@ import Wishlist from "./pages/Wishlist";
 import TravelDemo from "./pages/TravelDemo";
 import { WishlistProvider } from './contexts/WishlistContext';
 import ExperienceType from "./pages/ExperienceType";
+import SwipeAISuggestions from "./pages/SwipeAISuggestions";
 // Company Pages
 import AboutUs from "./pages/AboutUs";
 import Testimonials from "./pages/Testimonials";
@@ -35,19 +36,6 @@ import ContactUs from "./pages/ContactUs";
 import FAQ from "./pages/FAQ";
 // Auth-Protected Pages
 import Profile from "./pages/Profile";
-import HostExperience from "./pages/HostExperience";
-// Admin Pages
-import AdminLogin from './pages/admin/AdminLogin';
-import Dashboard from './pages/admin/Dashboard';
-import Users from './pages/admin/Users';
-import Analytics from './pages/admin/Analytics';
-import Settings from './pages/admin/Settings';
-import Customers from './pages/admin/users/Customers';
-import Providers from './pages/admin/users/Providers';
-import Experiences from './pages/admin/Experiences';
-import AdminProfile from './pages/admin/Profile';
-import { PaymentDetails } from '@/components/admin/PaymentDetails';
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
@@ -84,6 +72,7 @@ function App() {
                     <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
                     <Route path="/ai-suggestions" element={<Layout><AISuggestions /></Layout>} />
                     <Route path="/travel-demo" element={<Layout><TravelDemo /></Layout>} />
+                    <Route path="/swipe-ai" element={<Layout><SwipeAISuggestions /></Layout>} />
                     {/* Company Pages */}
                     <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
                     <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
@@ -97,18 +86,8 @@ function App() {
                     {/* Protected User Routes */}
                     <Route path="/wishlist" element={<Layout><Wishlist /></Layout>} />
                     <Route path="/profile" element={<Layout><Profile /></Layout>} />
-                    <Route path="/host-experience" element={<Layout><HostExperience /></Layout>} />
                     {/* Admin Routes */}
-                    <Route path="/admin/login" element={<AdminLogin />} />
-                    <Route path="/admin" element={<Dashboard />} />
-                    <Route path="/admin/users" element={<Users />} />
-                    <Route path="/admin/analytics" element={<Analytics />} />
-                    <Route path="/admin/settings" element={<Settings />} />
-                    <Route path="/admin/users/customers" element={<Customers />} />
-                    <Route path="/admin/users/providers" element={<Providers />} />
-                    <Route path="/admin/experiences" element={<Experiences />} />
-                    <Route path="/admin/profile" element={<AdminProfile />} />
-                    <Route path="/admin/payments" element={<PaymentDetails />} />
+                    {/* Admin routes removed */}
                     {/* 404 Page */}
                     <Route path="*" element={<Layout><NotFound /></Layout>} />
                   </Routes>
