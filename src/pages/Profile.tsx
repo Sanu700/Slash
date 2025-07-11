@@ -62,6 +62,12 @@ const removeSavedExperience = (id) => {
 const GOOGLE_CLIENT_ID = '630365428319-iujdl046niv4hec0asllb3mcsluq9j3u.apps.googleusercontent.com'; // <-- Replace with your client ID
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/contacts.readonly';
 
+type UserMeta = {
+  full_name?: string;
+  avatar_url?: string;
+  username?: string;
+};
+
 const Profile = () => {
   const { user, logout } = useAuth();
   const { toggleWishlist } = useExperienceInteractions(user?.id);
@@ -90,6 +96,8 @@ const Profile = () => {
   const [connectionStatuses, setConnectionStatuses] = useState({});
   const [friends, setFriends] = useState([]);
   const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
+
+  const meta = user?.user_metadata as UserMeta;
 
   // Merge matchedFriends and friends for People You May Know, ensuring uniqueness
   const allPeopleYouMayKnow = React.useMemo(() => {
@@ -452,7 +460,8 @@ const Profile = () => {
   };
 
   const handleShareProfile = async () => {
-    const url = `${window.location.origin}/profile/${user?.email?.split('@')[0]}`;
+const url = `${window.location.origin}/profile/${meta && 'username' in meta && meta.username ? meta.username : (user?.email ? user.email.split('@')[0] : '')}`;
+
     try {
       await navigator.clipboard.writeText(url);
       toast({ title: 'Profile link copied!', description: url });
@@ -522,6 +531,13 @@ const Profile = () => {
           </div>
           <div className="flex-1 flex flex-col items-center md:items-start gap-1">
             <h1 className="text-2xl md:text-3xl font-bold mb-0 text-gray-900 tracking-tight leading-tight">{user?.user_metadata?.full_name || editName || 'Your Name'}</h1>
+{meta && 'username' in meta && meta.username && (
+  <p className="text-gray-500 text-base font-medium">@{meta.username}</p>
+)}
+{(!meta || !('username' in meta) || !meta.username) && user?.email && (
+  <p className="text-gray-500 text-base font-medium">@{user.email.split('@')[0]}</p>
+)}
+
           </div>
           <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-center">
             <Button className="bg-white text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-gray-100 transition shadow-sm border border-gray-300 text-sm" onClick={() => {
@@ -845,7 +861,13 @@ const Profile = () => {
             <div className="mb-6">
               <p className="text-gray-600 mb-4">Share your profile with friends</p>
               <div className="flex items-center bg-gray-100 rounded-lg p-3 mb-4">
-                <input type="text" value={`https://slash-experiences.netlify.app/profile/${user?.email?.split('@')[0]}`} className="bg-transparent flex-1 outline-none text-gray-700" readOnly />
+<input
+  type="text"
+  value={`https://slash-experiences.netlify.app/profile/${meta?.username || user?.email?.split('@')[0] || ''}`}
+  className="bg-transparent flex-1 outline-none text-gray-700"
+  readOnly
+/>
+
                 <Button className="ml-2 text-primary" onClick={handleShareProfile}>Copy</Button>
               </div>
             </div>

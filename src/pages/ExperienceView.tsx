@@ -510,29 +510,29 @@ const ExperienceView = () => {
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Duration</h3>
-                  <p className="text-muted-foreground text-sm">{experience.duration}</p>
+                    <h3 className="font-medium mb-1">Duration</h3>
+                    <p className="text-muted-foreground text-sm">{experience.duration}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Users className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Group Size</h3>
-                  <p className="text-muted-foreground text-sm">{experience.participants}</p>
+                    <h3 className="font-medium mb-1">Group Size</h3>
+                    <p className="text-muted-foreground text-sm">{experience.participants}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Date</h3>
-                  <p className="text-muted-foreground text-sm">{experience.date}</p>
+                    <h3 className="font-medium mb-1">Date</h3>
+                    <p className="text-muted-foreground text-sm">{experience.date}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Location</h3>
-                  <p className="text-muted-foreground text-sm">{experience.location}</p>
+                    <h3 className="font-medium mb-1">Location</h3>
+                    <p className="text-muted-foreground text-sm">{experience.location}</p>
                 </div>
               </div>
 
