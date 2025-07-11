@@ -51,6 +51,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  useEffect(() => {
+    // Referral logic: runs after user signs in, globally
+    async function handleReferral() {
+      if (!user) return;
+      let referrerId = localStorage.getItem('pending_ref');
+      if (!referrerId) return;
+      if (user.id === referrerId) {
+        console.log('[Referral] Self-referral detected, not inserting.');
+        localStorage.removeItem('pending_ref');
+        return;
+      }
+      // Check if referral already exists
+      const { data, error: selectError } = await supabase
+        .from('referrals')
+        .select('*')
+        .eq('user_id', referrerId)
+        .eq('referred_user_id', user.id);
+      if (selectError) {
+        console.error('[Referral] Supabase select error:', selectError);
+        return;
+      }
+      if (!data || data.length === 0) {
+        console.log('[Referral] Inserting referral:', { user_id: referrerId, referred_user_id: user.id });
+        const { error: insertError } = await supabase.from('referrals').insert([
+          { user_id: referrerId, referred_user_id: user.id },
+        ]);
+        if (insertError) {
+          console.error('[Referral] Supabase insert error:', insertError);
+        } else {
+          console.log('[Referral] Referral row inserted successfully!');
+        }
+      } else {
+        console.log('[Referral] Referral already exists, not inserting.');
+      }
+      localStorage.removeItem('pending_ref');
+    }
+    handleReferral();
+  }, [user]);
+
   const signInWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
