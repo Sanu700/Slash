@@ -8,6 +8,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { FormData } from '@/types/personalizerTypes';
 import { submitAnswer, fetchSuggestions, goBackOneStep } from '@/lib/aiPersonalizer';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 interface StepInterestsProps {
   formData: FormData;
@@ -85,9 +86,30 @@ const StepInterests = ({
       console.log('Interests data submitted successfully');
 
       // Call /suggestion to get AI recommendations
-      const suggestions = await fetchSuggestions('', 5, aiSessionId);
-      setSuggestedExperiences(suggestions);
-      console.log('Suggestions fetched and set successfully');
+      function normalize(str: string) {
+        return (str || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9 ]/gi, '') // remove punctuation
+          .replace(/\s+/g, ' ')        // collapse spaces
+          .trim();
+      }
+
+      const aiSuggestions = await fetchSuggestions('', 5, aiSessionId);
+      const supabaseIds = aiSuggestions.map((s: any) => s.supabase_id).filter(Boolean);
+      let matchedExperiences = [];
+      if (supabaseIds.length > 0) {
+        const { data, error } = await supabase
+          .from('experiences')
+          .select('*')
+          .in('id', supabaseIds);
+        if (error) {
+          console.error('Error fetching experiences from Supabase:', error);
+        } else {
+          matchedExperiences = data || [];
+        }
+      }
+      setSuggestedExperiences(matchedExperiences);
+      console.log('Set experiences to:', matchedExperiences.length > 0 ? 'Supabase matches' : 'No matches');
       
       // Move to next step
       onNext();
@@ -183,13 +205,13 @@ const StepInterests = ({
         
         <Button
           onClick={handleNextClick}
-          disabled={isProcessing || isGenerating}
+          disabled={isProcessing || isGenerating || !interestsPrompt}
           className="flex items-center gap-2"
         >
-          {isProcessing || isGenerating ? (
+          {(!interestsPrompt || isProcessing || isGenerating) ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Processing...
+              {!interestsPrompt ? 'Loading...' : 'Processing...'}
             </>
           ) : (
             <>
