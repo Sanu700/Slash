@@ -27,7 +27,7 @@ interface ProfileCardProps {
 }
 
 const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCount }: ProfileCardProps) => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
   const [editMode, setEditMode] = React.useState(false);
@@ -369,7 +369,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
             }}
           >
             <Heart className="mr-2 h-4 w-4" />
-            Liked ({wishlistCount})
+            Wishlist ({wishlistCount})
           </Button>
           
           {!editMode && (
@@ -383,7 +383,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
             </Button>
           )}
           
-          {/* isAdmin && (
+          {isAdmin && (
             <Button 
               variant="outline" 
               className="justify-start"
@@ -392,7 +392,7 @@ const ProfileCard = ({ activeTab, setActiveTab, bookingHistoryCount, wishlistCou
               <Settings className="mr-2 h-4 w-4" />
               Manage Experiences
             </Button>
-          ) */}
+          )}
           
           <Button 
             variant="destructive" 
