@@ -1,5 +1,6 @@
 export async function getSwipeAISuggestions(userId: string, swipedIds: string[]) {
-  const response = await fetch('http://localhost:8000/swipe', {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const response = await fetch(`${API_URL}/swipe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
