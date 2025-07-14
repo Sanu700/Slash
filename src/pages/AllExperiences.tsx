@@ -75,7 +75,8 @@ const AllExperiences = () => {
   }
   const fallbackUserId = '00000000-0000-0000-0000-000000000000'; // Replace with a real UUID from your Supabase users table for testing
   const user = rawUser && isValidUUID(rawUser.id) ? rawUser : { id: fallbackUserId };
-  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const [wishlistVersion, setWishlistVersion] = useState(0);
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id, wishlistVersion);
   const [localWishlist, setLocalWishlist] = useState<string[]>([]);
   const [friends, setFriends] = useState([]);
   const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
@@ -186,6 +187,12 @@ const AllExperiences = () => {
     const handler = () => setLocationClearedCount(c => c + 1);
     window.addEventListener('locationChanged', handler);
     return () => window.removeEventListener('locationChanged', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setWishlistVersion(v => v + 1);
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
   }, []);
 
   // Sync currentPage with URL on mount and when location.search changes

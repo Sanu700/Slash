@@ -88,7 +88,8 @@ const Profile = () => {
   // Add local state for wishlist to allow UI update on remove
   const [localWishlist, setLocalWishlist] = useState([]);
   // Wishlist from Supabase
-  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const [wishlistVersion, setWishlistVersion] = useState(0);
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id, wishlistVersion);
   const { bookingHistory, isLoading: isBookingHistoryLoading } = useBookingHistory(user?.id);
   const [referralCount, setReferralCount] = useState(0);
   const [badgeMilestones, setBadgeMilestones] = useState([]);
@@ -280,6 +281,12 @@ const Profile = () => {
   useEffect(() => {
     setLocalWishlist(Array.isArray(wishlistExperiences) ? wishlistExperiences : []);
   }, [wishlistExperiences]);
+
+  useEffect(() => {
+    const handler = () => setWishlistVersion(v => v + 1);
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, []);
 
   // Load matchedFriends from localStorage on mount and when user changes
   useEffect(() => {
