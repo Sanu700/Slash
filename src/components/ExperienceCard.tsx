@@ -106,14 +106,46 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   // Always use Bangalore as default if no city/address
   const BANGALORE_COORDS = { latitude: 12.9716, longitude: 77.5946 };
 
+  const [isWishlisted, setIsWishlisted] = useState(isInWishlist);
+
+  // Sync isWishlisted with localStorage/backend on mount and when experience.id changes
+  useEffect(() => {
+    if (!user) {
+      // Guest: check localStorage
+      const wishlist = localStorage.getItem('wishlist');
+      let wishlistArr = wishlist ? JSON.parse(wishlist) : [];
+      setIsWishlisted(wishlistArr.includes(experience.id));
+    } else {
+      // Logged in: fetch from backend (or use isInWishlist prop if up-to-date)
+      setIsWishlisted(!!isInWishlist);
+    }
+  }, [user, experience.id, isInWishlist]);
+
+  // Listen for wishlistUpdated event to re-fetch isWishlisted state
+  useEffect(() => {
+    const handler = () => {
+      if (!user) {
+        const wishlist = localStorage.getItem('wishlist');
+        let wishlistArr = wishlist ? JSON.parse(wishlist) : [];
+        setIsWishlisted(wishlistArr.includes(experience.id));
+      } else {
+        setIsWishlisted(!!isInWishlist);
+      }
+    };
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, [user, experience.id, isInWishlist]);
+
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
       toast.error('Please log in to save to your wishlist');
       return;
     }
-    await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, () => {
-      onWishlistChange?.(experience.id, !isInWishlist);
+    await toggleWishlist(experience.id, isWishlisted, { [experience.id]: experience }, () => {
+      setIsWishlisted((prev) => !prev);
+      onWishlistChange?.(experience.id, !isWishlisted);
+      window.dispatchEvent(new Event('wishlistUpdated'));
     });
   };
 
@@ -216,11 +248,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
           {/* Wishlist icon, only visible on hover */}
           <button
             className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             onClick={handleToggleWishlist}
             disabled={isProcessing}
           >
-            {isInWishlist ? (
+            {isWishlisted ? (
               <HeartIcon className="h-5 w-5 text-red-500 fill-red-500 transition" />
             ) : (
               <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500 transition" />
