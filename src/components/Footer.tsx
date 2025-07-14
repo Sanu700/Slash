@@ -68,7 +68,6 @@ const Footer = () => {
       links: [
         { name: "About Us", href: "/about-us" },
         { name: "Testimonials", href: "/testimonials" },
-        { name: "Careers", href: "/careers" },
         { name: "Press", href: "/press" }
       ]
     },
@@ -88,11 +87,6 @@ const Footer = () => {
       url: 'https://www.instagram.com/slashsocials'
     },
     {
-      name: 'Facebook',
-      icon: Facebook,
-      url: 'https://facebook.com/social_slashexp'
-    },
-    {
       name: 'Twitter',
       icon: Twitter,
       url: 'https://x.com/social_slashexp?t=2hMgiF7n9Z-6px4AIhXhgA&s=09'
@@ -101,11 +95,6 @@ const Footer = () => {
       name: 'LinkedIn',
       icon: Linkedin,
       url: 'https://www.linkedin.com/company/slash-adbc/'
-    },
-    {
-      name: 'YouTube',
-      icon: Youtube,
-      url: 'https://youtube.com/@social_slashexp'
     }
   ];
 

@@ -59,17 +59,13 @@ const GiftPersonalizer = () => {
         console.log('initializationInProgressRef.current:', initializationInProgressRef.current);
         return;
       }
-      
       try {
-        console.log('=== STARTING AI SESSION INITIALIZATION ===');
         initializationInProgressRef.current = true;
         hasInitializedRef.current = true;
-        
         const { question, session_id } = await fetchInitQuestion();
         setAiPrompt(question);
         setAiSessionId(session_id);
         setIsInitialized(true);
-        
         console.log('=== AI SESSION INITIALIZATION COMPLETED ===');
         console.log('✅ /init response received:');
         console.log('  - question:', question);
@@ -81,7 +77,6 @@ const GiftPersonalizer = () => {
         console.log('=== END INITIALIZATION ===');
       } catch (error) {
         console.error('Failed to initialize AI session on page load:', error);
-        // Reset flags on error so user can retry
         hasInitializedRef.current = false;
         initializationInProgressRef.current = false;
       }
@@ -184,13 +179,7 @@ const GiftPersonalizer = () => {
 
           {/* Progress Bar */}
           {currentStep !== 'results' && (
-            <div className="mb-8">
-              <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                <span>Step {currentStep === 'basics' ? 1 : currentStep === 'interests' ? 2 : 3} of 3</span>
-                <span>{Math.round(progress)}% Complete</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
+            null
           )}
 
           {/* Step Content */}

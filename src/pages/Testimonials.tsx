@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useInView } from '@/lib/animations';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,8 @@ const testimonials = [
 const Testimonials = () => {
   const [heroRef, heroInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [testimonialsRef, testimonialsInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
+  const [playHikingVideo, setPlayHikingVideo] = useState(false);
+  const [playDiningVideo, setPlayDiningVideo] = useState(false);
 
   return (
     <main className="pt-10 sm:pt-16">
@@ -203,40 +205,83 @@ const Testimonials = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Video Placeholder 1 */}
             <div className="bg-gray-100 rounded-xl overflow-hidden aspect-video relative hover-lift">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/90 flex items-center justify-center">
-                  <div className="w-0 h-0 border-t-6 border-b-6 sm:border-t-8 sm:border-b-8 border-l-8 sm:border-l-12 border-t-transparent border-b-transparent border-l-primary ml-1"></div>
-                </div>
-              </div>
-              <img 
-                src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop"
-                alt="Adventure Experience Video" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-              <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white">
-                <h3 className="text-xl font-medium">Mountain Hiking Adventure</h3>
-                <p>Sarah & John's story</p>
-              </div>
+              {playHikingVideo ? (
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/1Xd9f_COHY0?autoplay=1"
+                  title="Mountain Hiking Adventure"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
+              ) : (
+                <button
+                  className="absolute inset-0 w-full h-full flex items-center justify-center focus:outline-none"
+                  onClick={() => setPlayHikingVideo(true)}
+                  aria-label="Play Mountain Hiking Adventure video"
+                  style={{ background: 'transparent', zIndex: 10 }}
+                >
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/90 flex items-center justify-center">
+                    <div className="w-0 h-0 border-t-6 border-b-6 sm:border-t-8 sm:border-b-8 border-l-8 sm:border-l-12 border-t-transparent border-b-transparent border-l-primary ml-1"></div>
+                  </div>
+                </button>
+              )}
+              {!playHikingVideo && (
+                <>
+                  <img 
+                    src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop"
+                    alt="Adventure Experience Video" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white">
+                    <h3 className="text-xl font-medium">Mountain Hiking Adventure</h3>
+                    <p>Sarah & John's story</p>
+                  </div>
+                </>
+              )}
             </div>
-            
             {/* Video Placeholder 2 */}
             <div className="bg-gray-100 rounded-xl overflow-hidden aspect-video relative hover-lift">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/90 flex items-center justify-center">
-                  <div className="w-0 h-0 border-t-6 border-b-6 sm:border-t-8 sm:border-b-8 border-l-8 sm:border-l-12 border-t-transparent border-b-transparent border-l-primary ml-1"></div>
-                </div>
-              </div>
-              <img 
-                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop"
-                alt="Dining Experience Video" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-              <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white">
-                <h3 className="text-xl font-medium">Fine Dining Experience</h3>
-                <p>Michael's 40th birthday celebration</p>
-              </div>
+              {playDiningVideo ? (
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/7pqP1dKF2V8?autoplay=1"
+                  title="Fine Dining Experience"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
+              ) : (
+                <button
+                  className="absolute inset-0 w-full h-full flex items-center justify-center focus:outline-none"
+                  onClick={() => setPlayDiningVideo(true)}
+                  aria-label="Play Fine Dining Experience video"
+                  style={{ background: 'transparent', zIndex: 10 }}
+                >
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/90 flex items-center justify-center">
+                    <div className="w-0 h-0 border-t-6 border-b-6 sm:border-t-8 sm:border-b-8 border-l-8 sm:border-l-12 border-t-transparent border-b-transparent border-l-primary ml-1"></div>
+                  </div>
+                </button>
+              )}
+              {!playDiningVideo && (
+                <>
+                  <img 
+                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop"
+                    alt="Dining Experience Video" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 text-white">
+                    <h3 className="text-xl font-medium">Fine Dining Experience</h3>
+                    <p>Michael's 40th birthday celebration</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

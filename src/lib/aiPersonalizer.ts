@@ -173,27 +173,24 @@ export const fetchNextQuestion = async (session_id?: string) => {
 };
 
 export const fetchSuggestions = async (tag = "", k = 5, session_id?: string) => {
-  // Fetch suggestions directly from Supabase
   try {
-    let supabaseQuery = supabase
-      .from('experiences')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(k);
-
-    // Filter by tags if provided (assuming tags is an array column)
-    if (tag) {
-      supabaseQuery = supabaseQuery.contains('tags', [tag]);
+    const url = `${API_BASE}/suggestion?session_id=${encodeURIComponent(session_id || "")}&tag=${encodeURIComponent(tag)}&k=${k}`;
+    const res = await fetchWithRetry(url, { method: 'GET' });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to fetch suggestions: ${res.status} ${res.statusText} - ${errorText}`);
     }
-
-    const { data, error } = await supabaseQuery;
-    if (error) {
-      console.error('Error fetching suggestions from Supabase:', error);
-      throw new Error('Failed to fetch suggestions from Supabase');
+    const responseText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error('Invalid JSON response from AI server');
     }
-    return data || [];
+    // Return the AI's output directly
+    return Array.isArray(data) ? data : (data.suggestions || data.results || []);
   } catch (error) {
-    console.error('Error fetching suggestions:', error);
+    console.error('Error fetching AI suggestions:', error);
     throw error;
   }
 };

@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import WishlistContent from '@/components/profile/WishlistContent';
 import ExperienceCard from '@/components/ExperienceCard';
@@ -20,6 +20,9 @@ import { useToast } from '@/components/ui/use-toast';
 import Papa from 'papaparse';
 import ImportContactsButton from '@/components/ImportContactsButton';
 import { Heart as HeartIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Star as StarIcon, Award, Gem, Medal, Diamond } from 'lucide-react';
+import { Dialog } from '@/components/ui/dialog';
 
 // Add this at the top of your file (or before using window.gapi)
 declare global {
@@ -62,6 +65,12 @@ const removeSavedExperience = (id) => {
 const GOOGLE_CLIENT_ID = '630365428319-iujdl046niv4hec0asllb3mcsluq9j3u.apps.googleusercontent.com'; // <-- Replace with your client ID
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/contacts.readonly';
 
+type UserMeta = {
+  full_name?: string;
+  avatar_url?: string;
+  username?: string;
+};
+
 const Profile = () => {
   const { user, logout } = useAuth();
   const { toggleWishlist } = useExperienceInteractions(user?.id);
@@ -79,9 +88,11 @@ const Profile = () => {
   // Add local state for wishlist to allow UI update on remove
   const [localWishlist, setLocalWishlist] = useState([]);
   // Wishlist from Supabase
-  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const [wishlistVersion, setWishlistVersion] = useState(0);
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id, wishlistVersion);
   const { bookingHistory, isLoading: isBookingHistoryLoading } = useBookingHistory(user?.id);
   const [referralCount, setReferralCount] = useState(0);
+  const [badgeMilestones, setBadgeMilestones] = useState([]);
   const [allExperiences, setAllExperiences] = useState([]);
   const { toast } = useToast();
   const [matchedFriends, setMatchedFriends] = useState([]);
@@ -90,6 +101,10 @@ const Profile = () => {
   const [connectionStatuses, setConnectionStatuses] = useState({});
   const [friends, setFriends] = useState([]);
   const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
+  const [unlockedBadge, setUnlockedBadge] = useState(null);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+
+  const meta = user?.user_metadata as UserMeta;
 
   // Merge matchedFriends and friends for People You May Know, ensuring uniqueness
   const allPeopleYouMayKnow = React.useMemo(() => {
@@ -267,6 +282,12 @@ const Profile = () => {
     setLocalWishlist(Array.isArray(wishlistExperiences) ? wishlistExperiences : []);
   }, [wishlistExperiences]);
 
+  useEffect(() => {
+    const handler = () => setWishlistVersion(v => v + 1);
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, []);
+
   // Load matchedFriends from localStorage on mount and when user changes
   useEffect(() => {
     if (user?.id) {
@@ -387,9 +408,12 @@ const Profile = () => {
           // Fetch experience details for these IDs
           const { data: experiences } = await supabase
             .from('experiences')
-            .select('id, title')
+            .select('id, title, image_url')
             .in('id', expIds);
-          allLikes[friend.id] = experiences || [];
+          allLikes[friend.id] = (experiences || []).map(exp => ({
+            ...exp,
+            imageUrl: exp.image_url,
+          }));
         } else {
           allLikes[friend.id] = [];
         }
@@ -419,7 +443,6 @@ const Profile = () => {
   // Profile info for header
   const profile = {
     name: user?.user_metadata?.full_name || editName || 'Jamie Smith',
-    username: user?.username || 'jamiesmith',
     avatar: user?.user_metadata?.avatar_url || editAvatar || '/placeholder.svg',
     email: user?.email || '',
   };
@@ -450,7 +473,8 @@ const Profile = () => {
   };
 
   const handleShareProfile = async () => {
-    const url = `${window.location.origin}/profile/${user?.username || user?.email?.split('@')[0]}`;
+const url = `${window.location.origin}/profile/${meta && 'username' in meta && meta.username ? meta.username : (user?.email ? user.email.split('@')[0] : '')}`;
+
     try {
       await navigator.clipboard.writeText(url);
       toast({ title: 'Profile link copied!', description: url });
@@ -475,14 +499,46 @@ const Profile = () => {
     // You can replace this with a real API call in the future
   }, []);
 
+  // Fetch real referral count from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('referrals')
+      .select('referred_user_id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .then(({ count }) => {
+        setReferralCount(count || 0);
+      });
+  }, [user]);
+
+  // Fetch badge milestones from Supabase
+  useEffect(() => {
+    supabase
+      .from('badges')
+      .select('*')
+      .order('milestone', { ascending: true })
+      .then(({ data }) => {
+        setBadgeMilestones(data || []);
+      });
+  }, []);
+
   // Stats (use local state for instant UI update)
   // Remove 'Bookings' stat and bookingHistory logic for stats
   const stats = [
-    { label: 'Experiences', value: viewedExperiences.length },
-    { label: 'Wishlist', value: localWishlist.length },
+    { label: 'Viewed', value: viewedExperiences.length },
+    { label: 'Liked', value: localWishlist.length },
     { label: 'Saved', value: savedExperiences.length },
     { label: 'Referrals', value: referralCount },
   ];
+
+  // Badge milestones
+  // const badgeMilestones = [
+  //   { label: 'Bronze', count: 5, icon: <Medal className="text-[#cd7f32]" /> },
+  //   { label: 'Silver', count: 10, icon: <Medal className="text-gray-400" /> },
+  //   { label: 'Gold', count: 25, icon: <Medal className="text-yellow-500" /> },
+  //   { label: 'Platinum', count: 50, icon: <Gem className="text-blue-400" /> },
+  //   { label: 'Diamond', count: 100, icon: <Diamond className="text-cyan-400" /> },
+  // ];
 
   // --- Recommended For You handlers ---
   const handleShareExperience = async (exp) => {
@@ -509,7 +565,45 @@ const Profile = () => {
     });
   };
 
+  const handleCopyReferralLink = () => {
+    const link = `${window.location.origin}/?ref=${user?.id}`;
+    navigator.clipboard.writeText(link).then(() => {
+      toast({ title: 'Referral link copied!', description: link });
+    });
+  };
+
   // Before rendering the people you may know list
+  useEffect(() => {
+    console.log('Current user ID:', user?.id);
+    console.log('Referral count:', referralCount);
+    console.log('Badge milestones:', badgeMilestones);
+  }, [user, referralCount, badgeMilestones]);
+
+  const prevReferralCount = useRef(referralCount);
+
+  useEffect(() => {
+    if (
+      referralCount > prevReferralCount.current &&
+      Array.isArray(badgeMilestones)
+    ) {
+      // Find the highest badge milestone just unlocked
+      const highestUnlockedBadge = [...badgeMilestones]
+        .filter(
+          (badge) =>
+            referralCount >= badge.milestone &&
+            prevReferralCount.current < badge.milestone
+        )
+        .pop(); // get the highest milestone crossed
+      if (highestUnlockedBadge) {
+        setUnlockedBadge(highestUnlockedBadge);
+        setShowBadgeModal(true);
+        // Auto-close after 3 seconds
+        setTimeout(() => setShowBadgeModal(false), 3000);
+      }
+    }
+    prevReferralCount.current = referralCount;
+  }, [referralCount, badgeMilestones]);
+
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-12">
       {/* Profile Header - formal, spaced, aligned */}
@@ -520,7 +614,13 @@ const Profile = () => {
           </div>
           <div className="flex-1 flex flex-col items-center md:items-start gap-1">
             <h1 className="text-2xl md:text-3xl font-bold mb-0 text-gray-900 tracking-tight leading-tight">{user?.user_metadata?.full_name || editName || 'Your Name'}</h1>
-            {user?.username && <p className="text-gray-500 text-base font-medium">@{user.username}</p>}
+{meta && 'username' in meta && meta.username && (
+  <p className="text-gray-500 text-base font-medium">@{meta.username}</p>
+)}
+{(!meta || !('username' in meta) || !meta.username) && user?.email && (
+  <p className="text-gray-500 text-base font-medium">@{user.email.split('@')[0]}</p>
+)}
+
           </div>
           <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-center">
             <Button className="bg-white text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-gray-100 transition shadow-sm border border-gray-300 text-sm" onClick={() => {
@@ -538,6 +638,7 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Main Content Area */}
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-14 mt-12">
         {/* Main Content Area */}
         <div className="md:w-2/3 flex flex-col gap-12">
@@ -576,13 +677,13 @@ const Profile = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {activeTab === 'liked' && (
               (Array.isArray(localWishlist) && localWishlist.length > 0) ? localWishlist.map((exp, idx) => (
-                <ExperienceCard key={exp.id} experience={exp} index={idx} isInWishlist={true} />
+                <ExperienceCard key={exp.id} experience={exp} index={idx} isInWishlist={true} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No liked experiences yet.</div>
             )}
             {activeTab === 'saved' && (
               (Array.isArray(savedExperiences) && savedExperiences.length > 0) ? savedExperiences.map((exp, idx) => (
                 <div key={exp.id} className="relative">
-                  <ExperienceCard experience={exp} index={idx} />
+                  <ExperienceCard experience={exp} index={idx} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
                   <Button size="icon" variant="ghost" className="absolute top-2 right-2 z-10" onClick={() => handleRemoveSaved(exp.id)} title="Remove from Saved">
                     <X className="h-5 w-5 text-gray-500" />
                   </Button>
@@ -591,13 +692,147 @@ const Profile = () => {
             )}
             {activeTab === 'viewed' && (
               (Array.isArray(viewedExperiences) && viewedExperiences.length > 0) ? viewedExperiences.map((exp, idx) => (
-                <ExperienceCard key={exp.id} experience={exp} index={idx} />
+                <ExperienceCard key={exp.id} experience={exp} index={idx} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No viewed experiences yet.</div>
             )}
           </div>
         </div>
         {/* Sidebar - formal, spaced, aligned */}
         <div className="md:w-1/3 flex flex-col gap-8">
+          {/* Referral Badges Slide Bar - card style */}
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-3 border border-gray-100">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-base font-semibold text-primary flex items-center gap-2">
+                <StarIcon className="h-5 w-5 text-yellow-400" />
+                Referral Badges
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={handleCopyReferralLink}
+              >
+                <Copy className="h-4 w-4" />
+                Copy Referral Link
+              </Button>
+            </div>
+            <div className="text-sm text-gray-700 font-medium mb-2 text-center">You have {referralCount} referral{referralCount === 1 ? '' : 's'}</div>
+            <div className="w-full overflow-x-auto">
+              <div className="flex gap-4 py-2 min-w-[500px]">
+                {Array.isArray(badgeMilestones) && badgeMilestones.length > 0 ? (
+                  badgeMilestones.map((badge) => {
+                    const achieved = referralCount >= badge.milestone;
+                    let icon = <span className="mb-2 text-6xl">🏅</span>;
+                    if (badge.name.toLowerCase() === 'bronze') {
+                      icon = (
+                        <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <radialGradient id="bronzeMedal" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="#ffe0b2" />
+                                <stop offset="100%" stopColor="#b87333" />
+                              </radialGradient>
+                            </defs>
+                            <circle cx="28" cy="28" r="22" fill="url(#bronzeMedal)" stroke="#a05a2c" strokeWidth="3" />
+                            <ellipse cx="28" cy="36" rx="10" ry="4" fill="#a05a2c" opacity="0.3" />
+                            <circle cx="28" cy="24" r="10" fill="#e2a76f" stroke="#fff7ed" strokeWidth="2" />
+                            <ellipse cx="28" cy="24" rx="6" ry="3" fill="#fff7ed" opacity="0.5" />
+                          </svg>
+                        </span>
+                      );
+                    } else if (badge.name.toLowerCase() === 'silver') {
+                      icon = (
+                        <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <radialGradient id="silverMedal" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="#f8fafc" />
+                                <stop offset="100%" stopColor="#6b7280" />
+                              </radialGradient>
+                            </defs>
+                            <circle cx="28" cy="28" r="22" fill="url(#silverMedal)" stroke="#6b7280" strokeWidth="3" />
+                            <ellipse cx="28" cy="36" rx="10" ry="4" fill="#6b7280" opacity="0.2" />
+                            <circle cx="28" cy="24" r="10" fill="#e0e7ef" stroke="#f1f5f9" strokeWidth="2" />
+                            <ellipse cx="28" cy="24" rx="6" ry="3" fill="#f1f5f9" opacity="0.5" />
+                          </svg>
+                        </span>
+                      );
+                    } else if (badge.name.toLowerCase() === 'gold') {
+                      icon = (
+                        <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <radialGradient id="goldMedal" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="#fffbe6" />
+                                <stop offset="100%" stopColor="#bfa100" />
+                              </radialGradient>
+                            </defs>
+                            <circle cx="28" cy="28" r="22" fill="url(#goldMedal)" stroke="#bfa100" strokeWidth="3" />
+                            <ellipse cx="28" cy="36" rx="10" ry="4" fill="#bfa100" opacity="0.2" />
+                            <circle cx="28" cy="24" r="10" fill="#ffe066" stroke="#fffbe6" strokeWidth="2" />
+                            <ellipse cx="28" cy="24" rx="6" ry="3" fill="#fffbe6" opacity="0.5" />
+                          </svg>
+                        </span>
+                      );
+                    } else if (badge.name.toLowerCase() === 'platinum') {
+                      icon = (
+                        <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <linearGradient id="platinumGradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#e0e7ef" />
+                                <stop offset="1" stopColor="#2563eb" />
+                              </linearGradient>
+                            </defs>
+                            <rect x="8" y="8" width="40" height="40" rx="12" fill="url(#platinumGradient)" stroke="#2563eb" strokeWidth="3" />
+                            <polygon points="28,16 36,36 20,36" fill="#fff" opacity="0.7" />
+                            <polygon points="28,16 32,36 24,36" fill="#60a5fa" opacity="0.5" />
+                            <polygon points="28,16 28,36 20,36" fill="#a5b4fc" opacity="0.5" />
+                          </svg>
+                        </span>
+                      );
+                    } else if (badge.name.toLowerCase() === 'diamond') {
+                      icon = (
+                        <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <linearGradient id="diamondGradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#b9f2ff" />
+                                <stop offset="0.5" stopColor="#e0e7ef" />
+                                <stop offset="1" stopColor="#8fd3f4" />
+                              </linearGradient>
+                            </defs>
+                            <polygon points="28,6 52,20 28,50 4,20" fill="url(#diamondGradient)" stroke="#5eead4" strokeWidth="2" />
+                            <polygon points="28,6 36,20 28,50 20,20" fill="#e0f7fa" opacity="0.7" />
+                            <polygon points="4,20 28,50 20,20" fill="#b9f2ff" opacity="0.5" />
+                            <polygon points="52,20 28,50 36,20" fill="#8fd3f4" opacity="0.5" />
+                            <polygon points="20,20 28,14 36,20 28,50" fill="#fff" opacity="0.3" />
+                          </svg>
+                        </span>
+                      );
+                    }
+                    return (
+                      <div
+                        key={badge.id}
+                        className={`flex flex-col items-center justify-center min-w-[150px] max-w-[150px] h-[170px] rounded-2xl border-2 shadow-lg px-6 py-5 transition-all duration-300 cursor-pointer hover:scale-110 hover:shadow-2xl active:scale-105 ${
+                          achieved
+                            ? 'border-primary text-primary bg-gradient-to-br from-primary/10 to-white'
+                            : 'border-gray-200 text-gray-400 bg-gray-50 opacity-80'
+                        }`}
+                      >
+                        {icon}
+                        <span className="font-bold text-lg mb-1 tracking-wide">{badge.name}</span>
+                        <span className="text-sm font-medium">{badge.milestone} Referrals</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-gray-400 text-center w-full">No badges defined yet.</div>
+                )}
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 mt-1 text-center">Earn badges as you refer more friends!</div>
+          </div>
           {/* Recommended For You */}
           <div className="bg-white rounded-2xl shadow p-5 flex flex-col gap-5 border border-gray-100 min-h-[220px]">
             <h2 className="font-semibold text-lg mb-2 text-gray-900">Recommended For You</h2>
@@ -675,7 +910,7 @@ const Profile = () => {
               return (
                 <div key={friend.id} className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                    <img src={friend.avatar_url} alt={friend.full_name} className="h-full w-full rounded-full object-cover" />
+                    <img src={friend.avatar_url || '/placeholder.svg'} alt={friend.full_name} className="h-full w-full rounded-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium mb-0.5 text-gray-800 truncate">{friend.full_name}</p>
@@ -844,7 +1079,13 @@ const Profile = () => {
             <div className="mb-6">
               <p className="text-gray-600 mb-4">Share your profile with friends</p>
               <div className="flex items-center bg-gray-100 rounded-lg p-3 mb-4">
-                <input type="text" value={`https://slash-experiences.netlify.app/profile/${profile.username}`} className="bg-transparent flex-1 outline-none text-gray-700" readOnly />
+<input
+  type="text"
+  value={`https://slash-experiences.netlify.app/profile/${meta?.username || user?.email?.split('@')[0] || ''}`}
+  className="bg-transparent flex-1 outline-none text-gray-700"
+  readOnly
+/>
+
                 <Button className="ml-2 text-primary" onClick={handleShareProfile}>Copy</Button>
               </div>
             </div>
@@ -855,6 +1096,137 @@ const Profile = () => {
               <Button variant="outline" className="flex-1">Email</Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Badge Unlock Modal */}
+      {showBadgeModal && unlockedBadge && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.4)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'fadeIn 0.3s',
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 24,
+            padding: 36,
+            minWidth: 320,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            textAlign: 'center',
+            animation: 'popIn 0.4s cubic-bezier(.68,-0.55,.27,1.55)',
+            position: 'relative',
+          }}>
+            <button onClick={() => setShowBadgeModal(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 24, color: '#888', cursor: 'pointer' }}>&times;</button>
+            {/* Badge Icon */}
+            {(() => {
+              let icon = <span className="mb-2 text-6xl">🏅</span>;
+              if (unlockedBadge.name.toLowerCase() === 'bronze') {
+                icon = (
+                  <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="bronzeMedal" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#ffe0b2" />
+                          <stop offset="100%" stopColor="#b87333" />
+                        </radialGradient>
+                      </defs>
+                      <circle cx="28" cy="28" r="22" fill="url(#bronzeMedal)" stroke="#a05a2c" strokeWidth="3" />
+                      <ellipse cx="28" cy="36" rx="10" ry="4" fill="#a05a2c" opacity="0.3" />
+                      <circle cx="28" cy="24" r="10" fill="#e2a76f" stroke="#fff7ed" strokeWidth="2" />
+                      <ellipse cx="28" cy="24" rx="6" ry="3" fill="#fff7ed" opacity="0.5" />
+                    </svg>
+                  </span>
+                );
+              } else if (unlockedBadge.name.toLowerCase() === 'silver') {
+                icon = (
+                  <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="silverMedal" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#f8fafc" />
+                          <stop offset="100%" stopColor="#6b7280" />
+                        </radialGradient>
+                      </defs>
+                      <circle cx="28" cy="28" r="22" fill="url(#silverMedal)" stroke="#6b7280" strokeWidth="3" />
+                      <ellipse cx="28" cy="36" rx="10" ry="4" fill="#6b7280" opacity="0.2" />
+                      <circle cx="28" cy="24" r="10" fill="#e0e7ef" stroke="#f1f5f9" strokeWidth="2" />
+                      <ellipse cx="28" cy="24" rx="6" ry="3" fill="#f1f5f9" opacity="0.5" />
+                    </svg>
+                  </span>
+                );
+              } else if (unlockedBadge.name.toLowerCase() === 'gold') {
+                icon = (
+                  <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="goldMedal" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#fffbe6" />
+                          <stop offset="100%" stopColor="#bfa100" />
+                        </radialGradient>
+                      </defs>
+                      <circle cx="28" cy="28" r="22" fill="url(#goldMedal)" stroke="#bfa100" strokeWidth="3" />
+                      <ellipse cx="28" cy="36" rx="10" ry="4" fill="#bfa100" opacity="0.2" />
+                      <circle cx="28" cy="24" r="10" fill="#ffe066" stroke="#fffbe6" strokeWidth="2" />
+                      <ellipse cx="28" cy="24" rx="6" ry="3" fill="#fffbe6" opacity="0.5" />
+                    </svg>
+                  </span>
+                );
+              } else if (unlockedBadge.name.toLowerCase() === 'platinum') {
+                icon = (
+                  <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="platinumGradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#e0e7ef" />
+                          <stop offset="1" stopColor="#2563eb" />
+                        </linearGradient>
+                      </defs>
+                      <rect x="8" y="8" width="40" height="40" rx="12" fill="url(#platinumGradient)" stroke="#2563eb" strokeWidth="3" />
+                      <polygon points="28,16 36,36 20,36" fill="#fff" opacity="0.7" />
+                      <polygon points="28,16 32,36 24,36" fill="#60a5fa" opacity="0.5" />
+                      <polygon points="28,16 28,36 20,36" fill="#a5b4fc" opacity="0.5" />
+                    </svg>
+                  </span>
+                );
+              } else if (unlockedBadge.name.toLowerCase() === 'diamond') {
+                icon = (
+                  <span className="mb-2 text-6xl" style={{ display: 'inline-block', width: '56px', height: '56px' }}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="diamondGradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#b9f2ff" />
+                          <stop offset="0.5" stopColor="#e0e7ef" />
+                          <stop offset="1" stopColor="#8fd3f4" />
+                        </linearGradient>
+                      </defs>
+                      <polygon points="28,6 52,20 28,50 4,20" fill="url(#diamondGradient)" stroke="#5eead4" strokeWidth="2" />
+                      <polygon points="28,6 36,20 28,50 20,20" fill="#e0f7fa" opacity="0.7" />
+                      <polygon points="4,20 28,50 20,20" fill="#b9f2ff" opacity="0.5" />
+                      <polygon points="52,20 28,50 36,20" fill="#8fd3f4" opacity="0.5" />
+                      <polygon points="20,20 28,14 36,20 28,50" fill="#fff" opacity="0.3" />
+                    </svg>
+                  </span>
+                );
+              }
+              return icon;
+            })()}
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: '18px 0 8px', color: '#2563eb' }}>Congratulations!</h2>
+            <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 8 }}>You unlocked the <span style={{ color: '#bfa100' }}>{unlockedBadge.name}</span> badge!</div>
+            <div style={{ fontSize: 16, color: '#666' }}>{unlockedBadge.milestone} Referrals</div>
+          </div>
+          {/* Animations */}
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
+          `}</style>
         </div>
       )}
     </div>

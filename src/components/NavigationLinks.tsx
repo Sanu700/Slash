@@ -78,13 +78,6 @@ export function NavigationLinks({
                   About Us
                 </Link>
                 <Link
-                  to="/careers"
-                  onClick={closeMobileMenu}
-                  className="block text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
-                >
-                  Careers
-                </Link>
-                <Link
                   to="/press"
                   onClick={closeMobileMenu}
                   className="block text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary"
@@ -170,16 +163,6 @@ export function NavigationLinks({
               className={dropdownItemClass}
             >
               About Us
-            </Link>
-            <Link
-              to="/careers"
-              onClick={() => {
-                setCompanyOpen(false);
-                scrollToTop();
-              }}
-              className={dropdownItemClass}
-            >
-              Careers
             </Link>
             <Link
               to="/press"

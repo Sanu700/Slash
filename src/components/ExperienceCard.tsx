@@ -4,7 +4,7 @@ import { Experience } from '@/lib/data';
 import { Heart, HeartIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useExperienceInteractions } from '@/hooks/useExperienceInteractions';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ExperienceMap from './ExperienceMap';
@@ -54,9 +54,12 @@ interface ExperienceCardProps {
   onWishlistChange?: (experienceId: string, isInWishlist: boolean) => void;
   isInWishlist?: boolean;
   index?: number;
+  openInNewTab?: boolean;
+  friends?: Array<{ id: string; full_name: string; avatar_url?: string }>;
+  friendsLikedExperiences?: Record<string, Array<{ id: string }>>;
 }
 
-const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWishlist = false, index }: ExperienceCardProps) => {
+const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWishlist = false, index, openInNewTab = false, friends = [], friendsLikedExperiences = {} }: ExperienceCardProps) => {
   const { user } = useAuth();
   const { toggleWishlist, isProcessing } = useExperienceInteractions(user?.id);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
@@ -105,14 +108,46 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   // Always use Bangalore as default if no city/address
   const BANGALORE_COORDS = { latitude: 12.9716, longitude: 77.5946 };
 
+  const [isWishlisted, setIsWishlisted] = useState(isInWishlist);
+
+  // Sync isWishlisted with localStorage/backend on mount and when experience.id changes
+  useEffect(() => {
+    if (!user) {
+      // Guest: check localStorage
+      const wishlist = localStorage.getItem('wishlist');
+      let wishlistArr = wishlist ? JSON.parse(wishlist) : [];
+      setIsWishlisted(wishlistArr.includes(experience.id));
+    } else {
+      // Logged in: fetch from backend (or use isInWishlist prop if up-to-date)
+      setIsWishlisted(!!isInWishlist);
+    }
+  }, [user, experience.id, isInWishlist]);
+
+  // Listen for wishlistUpdated event to re-fetch isWishlisted state
+  useEffect(() => {
+    const handler = () => {
+      if (!user) {
+        const wishlist = localStorage.getItem('wishlist');
+        let wishlistArr = wishlist ? JSON.parse(wishlist) : [];
+        setIsWishlisted(wishlistArr.includes(experience.id));
+      } else {
+        setIsWishlisted(!!isInWishlist);
+      }
+    };
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, [user, experience.id, isInWishlist]);
+
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
       toast.error('Please log in to save to your wishlist');
       return;
     }
-    await toggleWishlist(experience.id, isInWishlist, { [experience.id]: experience }, () => {
-      onWishlistChange?.(experience.id, !isInWishlist);
+    await toggleWishlist(experience.id, isWishlisted, { [experience.id]: experience }, () => {
+      setIsWishlisted((prev) => !prev);
+      onWishlistChange?.(experience.id, !isWishlisted);
+      window.dispatchEvent(new Event('wishlistUpdated'));
     });
   };
 
@@ -180,6 +215,21 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
     setImgSrc(experience.imageUrl || '/placeholder.svg');
   }, [experience.imageUrl]);
 
+  // Find friends who liked this experience
+  const friendsWhoLiked = friends.filter(friend => {
+    if (!friend || typeof friend !== 'object' || !friend.id) return false;
+    const liked = friendsLikedExperiences[friend.id];
+    if (Array.isArray(liked) && liked.length > 0) {
+      if (liked.every((v) => typeof v === 'string')) {
+        return (liked as string[]).includes(experience.id);
+      } else if (liked.every((v) => typeof v === 'object' && v !== null && 'id' in v)) {
+        return (liked as { id: string }[]).some(exp => exp.id === experience.id);
+      }
+    }
+    return false;
+  });
+  console.log('[DEBUG][ExperienceCard] friends:', friends, 'friendsLikedExperiences:', friendsLikedExperiences, 'experience.id:', experience.id, 'friendsWhoLiked:', friendsWhoLiked); // DEBUG LOG
+
   return (
     <>
       <div
@@ -215,11 +265,11 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
           {/* Wishlist icon, only visible on hover */}
           <button
             className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             onClick={handleToggleWishlist}
             disabled={isProcessing}
           >
-            {isInWishlist ? (
+            {isWishlisted ? (
               <HeartIcon className="h-5 w-5 text-red-500 fill-red-500 transition" />
             ) : (
               <Heart className="h-5 w-5 text-gray-300 group-hover:text-red-500 transition" />
@@ -234,6 +284,24 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
               {travelTime && <><Clock className="h-4 w-4 mr-1 text-primary" />{travelTime}</>}
               {travelTime && distance && <span className="mx-1">|</span>}
               {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
+            </div>
+          )}
+          {/* Liked by label and pfps below title */}
+          {friendsWhoLiked.length > 0 && (
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-xs text-green-600">Liked by</span>
+              {friendsWhoLiked.slice(0, 5).map(friend => (
+                <img
+                  key={friend.id}
+                  src={friend.avatar_url || '/placeholder.svg'}
+                  alt={friend.full_name}
+                  title={friend.full_name}
+                  className="h-6 w-6 rounded-full border border-gray-200 object-cover"
+                />
+              ))}
+              {friendsWhoLiked.length > 5 && (
+                <span className="text-xs text-gray-500 ml-1">+{friendsWhoLiked.length - 5}</span>
+              )}
             </div>
           )}
           {/* Name and price row */}
@@ -267,11 +335,27 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
             </DialogContent>
           </Dialog>
           {/* Minimal View Experience button */}
-          <Link to={`/experience/${experience.id}`}>
-            <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
+          {openInNewTab ? (
+            <a
+              href={`/experience/${experience.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block', width: '100%' }}
+            >
+              <Button size="sm" variant="outline" className="w-full mt-3 font-medium">
+                View Experience
+              </Button>
+            </a>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full mt-3 font-medium"
+              onClick={() => navigate(`/experience/${experience.id}`)}
+            >
               View Experience
             </Button>
-          </Link>
+          )}
         </div>
       </div>
     </>

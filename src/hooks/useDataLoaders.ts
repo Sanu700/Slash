@@ -119,7 +119,7 @@ export const useBookingHistory = (userId: string | undefined) => {
   return { bookingHistory, isLoading };
 };
 
-export const useWishlistExperiences = (userId: string | undefined) => {
+export const useWishlistExperiences = (userId: string | undefined, wishlistVersion: number = 0) => {
   const [wishlistExperiences, setWishlistExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -129,29 +129,23 @@ export const useWishlistExperiences = (userId: string | undefined) => {
         setIsLoading(false);
         return;
       }
-      
       try {
         const { data, error } = await supabase
           .from('wishlists')
           .select('experience_id, added_at')
           .eq('user_id', userId)
           .order('added_at', { ascending: false });
-          
         if (error) {
           throw error;
         }
-        
-        // Load experience details for each wishlist item
         if (data && data.length > 0) {
           const experiences = [];
-          
           for (const item of data) {
             const { data: expData, error: expError } = await supabase
               .from('experiences')
               .select('*')
               .eq('id', item.experience_id)
               .single();
-              
             if (!expError && expData) {
               const experience: Experience = {
                 id: expData.id,
@@ -171,12 +165,12 @@ export const useWishlistExperiences = (userId: string | undefined) => {
                 adventurous: expData.adventurous || false,
                 group: expData.group_activity || false
               };
-              
               experiences.push(experience);
             }
           }
-          
           setWishlistExperiences(experiences);
+        } else {
+          setWishlistExperiences([]);
         }
       } catch (error) {
         console.error('Error loading wishlist:', error);
@@ -184,10 +178,8 @@ export const useWishlistExperiences = (userId: string | undefined) => {
         setIsLoading(false);
       }
     };
-    
     loadWishlist();
-  }, [userId]);
-
+  }, [userId, wishlistVersion]);
   return { wishlistExperiences, isLoading };
 };
 
