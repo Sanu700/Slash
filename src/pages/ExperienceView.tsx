@@ -452,8 +452,10 @@ const ExperienceView = () => {
         
         {/* Main Content Section */}
         <div className="container max-w-3xl mx-auto px-4 py-8 flex flex-col items-center justify-center">
-            <div className="flex flex-col items-center w-full text-center">
-              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center break-words">{experience.title}</h1>
+
+          <div className="flex flex-col items-center w-full text-center">
+            <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center break-words">{experience.title}</h1>
+
               <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
                 <Button
                   onClick={toggleWishlist}
@@ -538,34 +540,60 @@ const ExperienceView = () => {
               {similarExperiences.length > 0 && (
                 <div className="mt-12">
                   <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                    {similarExperiences.map((exp, idx) => (
-                      <ExperienceCard 
-                        key={exp.id} 
-                        experience={exp} 
-                        index={idx} 
-                        isInWishlist={wishlistIds.includes(exp.id)}
-                        onWishlistChange={(experienceId, newIsInWishlist) => {
-                          setWishlistIds(prev => {
-                            if (newIsInWishlist) {
-                              return [...prev, experienceId];
-                            } else {
-                              return prev.filter(id => id !== experienceId);
-                            }
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
+                  {similarExperiences.length === 1 ? (
+                    <div className="flex justify-center">
+                      <div className="w-[346.66px] h-auto">
+                        <ExperienceCard 
+                          key={similarExperiences[0].id} 
+                          experience={similarExperiences[0]} 
+                          index={0} 
+                          isInWishlist={wishlistIds.includes(similarExperiences[0].id)}
+                          onWishlistChange={(experienceId, newIsInWishlist) => {
+                            setWishlistIds(prev => {
+                              if (newIsInWishlist) {
+                                return [...prev, experienceId];
+                              } else {
+                                return prev.filter(id => id !== experienceId);
+                              }
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                      {similarExperiences.map((exp, idx) => (
+                        <ExperienceCard 
+                          key={exp.id} 
+                          experience={exp} 
+                          index={idx} 
+                          isInWishlist={wishlistIds.includes(exp.id)}
+                          onWishlistChange={(experienceId, newIsInWishlist) => {
+                            setWishlistIds(prev => {
+                              if (newIsInWishlist) {
+                                return [...prev, experienceId];
+                              } else {
+                                return prev.filter(id => id !== experienceId);
+                              }
+                            });
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Right Column - Booking Card (desktop) */}
+            {/* Removed right column booking card */}
+          </div>
+          <LoginModal 
+            isOpen={showLoginModal} 
+            onClose={() => setShowLoginModal(false)} 
+          />
+
         </div>
-      </div>
-      <LoginModal 
-        isOpen={showLoginModal} 
-        onClose={() => setShowLoginModal(false)} 
-      />
     </>
   );
 };

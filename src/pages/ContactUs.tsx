@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,46 @@ import { Link } from 'react-router-dom';
 const ContactUs = () => {
   const [heroRef, heroInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
   const [formRef, formInView] = useInView<HTMLDivElement>({ threshold: 0.1 });
+
+  // Form state
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess('');
+    setError('');
+    try {
+      const res = await fetch('/api/send-contact-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSuccess('Your message has been sent!');
+        setForm({ firstName: '', lastName: '', email: '', subject: '', message: '' });
+      } else {
+        setError('Failed to send message. Please try again later.');
+      }
+    } catch (err) {
+      setError('Failed to send message. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -27,7 +67,7 @@ const ContactUs = () => {
             <div className="flex flex-wrap gap-6 mt-8">
               <div className="flex items-center">
                 <Phone className="w-5 h-5 mr-2" />
-                <span>+1 (555) 123-4567</span>
+                <span>8468951580, 8076586928, 9007488827</span>
               </div>
               <div className="flex items-center">
                 <Mail className="w-5 h-5 mr-2" />
@@ -99,36 +139,33 @@ const ContactUs = () => {
               formInView ? "opacity-100" : "opacity-0 translate-y-8"
             )}>
               <h2 className="text-2xl font-medium mb-6">Send Us a Message</h2>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label htmlFor="firstName" className="text-sm font-medium">
                       First Name
                     </label>
-                    <Input id="firstName" placeholder="Enter your first name" />
+                    <Input id="firstName" placeholder="Enter your first name" value={form.firstName} onChange={handleChange} required />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="lastName" className="text-sm font-medium">
                       Last Name
                     </label>
-                    <Input id="lastName" placeholder="Enter your last name" />
+                    <Input id="lastName" placeholder="Enter your last name" value={form.lastName} onChange={handleChange} required />
                   </div>
                 </div>
-                
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium">
                     Email Address
                   </label>
-                  <Input id="email" type="email" placeholder="Enter your email address" />
+                  <Input id="email" type="email" placeholder="Enter your email address" value={form.email} onChange={handleChange} required />
                 </div>
-                
                 <div className="space-y-2">
                   <label htmlFor="subject" className="text-sm font-medium">
                     Subject
                   </label>
-                  <Input id="subject" placeholder="What is your message regarding?" />
+                  <Input id="subject" placeholder="What is your message regarding?" value={form.subject} onChange={handleChange} required />
                 </div>
-                
                 <div className="space-y-2">
                   <label htmlFor="message" className="text-sm font-medium">
                     Message
@@ -137,10 +174,14 @@ const ContactUs = () => {
                     id="message" 
                     placeholder="How can we help you?" 
                     className="min-h-[120px]"
+                    value={form.message}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
-                
-                <Button type="submit" className="w-full">Send Message</Button>
+                {success && <div className="text-green-600 font-medium">{success}</div>}
+                {error && <div className="text-red-600 font-medium">{error}</div>}
+                <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Sending...' : 'Send Message'}</Button>
               </form>
             </div>
             
@@ -158,11 +199,18 @@ const ContactUs = () => {
                   </div>
                   <div>
                     <h3 className="font-medium mb-1">Phone</h3>
-                    <p className="text-muted-foreground">
-                      Aryan Jain - 8468951580<br />
-                      Apoorv Kakar - 8076586928<br />
-                      Kaushal Rathi - 9007488827
-                    </p>
+                    <div className="text-muted-foreground flex flex-row gap-8">
+                      <div className="flex flex-col">
+                        <span>Aryan Jain</span>
+                        <span>Apoorv Kakar</span>
+                        <span>Kaushal Rathi</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span>8468951580</span>
+                        <span>8076586928</span>
+                        <span>9007488827</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
