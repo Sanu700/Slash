@@ -220,10 +220,10 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
     if (!friend || typeof friend !== 'object' || !friend.id) return false;
     const liked = friendsLikedExperiences[friend.id];
     if (Array.isArray(liked) && liked.length > 0) {
-      if (typeof liked[0] === 'string') {
-        return liked.includes(experience.id);
-      } else if (typeof liked[0] === 'object' && liked[0] !== null) {
-        return liked.some((exp: any) => typeof exp === 'object' && exp.id === experience.id);
+      if (liked.every((v) => typeof v === 'string')) {
+        return (liked as string[]).includes(experience.id);
+      } else if (liked.every((v) => typeof v === 'object' && v !== null && 'id' in v)) {
+        return (liked as { id: string }[]).some(exp => exp.id === experience.id);
       }
     }
     return false;
@@ -286,21 +286,21 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
               {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
             </div>
           )}
-          {/* Liked by label and pfps below title, visually lighter */}
+          {/* Liked by label and pfps below title */}
           {friendsWhoLiked.length > 0 && (
             <div className="flex items-center gap-1 mb-1">
-              <span className="text-xs text-gray-400 font-normal">Liked by</span>
+              <span className="text-xs text-green-600">Liked by</span>
               {friendsWhoLiked.slice(0, 5).map(friend => (
                 <img
                   key={friend.id}
                   src={friend.avatar_url || '/placeholder.svg'}
                   alt={friend.full_name}
                   title={friend.full_name}
-                  className="h-5 w-5 rounded-full border border-gray-200 object-cover opacity-80"
+                  className="h-6 w-6 rounded-full border border-gray-200 object-cover"
                 />
               ))}
               {friendsWhoLiked.length > 5 && (
-                <span className="text-xs text-gray-400 ml-1">+{friendsWhoLiked.length - 5}</span>
+                <span className="text-xs text-gray-500 ml-1">+{friendsWhoLiked.length - 5}</span>
               )}
             </div>
           )}

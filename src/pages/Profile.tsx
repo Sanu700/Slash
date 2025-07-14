@@ -72,7 +72,7 @@ type UserMeta = {
 };
 
 const Profile = () => {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout } = useAuth();
   const { toggleWishlist } = useExperienceInteractions(user?.id);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('liked');
