@@ -39,7 +39,13 @@ function getValidImgSrc(src: any) {
   return src;
 }
 
-const ExperienceView = () => {
+// Accept friends and friendsLikedExperiences as optional props
+interface ExperienceViewProps {
+  friends?: any[];
+  friendsLikedExperiences?: Record<string, any>;
+}
+
+const ExperienceView: React.FC<ExperienceViewProps> = ({ friends: propsFriends, friendsLikedExperiences: propsFriendsLikedExperiences }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart, items, updateQuantity } = useCart();
@@ -64,8 +70,10 @@ const ExperienceView = () => {
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [isSavedForLater, setIsSavedForLater] = useState(false);
-  const [friends, setFriends] = useState([]);
-  const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
+  // --- Friends and their liked experiences logic (copied from Profile) ---
+  // Use props if provided, otherwise use local state
+  const [friends, setFriends] = useState<any[]>(propsFriends || []);
+  const [friendsLikedExperiences, setFriendsLikedExperiences] = useState<Record<string, any>>(propsFriendsLikedExperiences || {});
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -458,8 +466,10 @@ const ExperienceView = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }, []);
   
-  // Fetch friends (copy from Profile)
+  // Revert to previous friends and friendsLikedExperiences logic (before Profile.tsx copy)
+  // Only fetch if not provided by props
   useEffect(() => {
+    if (propsFriends) return;
     if (!user?.id) return;
     (async () => {
       const { data } = await supabase
@@ -467,23 +477,21 @@ const ExperienceView = () => {
         .select('from_user_id, to_user_id')
         .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
         .eq('status', 'accepted');
-      console.log('[DEBUG] Fetched connections:', data); // DEBUG LOG
       if (!data) return setFriends([]);
       const friendIds = data.map(conn =>
         conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
       );
-      console.log('[DEBUG] Friend IDs:', friendIds); // DEBUG LOG
       if (friendIds.length === 0) return setFriends([]);
       const { data: profiles } = await supabase
         .from('profiles_with_email')
         .select('id, full_name, avatar_url, username')
         .in('id', friendIds);
-      console.log('[DEBUG] Friend profiles:', profiles); // DEBUG LOG
       setFriends(profiles || []);
     })();
-  }, [user?.id]);
-  // Fetch friends' liked experiences
+  }, [user?.id, propsFriends]);
+
   useEffect(() => {
+    if (propsFriendsLikedExperiences) return;
     async function fetchFriendsLikes() {
       if (!friends.length) {
         setFriendsLikedExperiences({});
@@ -497,13 +505,11 @@ const ExperienceView = () => {
           .eq('user_id', friend.id);
         const expIds = (wishlist || []).map(w => w.experience_id).filter(Boolean);
         allLikes[friend.id] = expIds;
-        console.log(`[DEBUG] Friend ${friend.full_name} (${friend.id}) liked experiences:`, expIds); // DEBUG LOG
       }
       setFriendsLikedExperiences(allLikes);
-      console.log('[DEBUG] All friendsLikedExperiences:', allLikes); // DEBUG LOG
     }
     fetchFriendsLikes();
-  }, [friends]);
+  }, [friends, propsFriendsLikedExperiences]);
 
   if (loading) {
     return (
@@ -626,19 +632,23 @@ const ExperienceView = () => {
                 </Button>
               </div>
               {friendsWhoLiked.length > 0 && (
-                <div className="flex items-center gap-1 mb-2">
-                  <span className="text-green-600 text-sm font-medium">Liked by</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-gray-400 font-normal">Liked by</span>
                   {friendsWhoLiked.slice(0, 5).map(friend => (
-                    <img
-                      key={friend.id}
-                      src={friend.avatar_url || '/placeholder.svg'}
-                      alt={friend.full_name}
-                      title={friend.full_name}
-                      className="h-7 w-7 rounded-full border border-gray-200 object-cover"
-                    />
+                    <div key={friend.id} className="flex items-center gap-1">
+                      <img
+                        src={friend.avatar_url || '/placeholder.svg'}
+                        alt={friend.full_name}
+                        title={friend.full_name}
+                        className="h-5 w-5 rounded-full border border-gray-200 object-cover opacity-80"
+                      />
+                      <span className="text-xs text-gray-500 font-normal">
+                        {friend.username ? `@${friend.username}` : friend.full_name}
+                      </span>
+                    </div>
                   ))}
                   {friendsWhoLiked.length > 5 && (
-                    <span className="text-xs text-gray-500 ml-1">+{friendsWhoLiked.length - 5}</span>
+                    <span className="text-xs text-gray-400 ml-1">+{friendsWhoLiked.length - 5}</span>
                   )}
                 </div>
               )}

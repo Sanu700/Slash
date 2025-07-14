@@ -286,21 +286,21 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
               {distance && <><MapPin className="h-4 w-4 mr-1 text-primary" />{distance}</>}
             </div>
           )}
-          {/* Liked by label and pfps below title */}
+          {/* Liked by label and pfps below title, visually lighter */}
           {friendsWhoLiked.length > 0 && (
             <div className="flex items-center gap-1 mb-1">
-              <span className="text-xs text-green-600">Liked by</span>
+              <span className="text-xs text-gray-400 font-normal">Liked by</span>
               {friendsWhoLiked.slice(0, 5).map(friend => (
                 <img
                   key={friend.id}
                   src={friend.avatar_url || '/placeholder.svg'}
                   alt={friend.full_name}
                   title={friend.full_name}
-                  className="h-6 w-6 rounded-full border border-gray-200 object-cover"
+                  className="h-5 w-5 rounded-full border border-gray-200 object-cover opacity-80"
                 />
               ))}
               {friendsWhoLiked.length > 5 && (
-                <span className="text-xs text-gray-500 ml-1">+{friendsWhoLiked.length - 5}</span>
+                <span className="text-xs text-gray-400 ml-1">+{friendsWhoLiked.length - 5}</span>
               )}
             </div>
           )}
