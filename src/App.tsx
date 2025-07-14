@@ -27,7 +27,6 @@ import SwipeAISuggestions from "./pages/SwipeAISuggestions";
 // Company Pages
 import AboutUs from "./pages/AboutUs";
 import Testimonials from "./pages/Testimonials";
-import Careers from "./pages/Careers";
 import Press from "./pages/Press";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -80,7 +79,6 @@ function App() {
                     {/* Company Pages */}
                     <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
                     <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />
-                    <Route path="/careers" element={<Layout><Careers /></Layout>} />
                     <Route path="/press" element={<Layout><Press /></Layout>} />
                     <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
                     <Route path="/terms" element={<Layout><Terms /></Layout>} />
