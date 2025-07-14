@@ -484,26 +484,22 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Link to="/about-us" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">About Us</div>
+                  <DropdownMenuItem onClick={() => navigate('/about-us')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">About Us</div>
                     <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
-                  </Link>
-                  <Link to="/testimonials" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Testimonials</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/testimonials')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Testimonials</div>
                     <p className="text-sm text-muted-foreground">What our customers say about us</p>
-                  </Link>
-                  <Link to="/careers" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Careers</div>
-                    <p className="text-sm text-muted-foreground">Join our growing team</p>
-                  </Link>
-                  <Link to="/press" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Press</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/press')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Press</div>
                     <p className="text-sm text-muted-foreground">Media coverage and press releases</p>
-                  </Link>
-                  <Link to="/privacy" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Privacy Policy</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/privacy')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Privacy Policy</div>
                     <p className="text-sm text-muted-foreground">Read our privacy policy</p>
-                  </Link>
+                  </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -516,14 +512,14 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Link to="/contact" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Contact Us</div>
+                  <DropdownMenuItem onClick={() => navigate('/contact')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Contact Us</div>
                     <p className="text-sm text-muted-foreground">Get in touch with our support team</p>
-                  </Link>
-                  <Link to="/faq" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">FAQ</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/faq')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">FAQ</div>
                     <p className="text-sm text-muted-foreground">Frequently asked questions</p>
-                  </Link>
+                  </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -731,7 +727,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
                   <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
-                  <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
                   <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
                   <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
                 </div>

@@ -68,7 +68,6 @@ const Footer = () => {
       links: [
         { name: "About Us", href: "/about-us" },
         { name: "Testimonials", href: "/testimonials" },
-        { name: "Careers", href: "/careers" },
         { name: "Press", href: "/press" }
       ]
     },
