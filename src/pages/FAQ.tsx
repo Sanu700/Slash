@@ -28,6 +28,7 @@ const FAQ = () => {
         // Extract categories
         const categoryList = Object.keys(faqData);
         setCategories(categoryList);
+        setFaqsByCategory(faqData);
         
         // Set initial active category
         if (categoryList.length > 0 && !activeCategory) {
@@ -111,28 +112,7 @@ const FAQ = () => {
             </div>
           ) : (
             <div className="flex flex-col lg:flex-row gap-10">
-              {/* Categories Sidebar */}
-              {!searchQuery && categories.length > 0 && (
-                <div className="lg:w-1/4">
-                  <h2 className="text-xl font-medium mb-6">Categories</h2>
-                  <div className="space-y-2">
-                    {categories.map(category => (
-                      <button
-                        key={category}
-                        onClick={() => setActiveCategory(category)}
-                        className={cn(
-                          "block w-full text-left px-4 py-2 rounded-lg transition-colors",
-                          activeCategory === category
-                            ? "bg-primary text-white"
-                            : "hover:bg-secondary/50"
-                        )}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              
               
               {/* FAQ Questions */}
               <div className={searchQuery || categories.length === 0 ? "w-full" : "lg:w-3/4"}>
@@ -232,9 +212,7 @@ const FAQ = () => {
             <Button size="lg" asChild>
               <Link to="/contact">Contact Support</Link>
             </Button>
-            <Button size="lg" variant="outline">
-              Live Chat
-            </Button>
+           
           </div>
         </div>
       </section>
