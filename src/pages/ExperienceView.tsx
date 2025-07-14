@@ -451,11 +451,9 @@ const ExperienceView = () => {
         </div>
         
         {/* Main Content Section */}
-        <div className="container max-w-6xl mx-auto px-4 md:px-10 py-8 md:py-12 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center w-full">
-            {/* Left Column - Experience Details */}
-            <div className="lg:col-span-2 mx-auto text-center">
-              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center">{experience.title}</h1>
+        <div className="container max-w-3xl mx-auto px-4 py-8 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center w-full text-center">
+            <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center break-words">{experience.title}</h1>
               <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
                 <Button
                   onClick={toggleWishlist}
@@ -587,12 +585,11 @@ const ExperienceView = () => {
             {/* Right Column - Booking Card (desktop) */}
             {/* Removed right column booking card */}
           </div>
+          <LoginModal 
+            isOpen={showLoginModal} 
+            onClose={() => setShowLoginModal(false)} 
+          />
         </div>
-      </div>
-      <LoginModal 
-        isOpen={showLoginModal} 
-        onClose={() => setShowLoginModal(false)} 
-      />
     </>
   );
 };
