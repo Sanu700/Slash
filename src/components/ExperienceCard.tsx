@@ -15,6 +15,13 @@ import { MapPin, Clock } from 'lucide-react';
 import { CITY_COORDINATES } from './CitySelector';
 
 import { TravelInfoDisplay } from './TravelInfoDisplay';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from '@/components/ui/carousel';
 
 // Array of fallback images for variety
 const FALLBACK_IMAGES = [
@@ -251,20 +258,44 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
       >
         {/* Image section */}
         <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
-          <img
-            src={getValidImgSrc(imgSrc)}
-            alt={experience.title}
-            className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
-            onError={e => {
-              e.currentTarget.onerror = null;
-              setImgSrc('/placeholder.svg');
-              setImgError(true);
-            }}
-            onLoad={() => setImgError(false)}
-          />
+          {Array.isArray(experience.imageUrl) && experience.imageUrl.length > 1 ? (
+            <Carousel className="w-full h-full">
+              <CarouselContent>
+                {experience.imageUrl.map((img, idx) => (
+                  <CarouselItem key={idx} className="w-full h-full">
+                    <img
+                      src={getValidImgSrc(img)}
+                      alt={experience.title}
+                      className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
+                      onError={e => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/placeholder.svg';
+                        setImgError(true);
+                      }}
+                      onLoad={() => setImgError(false)}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80" />
+              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/80" />
+            </Carousel>
+          ) : (
+            <img
+              src={getValidImgSrc(imgSrc)}
+              alt={experience.title}
+              className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${imgError ? 'border-4 border-red-500' : ''}`}
+              onError={e => {
+                e.currentTarget.onerror = null;
+                setImgSrc('/placeholder.svg');
+                setImgError(true);
+              }}
+              onLoad={() => setImgError(false)}
+            />
+          )}
           {/* Wishlist icon, only visible on hover */}
           <button
-            className="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-4 right-4 z-20 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
             title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             onClick={handleToggleWishlist}
             disabled={isProcessing}

@@ -324,7 +324,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
 
   if (standalone) {
     return (
-      <div className="w-80 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
+      <div className="w-[28rem] p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
         {/* Header with clear messaging */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
           <div className="flex items-center gap-2 mb-2">
@@ -367,7 +367,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                       placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
                       value={address}
                       onChange={e => setAddress(e.target.value)}
-                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                     />
                   </Autocomplete>
                 )}
@@ -550,7 +550,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           <ChevronDown className="ml-1 h-4 w-4 text-gray-400" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
+      <DropdownMenuContent className="w-[28rem] p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
         {/* Header with clear messaging */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
           <div className="flex items-center gap-2 mb-2">
@@ -593,7 +593,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                       placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
                       value={address}
                       onChange={e => setAddress(e.target.value)}
-                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                     />
                   </Autocomplete>
                 )}
