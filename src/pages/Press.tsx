@@ -37,7 +37,7 @@ const mediaReleases = [
     title: 'I don\'t buy my kids gifts to unwrap - I buy them experiences',
     publication: 'The Daily Telegraph',
     date: 'Nov 19, 2024',
-    image: '/dailytelegraph.svg',
+    image: '/media_images/daily-telegraph-article.png',
     link: 'https://www.dailytelegraph.com.au/lifestyle/parenting/i-dont-buy-my-kids-gifts-to-unwrap-i-buy-them-experiences/news-story/eb8b92cea7033771aac1f3708a0301b6?utm_source=chatgpt.com'
   },
   {
@@ -45,7 +45,7 @@ const mediaReleases = [
     title: 'One thing you need to do with your cash',
     publication: 'news.com.au',
     date: 'Dec 13, 2024',
-    image: 'https://www.news.com.au/content/dam/images/1/5/0/3/5/0/image.related.articleLeadwide.620x349.150350.png/1688889600018.jpg',
+    image: '/media_images/news.com.au.png',
     link: 'https://www.news.com.au/finance/money/wealth/proof-money-really-can-buy-happiness/news-story/3d6847d3b047921553f270ee0811c1fd?utm_source=chatgpt.com'
   },
   {
@@ -53,7 +53,7 @@ const mediaReleases = [
     title: 'My parents gave my son an experience rather than a toy for his birthday. It was a game changer',
     publication: 'Business Insider',
     date: 'Apr 29, 2025',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Business_Insider_logo.svg/1200px-Business_Insider_logo.svg.png',
+    image: '/media_images/business_insider.png',
     link: 'https://www.businessinsider.com/grandparents-birthday-gift-experiences-instead-of-toys-2025-4?utm_source=chatgpt.com'
   }
 ];
@@ -189,8 +189,8 @@ const Press = () => {
                     mediaInView ? 'opacity-100' : 'opacity-0 translate-y-8'
                   )}
                 >
-                  <div className="h-32 p-6 flex items-center justify-center bg-gray-100">
-                    <img src={media.image} alt={media.publication} className="max-h-full max-w-full object-contain" />
+                  <div className="w-full aspect-video bg-gray-100 overflow-hidden flex items-center justify-center">
+                    <img src={media.image} alt={media.publication} className="w-full h-full object-cover" />
                   </div>
                   <div className="p-6">
                     <div className="text-sm text-muted-foreground mb-2 flex justify-between">
@@ -205,46 +205,6 @@ const Press = () => {
                   </div>
                 </a>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Brand Assets */}
-        <section className="py-16 md:py-24">
-          <div className="container max-w-6xl mx-auto px-6 md:px-10">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-medium mb-4">Brand Assets</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Official logos, images, and brand guidelines for media use
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Logo Pack */}
-              <BrandCard
-                title="Logo Pack"
-                description="Official logo in various formats (PNG, SVG, EPS) with light and dark variations."
-                image="/logos.zip"
-                downloadUrl="/logos.zip"
-                downloadText="Download Logos"
-              />
-
-              {/* Product Images */}
-              <BrandCard
-                title="Product Images"
-                description="High-resolution screenshots and product images for media use."
-                image="/images.zip"
-                downloadUrl="/images.zip"
-                downloadText="Download Images"
-              />
-
-              {/* Brand Guidelines */}
-              <BrandCard
-                title="Brand Guidelines"
-                description="Comprehensive guide for proper brand usage, colors, typography, and tone of voice."
-                image="/brand-guidelines.pdf"
-                downloadUrl="/brand-guidelines.pdf"
-                downloadText="Download PDF"
-              />
             </div>
           </div>
         </section>

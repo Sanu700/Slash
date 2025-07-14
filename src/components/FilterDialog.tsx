@@ -244,6 +244,44 @@ export function FilterDialog({ isOpen, onClose, onApply, initialFilters }: Filte
             {/* Price Range */}
             <div className="space-y-4">
               <Label>Price Range</Label>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="priceRange"
+                    checked={filters.priceRange[0] === 0 && filters.priceRange[1] === 1000}
+                    onChange={() => setFilters(prev => ({ ...prev, priceRange: [0, 1000] }))}
+                  />
+                  ₹0 - ₹1,000
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="priceRange"
+                    checked={filters.priceRange[0] === 1000 && filters.priceRange[1] === 2000}
+                    onChange={() => setFilters(prev => ({ ...prev, priceRange: [1000, 2000] }))}
+                  />
+                  ₹1,000 - ₹2,000
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="priceRange"
+                    checked={filters.priceRange[0] === 2000 && filters.priceRange[1] === 3000}
+                    onChange={() => setFilters(prev => ({ ...prev, priceRange: [2000, 3000] }))}
+                  />
+                  ₹2,000 - ₹3,000
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="priceRange"
+                    checked={filters.priceRange[0] === 3000 && filters.priceRange[1] === 100000}
+                    onChange={() => setFilters(prev => ({ ...prev, priceRange: [3000, 100000] }))}
+                  />
+                  ₹3,000+
+                </label>
+              </div>
               <Slider
                 value={filters.priceRange}
                 min={minPrice}
