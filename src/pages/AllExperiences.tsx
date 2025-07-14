@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useWishlistExperiences } from '@/hooks/useDataLoaders';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 // Add distance filter options
 const DISTANCE_FILTERS = [
@@ -76,6 +77,50 @@ const AllExperiences = () => {
   const user = rawUser && isValidUUID(rawUser.id) ? rawUser : { id: fallbackUserId };
   const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
   const [localWishlist, setLocalWishlist] = useState<string[]>([]);
+  const [friends, setFriends] = useState([]);
+  const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
+
+  // Fetch friends (copy from Profile)
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from('connections')
+        .select('from_user_id, to_user_id')
+        .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+      if (!data) return setFriends([]);
+      const friendIds = data.map(conn =>
+        conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
+      );
+      if (friendIds.length === 0) return setFriends([]);
+      const { data: profiles } = await supabase
+        .from('profiles_with_email')
+        .select('id, full_name, avatar_url')
+        .in('id', friendIds);
+      setFriends(profiles || []);
+    })();
+  }, [user?.id]);
+  // Fetch friends' liked experiences
+  useEffect(() => {
+    async function fetchFriendsLikes() {
+      if (!friends.length) {
+        setFriendsLikedExperiences({});
+        return;
+      }
+      const allLikes = {};
+      for (const friend of friends) {
+        const { data: wishlist } = await supabase
+          .from('wishlists')
+          .select('experience_id')
+          .eq('user_id', friend.id);
+        const expIds = (wishlist || []).map(w => w.experience_id).filter(Boolean);
+        allLikes[friend.id] = expIds;
+      }
+      setFriendsLikedExperiences(allLikes);
+    }
+    fetchFriendsLikes();
+  }, [friends]);
 
   // Get location from query param
   const query = new URLSearchParams(location.search);
@@ -372,6 +417,8 @@ const AllExperiences = () => {
             experience={{ ...exp }}
             isInWishlist={inWishlist}
             onWishlistChange={handleWishlistChange}
+            friends={friends}
+            friendsLikedExperiences={friendsLikedExperiences}
           />
         ) };
       }
@@ -429,12 +476,14 @@ const AllExperiences = () => {
             experience={{ ...exp }}
             isInWishlist={inWishlist}
             onWishlistChange={handleWishlistChange}
+            friends={friends}
+            friendsLikedExperiences={friendsLikedExperiences}
           />
         )
       };
     });
     return [...groupCardEntries, ...ungroupedCardEntries];
-  }, [groupedExperiences, ungroupedExperiences, navigate, localWishlist]);
+  }, [groupedExperiences, ungroupedExperiences, navigate, localWishlist, friends, friendsLikedExperiences]);
 
   // Pagination for all cards
   const cardsPerPage = 9;

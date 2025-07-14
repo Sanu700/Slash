@@ -63,6 +63,8 @@ const ExperienceView = () => {
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [friends, setFriends] = useState([]);
+  const [friendsLikedExperiences, setFriendsLikedExperiences] = useState({});
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -381,6 +383,53 @@ const ExperienceView = () => {
     fetchWishlist();
   }, [user, wishlistLocal]);
   
+  // Fetch friends (copy from Profile)
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from('connections')
+        .select('from_user_id, to_user_id')
+        .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+      console.log('[DEBUG] Fetched connections:', data); // DEBUG LOG
+      if (!data) return setFriends([]);
+      const friendIds = data.map(conn =>
+        conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
+      );
+      console.log('[DEBUG] Friend IDs:', friendIds); // DEBUG LOG
+      if (friendIds.length === 0) return setFriends([]);
+      const { data: profiles } = await supabase
+        .from('profiles_with_email')
+        .select('id, full_name, avatar_url, username')
+        .in('id', friendIds);
+      console.log('[DEBUG] Friend profiles:', profiles); // DEBUG LOG
+      setFriends(profiles || []);
+    })();
+  }, [user?.id]);
+  // Fetch friends' liked experiences
+  useEffect(() => {
+    async function fetchFriendsLikes() {
+      if (!friends.length) {
+        setFriendsLikedExperiences({});
+        return;
+      }
+      const allLikes = {};
+      for (const friend of friends) {
+        const { data: wishlist } = await supabase
+          .from('wishlists')
+          .select('experience_id')
+          .eq('user_id', friend.id);
+        const expIds = (wishlist || []).map(w => w.experience_id).filter(Boolean);
+        allLikes[friend.id] = expIds;
+        console.log(`[DEBUG] Friend ${friend.full_name} (${friend.id}) liked experiences:`, expIds); // DEBUG LOG
+      }
+      setFriendsLikedExperiences(allLikes);
+      console.log('[DEBUG] All friendsLikedExperiences:', allLikes); // DEBUG LOG
+    }
+    fetchFriendsLikes();
+  }, [friends]);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -392,6 +441,25 @@ const ExperienceView = () => {
   if (!experience) {
     return null;
   }
+  
+  const friendsWhoLiked = friends.filter(friend => {
+    const liked = friendsLikedExperiences[friend.id];
+    if (Array.isArray(liked) && liked.length > 0) {
+      if (typeof liked[0] === 'string') {
+        return liked.includes(experience.id);
+      } else if (typeof liked[0] === 'object' && liked[0] !== null) {
+        return liked.some((exp) => typeof exp === 'object' && exp.id === experience.id);
+      }
+    }
+    return false;
+  });
+  console.log('[DEBUG] friendsWhoLiked:', friendsWhoLiked, 'for experience', experience?.id, experience?.title); // DEBUG LOG
+  
+  // Debug logs for troubleshooting
+  console.log('[DEBUG][ExperienceView] friends:', friends);
+  console.log('[DEBUG][ExperienceView] friendsLikedExperiences:', friendsLikedExperiences);
+  console.log('[DEBUG][ExperienceView] experience.id:', experience?.id);
+  console.log('[DEBUG][ExperienceView] friendsWhoLiked:', friendsWhoLiked);
   
   return (
     <>
@@ -474,6 +542,23 @@ const ExperienceView = () => {
                   Save for Later
                 </Button>
               </div>
+              {friendsWhoLiked.length > 0 && (
+                <div className="flex items-center gap-1 mb-2">
+                  <span className="text-green-600 text-sm font-medium">Liked by</span>
+                  {friendsWhoLiked.slice(0, 5).map(friend => (
+                    <img
+                      key={friend.id}
+                      src={friend.avatar_url || '/placeholder.svg'}
+                      alt={friend.full_name}
+                      title={friend.full_name}
+                      className="h-7 w-7 rounded-full border border-gray-200 object-cover"
+                    />
+                  ))}
+                  {friendsWhoLiked.length > 5 && (
+                    <span className="text-xs text-gray-500 ml-1">+{friendsWhoLiked.length - 5}</span>
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap gap-4 mb-6 justify-center items-center text-center">
                 <div className="flex items-center gap-2 text-muted-foreground text-base">
                   <MapPin className="h-5 w-5" />

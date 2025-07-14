@@ -598,7 +598,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 <DropdownMenuContent align="end" className="w-48 sm:w-56">
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
-                    Wishlist
+                    Liked
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -609,7 +609,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 className={iconClass}
                 onClick={() => {
                   toast({
-                    title: 'Please log in to view your wishlist.',
+                    title: 'Please log in to view your liked list.',
                     variant: 'destructive',
                   });
                 }}
@@ -639,7 +639,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
-                    Wishlist
+                    Liked
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
