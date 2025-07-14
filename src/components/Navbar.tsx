@@ -479,7 +479,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
+                <button className={cn("text-base font-medium flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -498,16 +498,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <div className="text-base font-medium">Press</div>
                     <p className="text-sm text-muted-foreground">Media coverage and press releases</p>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/privacy')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
-                    <div className="text-base font-medium">Privacy Policy</div>
-                    <p className="text-sm text-muted-foreground">Read our privacy policy</p>
-                  </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
+                <button className={cn("text-base font-medium flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
@@ -528,13 +524,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
+                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-medium whitespace-nowrap", textClass)}
                   aria-label="Select location"
                 >
                   <MapPin className="h-5 w-5 text-blue-600" />
                   <span
                     className={cn(
-                      "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                      "max-w-[120px] truncate text-base font-medium whitespace-nowrap",
                       isDarkPage ? "text-white" : "text-gray-900"
                     )}
                     style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
@@ -598,7 +594,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 <DropdownMenuContent align="end" className="w-48 sm:w-56">
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
-                    Wishlist
+                    Liked
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -609,7 +605,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 className={iconClass}
                 onClick={() => {
                   toast({
-                    title: 'Please log in to view your wishlist.',
+                    title: 'Please log in to view your liked list.',
                     variant: 'destructive',
                   });
                 }}
@@ -639,7 +635,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
-                    Wishlist
+                    Liked
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
@@ -681,22 +677,22 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </button>
             {/* Profile/Account option for mobile */}
             {isAuthenticated ? (
-              <Link to="/profile" onClick={toggleMobileMenu} className="text-lg font-medium text-primary w-full mb-2">Profile</Link>
+              <Link to="/profile" onClick={toggleMobileMenu} className="text-base font-medium text-primary w-full mb-2">Profile</Link>
             ) : (
-              <button onClick={handleSignIn} className="text-lg font-medium text-primary w-full mb-2">Sign In</button>
+              <button onClick={handleSignIn} className="text-base font-medium text-primary w-full mb-2">Sign In</button>
             )}
             {/* Location selection in mobile menu (Dialog) */}
             <div className="mb-4">
               <Dialog open={mobileLocationDialogOpen} onOpenChange={setMobileLocationDialogOpen}>
                 <DialogTrigger asChild>
                   <button
-                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
+                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-medium whitespace-nowrap", textClass)}
                     aria-label="Select location"
                   >
                     <MapPin className="h-5 w-5 text-blue-600" />
                     <span
                       className={cn(
-                        "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                        "max-w-[120px] truncate text-base font-medium whitespace-nowrap",
                         isDarkPage ? "text-white" : "text-gray-900"
                       )}
                       style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
@@ -736,12 +732,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               </Dialog>
             </div>
             {/* Main navigation options */}
-            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
-            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
-            <Link to="/swipe-ai" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Swipe AI</Link>
+            <Link to="/experiences" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
+            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/swipe-ai" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Swipe AI</Link>
             {/* Company Section */}
             <div>
-              <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+              <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-base font-medium text-gray-900 dark:text-gray-100">
                 Company
                 <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")}/>
               </button>
@@ -750,13 +746,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                   <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
                   <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
                   <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
-                  <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
                 </div>
               )}
             </div>
             {/* Support Section */}
             <div>
-              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-base font-medium text-gray-900 dark:text-gray-100">
                 Support
                 <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")}/>
               </button>

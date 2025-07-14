@@ -88,7 +88,8 @@ const Profile = () => {
   // Add local state for wishlist to allow UI update on remove
   const [localWishlist, setLocalWishlist] = useState([]);
   // Wishlist from Supabase
-  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id);
+  const [wishlistVersion, setWishlistVersion] = useState(0);
+  const { wishlistExperiences, isLoading: isWishlistLoading } = useWishlistExperiences(user?.id, wishlistVersion);
   const { bookingHistory, isLoading: isBookingHistoryLoading } = useBookingHistory(user?.id);
   const [referralCount, setReferralCount] = useState(0);
   const [badgeMilestones, setBadgeMilestones] = useState([]);
@@ -280,6 +281,12 @@ const Profile = () => {
   useEffect(() => {
     setLocalWishlist(Array.isArray(wishlistExperiences) ? wishlistExperiences : []);
   }, [wishlistExperiences]);
+
+  useEffect(() => {
+    const handler = () => setWishlistVersion(v => v + 1);
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, []);
 
   // Load matchedFriends from localStorage on mount and when user changes
   useEffect(() => {
@@ -518,8 +525,8 @@ const url = `${window.location.origin}/profile/${meta && 'username' in meta && m
   // Stats (use local state for instant UI update)
   // Remove 'Bookings' stat and bookingHistory logic for stats
   const stats = [
-    { label: 'Experiences', value: viewedExperiences.length },
-    { label: 'Wishlist', value: localWishlist.length },
+    { label: 'Viewed', value: viewedExperiences.length },
+    { label: 'Liked', value: localWishlist.length },
     { label: 'Saved', value: savedExperiences.length },
     { label: 'Referrals', value: referralCount },
   ];
@@ -670,13 +677,13 @@ const url = `${window.location.origin}/profile/${meta && 'username' in meta && m
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {activeTab === 'liked' && (
               (Array.isArray(localWishlist) && localWishlist.length > 0) ? localWishlist.map((exp, idx) => (
-                <ExperienceCard key={exp.id} experience={exp} index={idx} isInWishlist={true} />
+                <ExperienceCard key={exp.id} experience={exp} index={idx} isInWishlist={true} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No liked experiences yet.</div>
             )}
             {activeTab === 'saved' && (
               (Array.isArray(savedExperiences) && savedExperiences.length > 0) ? savedExperiences.map((exp, idx) => (
                 <div key={exp.id} className="relative">
-                  <ExperienceCard experience={exp} index={idx} />
+                  <ExperienceCard experience={exp} index={idx} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
                   <Button size="icon" variant="ghost" className="absolute top-2 right-2 z-10" onClick={() => handleRemoveSaved(exp.id)} title="Remove from Saved">
                     <X className="h-5 w-5 text-gray-500" />
                   </Button>
@@ -685,7 +692,7 @@ const url = `${window.location.origin}/profile/${meta && 'username' in meta && m
             )}
             {activeTab === 'viewed' && (
               (Array.isArray(viewedExperiences) && viewedExperiences.length > 0) ? viewedExperiences.map((exp, idx) => (
-                <ExperienceCard key={exp.id} experience={exp} index={idx} />
+                <ExperienceCard key={exp.id} experience={exp} index={idx} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
               )) : <div className="col-span-full text-center text-gray-400 py-12 text-lg">No viewed experiences yet.</div>
             )}
           </div>
