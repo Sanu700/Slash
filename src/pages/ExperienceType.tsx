@@ -9,7 +9,8 @@ const ExperienceType = () => {
   const { type } = useParams();
   const { experiences, isLoading } = useExperiencesManager();
   const { user } = useAuth();
-  const { wishlistExperiences } = useWishlistExperiences(user?.id);
+  const [wishlistVersion, setWishlistVersion] = useState(0);
+  const { wishlistExperiences } = useWishlistExperiences(user?.id, wishlistVersion);
   const [localWishlist, setLocalWishlist] = useState<string[]>([]);
 
   useEffect(() => {
@@ -17,6 +18,12 @@ const ExperienceType = () => {
       setLocalWishlist(wishlistExperiences.map(exp => exp.id));
     }
   }, [wishlistExperiences]);
+
+  useEffect(() => {
+    const handler = () => setWishlistVersion(v => v + 1);
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, []);
 
   const handleWishlistChange = (experienceId: string, isNowInWishlist: boolean) => {
     setLocalWishlist(prev => {
