@@ -63,6 +63,8 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [mobileLocationDialogOpen, setMobileLocationDialogOpen] = useState(false);
+  const [wishlistMenuOpen, setWishlistMenuOpen] = useState(false);
+  const [profileWishlistMenuOpen, setProfileWishlistMenuOpen] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -573,30 +575,50 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <Search className="h-5 w-5" />
             </button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={iconClass}>
-                  <div className="relative">
-                    <Heart className="h-5 w-5" />
-                    {wishlistCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {wishlistCount}
-                      </span>
-                    )}
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 sm:w-56">
-                {isAuthenticated ? (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      Wishlist
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Wishlist/Heart Button */}
+            {isAuthenticated ? (
+              <DropdownMenu open={wishlistMenuOpen} onOpenChange={setWishlistMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={iconClass}
+                    onClick={() => setWishlistMenuOpen(open => !open)}
+                  >
+                    <span className="relative">
+                      <Heart className="h-5 w-5" />
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
+                  <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    Wishlist
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={iconClass}
+                onClick={() => {
+                  toast({
+                    title: 'Please log in to view your wishlist.',
+                    variant: 'destructive',
+                  });
+                }}
+              >
+                <span className="relative">
+                  <Heart className="h-5 w-5" />
+                </span>
+              </Button>
+            )}
 
             {isAuthenticated ? (
               <DropdownMenu>
