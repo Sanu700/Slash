@@ -1,9 +1,0 @@
-/*
-  Content-Security-Policy: 
-    default-src 'self';
-    script-src 'self' https://maps.googleapis.com https://maps.gstatic.com 'unsafe-inline' 'unsafe-eval';
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com;
-    img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com;
-    connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://api.mapbox.com https://events.mapbox.com https://api.openai.com https://ceqpdprcqhmkqdbgmmkn.supabase.co https://YOUR_API_DOMAIN;
-    font-src 'self' https://fonts.gstatic.com;
-    frame-src https://www.google.com https://maps.googleapis.com https://maps.gstatic.com; 
