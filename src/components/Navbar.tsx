@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { getSavedExperiences } from '@/lib/data';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -57,17 +57,14 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
   const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, user, logout, signInWithGoogle, login } = useAuth();
+  const { isAuthenticated, user, logout, signInWithGoogle } = useAuth();
   const { toast } = useToast();
-  const [showLoginDropdown, setShowLoginDropdown] = useState(false);
-  const [adminId, setAdminId] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [adminCredentials, setAdminCredentials] = useState({ id: '', password: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [mobileLocationDialogOpen, setMobileLocationDialogOpen] = useState(false);
+  const [wishlistMenuOpen, setWishlistMenuOpen] = useState(false);
+  const [profileWishlistMenuOpen, setProfileWishlistMenuOpen] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -411,31 +408,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
     document.body.style.overflow = '';
   };
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const success = await login(adminCredentials.id, adminCredentials.password);
-      if (success) {
-        setShowLoginDropdown(false);
-        toast({
-          title: "Signed in successfully",
-          description: "You have been signed in to your account.",
-        });
-      }
-    } catch (error) {
-      console.error('Error signing in:', error);
-      toast({
-        title: "Error signing in",
-        description: "There was a problem signing in. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-
   // Add a function to get the display label for the location button
   const getLocationLabel = () => {
     if (selectedLocation) {
@@ -501,69 +473,64 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               Gift Personalizer
             </Link>
+            <Link to="/swipe-ai" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Swipe AI
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
+                <button className={cn("text-base font-medium flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Company
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Link to="/about-us" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">About Us</div>
+                  <DropdownMenuItem onClick={() => navigate('/about-us')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">About Us</div>
                     <p className="text-sm text-muted-foreground">Learn more about our mission and team</p>
-                  </Link>
-                  <Link to="/testimonials" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Testimonials</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/testimonials')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Testimonials</div>
                     <p className="text-sm text-muted-foreground">What our customers say about us</p>
-                  </Link>
-                  <Link to="/careers" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Careers</div>
-                    <p className="text-sm text-muted-foreground">Join our growing team</p>
-                  </Link>
-                  <Link to="/press" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Press</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/press')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Press</div>
                     <p className="text-sm text-muted-foreground">Media coverage and press releases</p>
-                  </Link>
-                  <Link to="/privacy" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Privacy Policy</div>
-                    <p className="text-sm text-muted-foreground">Read our privacy policy</p>
-                  </Link>
+                  </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={cn("text-base font-normal flex items-center gap-1 whitespace-nowrap", textClass)}>
+                <button className={cn("text-base font-medium flex items-center gap-1 whitespace-nowrap", textClass)}>
                   Support
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-[280px] sm:w-[400px] p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Link to="/contact" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">Contact Us</div>
+                  <DropdownMenuItem onClick={() => navigate('/contact')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">Contact Us</div>
                     <p className="text-sm text-muted-foreground">Get in touch with our support team</p>
-                  </Link>
-                  <Link to="/faq" className="block p-3 rounded-md hover:bg-accent">
-                    <div className="font-medium">FAQ</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/faq')} className="flex flex-col items-start p-3 rounded-md hover:bg-accent cursor-pointer gap-1">
+                    <div className="text-base font-medium">FAQ</div>
                     <p className="text-sm text-muted-foreground">Frequently asked questions</p>
-                  </Link>
+                  </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
+                  className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-medium whitespace-nowrap", textClass)}
                   aria-label="Select location"
                 >
                   <MapPin className="h-5 w-5 text-blue-600" />
                   <span
                     className={cn(
-                      "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                      "max-w-[120px] truncate text-base font-medium whitespace-nowrap",
                       isDarkPage ? "text-white" : "text-gray-900"
                     )}
                     style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
@@ -604,30 +571,50 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               <Search className="h-5 w-5" />
             </button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={iconClass}>
-                  <div className="relative">
-                    <Heart className="h-5 w-5" />
-                    {wishlistCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {wishlistCount}
-                      </span>
-                    )}
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 sm:w-56">
-                {isAuthenticated ? (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      Wishlist
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Wishlist/Heart Button */}
+            {isAuthenticated ? (
+              <DropdownMenu open={wishlistMenuOpen} onOpenChange={setWishlistMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={iconClass}
+                    onClick={() => setWishlistMenuOpen(open => !open)}
+                  >
+                    <span className="relative">
+                      <Heart className="h-5 w-5" />
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
+                  <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    Liked
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={iconClass}
+                onClick={() => {
+                  toast({
+                    title: 'Please log in to view your liked list.',
+                    variant: 'destructive',
+                  });
+                }}
+              >
+                <span className="relative">
+                  <Heart className="h-5 w-5" />
+                </span>
+              </Button>
+            )}
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -646,18 +633,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  {user?.user_metadata?.role === 'admin' && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/admin')}>
-                        <Shield className="mr-2 h-4 w-4" />
-                        Admin Dashboard
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
                   <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                     <Heart className="mr-2 h-4 w-4" />
-                    Wishlist
+                    Liked
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
@@ -667,7 +645,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <DropdownMenu open={showLoginDropdown} onOpenChange={setShowLoginDropdown}>
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className={iconClass}>
                     <User className="h-5 w-5" />
@@ -699,22 +677,22 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             </button>
             {/* Profile/Account option for mobile */}
             {isAuthenticated ? (
-              <Link to="/profile" onClick={toggleMobileMenu} className="text-lg font-medium text-primary w-full mb-2">Profile</Link>
+              <Link to="/profile" onClick={toggleMobileMenu} className="text-base font-medium text-primary w-full mb-2">Profile</Link>
             ) : (
-              <button onClick={handleSignIn} className="text-lg font-medium text-primary w-full mb-2">Sign In</button>
+              <button onClick={handleSignIn} className="text-base font-medium text-primary w-full mb-2">Sign In</button>
             )}
             {/* Location selection in mobile menu (Dialog) */}
             <div className="mb-4">
               <Dialog open={mobileLocationDialogOpen} onOpenChange={setMobileLocationDialogOpen}>
                 <DialogTrigger asChild>
                   <button
-                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-normal whitespace-nowrap", textClass)}
+                    className={cn("flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-base font-medium whitespace-nowrap", textClass)}
                     aria-label="Select location"
                   >
                     <MapPin className="h-5 w-5 text-blue-600" />
                     <span
                       className={cn(
-                        "max-w-[120px] truncate text-base font-normal whitespace-nowrap",
+                        "max-w-[120px] truncate text-base font-medium whitespace-nowrap",
                         isDarkPage ? "text-white" : "text-gray-900"
                       )}
                       style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
@@ -754,11 +732,12 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
               </Dialog>
             </div>
             {/* Main navigation options */}
-            <Link to="/experiences" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
-            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-lg font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/experiences" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
+            <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/swipe-ai" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Swipe AI</Link>
             {/* Company Section */}
             <div>
-              <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+              <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-base font-medium text-gray-900 dark:text-gray-100">
                 Company
                 <ChevronDown className={cn("h-5 w-5 transition-transform", companyDropdownOpen && "rotate-180")}/>
               </button>
@@ -766,15 +745,13 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                 <div className="pl-4 flex flex-col space-y-2 mt-2">
                   <Link to="/about-us" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">About Us</Link>
                   <Link to="/testimonials" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Testimonials</Link>
-                  <Link to="/careers" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Careers</Link>
                   <Link to="/press" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Press</Link>
-                  <Link to="/privacy" onClick={toggleMobileMenu} className="text-gray-700 dark:text-gray-300">Privacy Policy</Link>
                 </div>
               )}
             </div>
             {/* Support Section */}
             <div>
-              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-lg font-medium text-gray-900 dark:text-gray-100">
+              <button onClick={() => setSupportDropdownOpen(!supportDropdownOpen)} className="flex items-center justify-between w-full text-base font-medium text-gray-900 dark:text-gray-100">
                 Support
                 <ChevronDown className={cn("h-5 w-5 transition-transform", supportDropdownOpen && "rotate-180")}/>
               </button>

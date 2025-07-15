@@ -51,15 +51,16 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
     setIsProcessing(true);
     
     try {
-      // Step 2: Construct the proper input string with all form data
-      console.log('=== SUBMITTING BASICS DATA ===');
-      
+      // Always construct budget string from slider value
       const recipient = formData.recipient || 'User';
       const location = formData.city || 'Mumbai';
       const relation = formData.relationship === 'other' ? formData.customRelationship : formData.relationship || 'Friend';
       const occasion = formData.occasion === 'other' ? formData.customOccasion : formData.occasion || 'Birthday';
-      const budget = formData.budget || '10000-50000';
-      
+      const budget = `${formData.budgetRange[0]}-${formData.budgetRange[1]}`;
+      // Sync budget string in formData for consistency
+      if (formData.budget !== budget) {
+        setFormData(prev => ({ ...prev, budget }));
+      }
       // Create the input string in the required format: name`location`relation`occasion`budget
       const combinedInput = `${recipient}\`${location}\`${relation}\`${occasion}\`${budget}`;
       
@@ -228,12 +229,13 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
               max={100000}
               step={100}
               value={formData.budgetRange}
-              onValueChange={(val) =>
+              onValueChange={(val) => {
                 setFormData((prev) => ({
                   ...prev,
                   budgetRange: val as [number, number],
-                }))
-              }
+                  budget: `${val[0]}-${val[1]}` // Sync budget string with slider
+                }));
+              }}
               className="w-full"
             />
             <div className="flex justify-between text-sm text-muted-foreground mt-2">
@@ -250,13 +252,13 @@ const StepBasics = ({ formData, handleInputChange, setFormData, onNext, isGenera
       <div className="flex justify-end">
         <Button
           onClick={handleNextClick}
-          disabled={isProcessing || isGenerating}
+          disabled={isProcessing || isGenerating || !aiPrompt}
           className="flex items-center gap-2"
         >
-          {isProcessing || isGenerating ? (
+          {(!aiPrompt || isProcessing || isGenerating) ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              {!isInitialized ? 'Initializing...' : 'Processing...'}
+              {!aiPrompt ? 'Loading...' : (!isInitialized ? 'Initializing...' : 'Processing...')}
             </>
           ) : (
             'Next'
