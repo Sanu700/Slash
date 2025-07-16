@@ -117,7 +117,7 @@ const SwipeAISuggestions = () => {
         {user?.id && currentExp && (
           <div className="flex flex-col items-center mt-6">
             <div className="mb-4 w-full">
-              <img src={currentExp.imageUrl?.[0] || currentExp.imageUrl || "/placeholder.svg"} alt={currentExp.title} className="w-full h-48 object-cover rounded mb-2" />
+              <img src={currentExp.imageUrl[0] || "/placeholder.svg"} alt={currentExp.title} className="w-full h-48 object-cover rounded mb-2" />
               <h2 className="text-xl font-semibold mb-1">{currentExp.title}</h2>
               <p className="text-gray-600 mb-2">{currentExp.description}</p>
               <div className="text-sm text-gray-500 mb-2">{currentExp.location}</div>
