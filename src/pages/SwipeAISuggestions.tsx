@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 // Helper to join IDs with backtick
 const joinIds = (arr: string[]) => arr.join('`');
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://localhost:8002";
 
 const SwipeAISuggestions = () => {
   const { user } = useAuth();
@@ -84,11 +84,10 @@ const SwipeAISuggestions = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              session_id: sessionId,
               user_id: user?.id,
-              liked: joinIds([...liked, type === "like" ? expId : ""] .filter(Boolean)),
-              disliked: joinIds([...disliked, type === "dislike" ? expId : ""] .filter(Boolean)),
-              skipped: joinIds([...skipped, type === "skip" ? expId : ""] .filter(Boolean)),
+              likes: [...liked, type === "like" ? expId : ""].filter(Boolean),
+              dislikes: [...disliked, type === "dislike" ? expId : ""].filter(Boolean),
+              skips: [...skipped, type === "skip" ? expId : ""].filter(Boolean),
             })
           });
           if (!res.ok) throw new Error("Failed to get recommendations");
