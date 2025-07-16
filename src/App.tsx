@@ -49,12 +49,6 @@ const queryClient = new QueryClient();
 
 function App() {
   const [showCityModal, setShowCityModal] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleLocationModalClose = () => {
     setShowCityModal(true);
@@ -62,57 +56,6 @@ function App() {
 
   return (
     <>
-      {showSplash && (
-        <div style={{ position: 'fixed', zIndex: 99999, inset: 0, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity 0.5s', animation: 'splash-fade 0.5s 1.2s forwards' }}>
-          {/* Confetti burst */}
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-            {[...Array(24)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '50%',
-                  width: 8,
-                  height: 24,
-                  background: `hsl(${i * 15}, 80%, 60%)`,
-                  borderRadius: 4,
-                  transform: `rotate(${i * 15}deg) translateY(-80px) scaleY(0.7)`,
-                  opacity: 0.7,
-                  animation: `confetti-burst 1s cubic-bezier(.68,-0.55,.27,1.55) ${0.05 * i}s forwards`
-                }}
-              />
-            ))}
-          </div>
-          <img
-            src={logo}
-            alt="Slash Experiences Logo"
-            style={{
-              width: 120,
-              height: 120,
-              animation: 'splash-bounce 1.2s cubic-bezier(.68,-0.55,.27,1.55) forwards',
-              filter: 'drop-shadow(0 4px 24px rgba(0,0,0,0.12))',
-              zIndex: 2,
-            }}
-          />
-          <style>{`
-            @keyframes splash-bounce {
-              0% { transform: scale(0.7) rotate(-10deg); opacity: 0; }
-              40% { transform: scale(1.1) rotate(8deg); opacity: 1; }
-              70% { transform: scale(0.95) rotate(-4deg); }
-              100% { transform: scale(1) rotate(0deg); opacity: 1; }
-            }
-            @keyframes splash-fade {
-              to { opacity: 0; pointer-events: none; }
-            }
-            @keyframes confetti-burst {
-              0% { opacity: 0; transform: scaleY(0.7) translateY(-80px); }
-              60% { opacity: 1; transform: scaleY(1.2) translateY(-120px); }
-              100% { opacity: 0; transform: scaleY(0.7) translateY(-180px); }
-            }
-          `}</style>
-        </div>
-      )}
       <GoogleOAuthProvider clientId={config.google.clientId}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
