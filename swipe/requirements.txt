@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-supabase
-pydantic
-python-dotenv
-qdrant-client
-openai
-nltk
-sentence_transformers

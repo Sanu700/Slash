@@ -72,7 +72,7 @@ type UserMeta = {
 };
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const { toggleWishlist } = useExperienceInteractions(user?.id);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('liked');
@@ -405,10 +405,10 @@ const Profile = () => {
           .eq('user_id', friend.id);
         const expIds = (wishlist || []).map(w => w.experience_id).filter(Boolean);
         if (expIds.length > 0) {
-          // Fetch experience details for these IDs
+          // Fetch FULL experience details for these IDs
           const { data: experiences } = await supabase
             .from('experiences')
-            .select('id, title, image_url')
+            .select('*')
             .in('id', expIds);
           allLikes[friend.id] = (experiences || []).map(exp => ({
             ...exp,
@@ -464,9 +464,11 @@ const Profile = () => {
     }
     try {
       await updateUserProfile(user.id, { full_name: editName, avatar_url: avatarUrl });
+      // Fetch the latest user from Supabase and update AuthContext
+      const { data: { user: updatedUser } } = await supabase.auth.getUser();
+      setUser(updatedUser);
       toast({ title: 'Profile updated!' });
       setShowEditModal(false);
-      // Optionally update user context/state here
     } catch {
       toast({ title: 'Failed to update profile', variant: 'destructive' });
     }
@@ -1019,9 +1021,9 @@ const url = `${window.location.origin}/profile/${meta && 'username' in meta && m
                   <span className="font-medium text-lg text-gray-800">{friend.full_name}</span>
                 </div>
                 {(friendsLikedExperiences[friend.id] && friendsLikedExperiences[friend.id].length > 0) ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {friendsLikedExperiences[friend.id].map(exp => (
-                      <ExperienceCard key={exp.id} experience={exp} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch stagger-children">
+                    {friendsLikedExperiences[friend.id].map((exp, idx) => (
+                      <ExperienceCard key={exp.id} experience={exp} index={idx} friends={friends} friendsLikedExperiences={friendsLikedExperiences} />
                     ))}
                   </div>
                 ) : (

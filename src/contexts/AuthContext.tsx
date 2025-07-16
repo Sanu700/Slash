@@ -16,6 +16,7 @@ export interface User {
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -116,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, setUser, signInWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
