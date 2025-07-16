@@ -31,10 +31,10 @@ const AboutUs = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="rounded-xl overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=800&q=80" 
-                alt="Gift box on cozy background" 
-                className="w-full h-full object-cover"
-              />
+                 src="https://thumbs.dreamstime.com/b/gift-present-boxes-snowy-fir-tree-golden-holiday-decoration-against-magic-bokeh-background-christmas-greeting-card-261403295.jpg" 
+                 alt="Gift present boxes with snowy fir tree and golden holiday decoration" 
+                  className="w-full h-full object-cover"
+                />
             </div>
             
             <div>
