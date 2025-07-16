@@ -7,25 +7,27 @@ export default function AuthCallback() {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('AuthCallback useEffect running');
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event);
-      if (event === 'SIGNED_IN') {
-        alert('SIGNED_IN event triggered');
+    let isMounted = true;
+    async function handleAuthCallback() {
+      try {
+        // Wait for the session to be available
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error('Supabase getUser error:', userError.message);
+          navigate('/');
+          return;
+        }
+        if (!user) {
+          // No user found, redirect home
+          navigate('/');
+          return;
+        }
         // Referral logic
         const params = new URLSearchParams(location.search);
         let referrerId = params.get('ref');
         if (!referrerId) {
           referrerId = localStorage.getItem('pending_ref');
         }
-        alert('RefTracker: location.search = ' + location.search);
-        alert('RefTracker: localStorage.pending_ref = ' + localStorage.getItem('pending_ref'));
-        alert('ReferrerId: ' + referrerId);
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          alert('Supabase getUser error: ' + userError.message);
-        }
-        alert('New user: ' + (user ? JSON.stringify(user) : 'null'));
         if (user && referrerId && user.id !== referrerId) {
           // Check if this referral already exists
           const { data, error: selectError } = await supabase
@@ -34,33 +36,28 @@ export default function AuthCallback() {
             .eq('user_id', referrerId)
             .eq('referred_user_id', user.id);
           if (selectError) {
-            alert('Supabase select error: ' + selectError.message);
-          } else {
-            alert('Referral select result: ' + JSON.stringify(data));
+            console.error('Supabase select error:', selectError.message);
           }
           if (!data || data.length === 0) {
-            alert('Inserting referral: ' + JSON.stringify({ user_id: referrerId, referred_user_id: user.id }));
             const { error: insertError } = await supabase.from('referrals').insert([
               { user_id: referrerId, referred_user_id: user.id },
             ]);
             if (insertError) {
-              alert('Referral insert error: ' + insertError.message);
-            } else {
-              alert('Referral row inserted successfully!');
+              console.error('Referral insert error:', insertError.message);
             }
-          } else {
-            alert('Referral already exists, not inserting.');
           }
           // Clear the ref from storage after use
           localStorage.removeItem('pending_ref');
-        } else {
-          if (!user) alert('No user found after signup.');
-          if (!referrerId) alert('No referrerId found.');
-          if (user && referrerId && user.id === referrerId) alert('Self-referral detected, not inserting.');
         }
-        navigate('/');
+        // Redirect to homepage after handling
+        if (isMounted) navigate('/');
+      } catch (err) {
+        console.error('Error in AuthCallback:', err);
+        if (isMounted) navigate('/');
       }
-    });
+    }
+    handleAuthCallback();
+    return () => { isMounted = false; };
   }, [navigate, location]);
 
   return (
