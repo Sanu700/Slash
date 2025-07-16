@@ -1,105 +1,86 @@
-import React, { useEffect, useState } from 'react';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import React, { useEffect } from 'react';
 
-interface ExperienceMapProps {
-  locationName: string;
+const GOOGLE_MAPS_API_KEY = "AIzaSyDuFZbhqg3iFNVljlXFo3tQcHjJqWSX9Qs";
+
+// Add TypeScript declarations for custom elements
+// @ts-ignore
+interface GMPMapElement extends HTMLElement {
+  innerMap: any;
+  center: any;
+  zoom: any;
+}
+// @ts-ignore
+interface GMPAdvancedMarkerElement extends HTMLElement {
+  position: any;
+}
+// @ts-ignore
+interface GMPXPlacePickerElement extends HTMLElement {
+  value: any;
 }
 
-const containerStyle = {
-  width: '100%',
-  height: '400px',
-};
-
-const ExperienceMap: React.FC<ExperienceMapProps> = ({ locationName }) => {
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load Google Maps JS API
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-  });
-
+const ExperienceMap = () => {
   useEffect(() => {
-    if (!locationName) return;
-    // Use Nominatim to geocode the location string (can be replaced with Google Geocoding API later)
-    const fetchCoords = async () => {
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}`
-        );
-        const data = await response.json();
-        if (data && data.length > 0) {
-          setCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
-          setError(null);
+    const init = async () => {
+      await window.customElements.whenDefined('gmp-map');
+      const map = document.querySelector('gmp-map') as GMPMapElement | null;
+      const marker = document.querySelector('gmp-advanced-marker') as GMPAdvancedMarkerElement | null;
+      const placePicker = document.querySelector('gmpx-place-picker') as GMPXPlacePickerElement | null;
+      // @ts-ignore
+      const infowindow = new window.google.maps.InfoWindow();
+
+      if (!map || !marker || !placePicker) return;
+      // @ts-ignore
+      map.innerMap.setOptions({ mapTypeControl: false });
+
+      placePicker.addEventListener('gmpx-placechange', () => {
+        const place = placePicker.value;
+        if (!place.location) {
+          window.alert("No details available for input: '" + place.name + "'");
+          infowindow.close();
+          marker.position = null;
+          return;
+        }
+        if (place.viewport) {
+          // @ts-ignore
+          map.innerMap.fitBounds(place.viewport);
         } else {
-          setError('Location not found');
+          map.center = place.location;
+          map.zoom = 17;
         }
-      } catch (err) {
-        setError('Error fetching location');
-      }
+        marker.position = place.location;
+        infowindow.setContent(
+          `<strong>${place.displayName}</strong><br>
+           <span>${place.formattedAddress}</span>`
+        );
+        // @ts-ignore
+        infowindow.open(map.innerMap, marker);
+      });
     };
-    fetchCoords();
-  }, [locationName]);
+    document.addEventListener('DOMContentLoaded', init);
+    return () => {
+      document.removeEventListener('DOMContentLoaded', init);
+    };
+  }, []);
 
-  if (error) return <div className="text-red-500">{error}</div>;
-  if (!coords) return <div>Loading map...</div>;
-  if (loadError) return <div className="text-red-500">Failed to load Google Maps</div>;
-  if (!isLoaded) return <div>Loading Google Maps...</div>;
-
-  // Build Google Maps navigation URL using user's chosen address as origin
-  let origin = '';
-  if (typeof window !== 'undefined') {
-    const selectedAddressRaw = localStorage.getItem('selected_address');
-    if (selectedAddressRaw) {
-      try {
-        const parsed = JSON.parse(selectedAddressRaw);
-        if (parsed && parsed.lat && parsed.lon) {
-          origin = `${parsed.lat},${parsed.lon}`;
-        }
-      } catch {
-        // fallback: do nothing
-      }
-    }
-  }
-  const destination = coords ? `${coords.lat},${coords.lng}` : '';
-  const navigationUrl = origin
-    ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-
+  // @ts-ignore: Suppress all JSX errors for custom elements in this block
   return (
-    <div>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={coords}
-        zoom={14}
-        options={{
-          disableDefaultUI: true,
-          zoomControl: true,
-          scrollwheel: false,
-        }}
+    // @ts-ignore
+    <div style={{ width: '100%', height: '500px' }}>
+      <gmpx-api-loader
+        key={GOOGLE_MAPS_API_KEY}
+        solution-channel="GMP_GE_mapsandplacesautocomplete_v2"
+      ></gmpx-api-loader>
+      <gmp-map
+        center="40.749933,-73.98633"
+        zoom="13"
+        map-id="DEMO_MAP_ID"
+        style={{ width: '100%', height: '100%' }}
       >
-        <Marker position={coords} />
-      </GoogleMap>
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-        <a
-          href={navigationUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'inline-block',
-            padding: '0.5rem 1.5rem',
-            background: '#4285F4',
-            color: 'white',
-            borderRadius: '4px',
-            textDecoration: 'none',
-            fontWeight: 500,
-            fontSize: '1rem',
-            boxShadow: '0 1px 4px rgba(60,60,60,0.1)'
-          }}
-        >
-          Navigate with Google Maps
-        </a>
-      </div>
+        <div slot="control-block-start-inline-start" className="place-picker-container" style={{ padding: 20 }}>
+          <gmpx-place-picker placeholder="Enter an address"></gmpx-place-picker>
+        </div>
+        <gmp-advanced-marker></gmp-advanced-marker>
+      </gmp-map>
     </div>
   );
 };

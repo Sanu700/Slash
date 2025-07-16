@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { CITY_COORDINATES } from './CitySelector';
 import { useLocation } from 'react-router-dom';
 import Fuse from 'fuse.js';
-import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 
 export const INDIAN_LOCATIONS = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
@@ -92,12 +91,12 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
   // Store user's coordinates if available
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
-  const [autocomplete, setAutocomplete] = useState<any>(null);
+  // Removed: const [autocomplete, setAutocomplete] = useState<any>(null);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ['places'],
-  });
+  // Removed: const { isLoaded } = useJsApiLoader({
+  // Removed:   googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  // Removed:   libraries: ['places'],
+  // Removed: });
 
   useEffect(() => {
     // Always read the latest value from localStorage when the route changes
@@ -215,24 +214,24 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
     }
   };
 
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      setAddress(place.formatted_address || '');
-      setSelectedLocation(place.formatted_address || '');
-      if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        localStorage.setItem('selected_address', JSON.stringify({
-          address: place.formatted_address,
-          lat: lat,
-          lon: lng
-        }));
-      }
-      setAddressResults([]);
-      setCityResults([]);
-    }
-  };
+  // Removed: const onPlaceChanged = () => {
+  // Removed:   if (autocomplete !== null) {
+  // Removed:     const place = autocomplete.getPlace();
+  // Removed:     setAddress(place.formatted_address || '');
+  // Removed:     setSelectedLocation(place.formatted_address || '');
+  // Removed:     if (place.geometry && place.geometry.location) {
+  // Removed:       const lat = place.geometry.location.lat();
+  // Removed:       const lng = place.geometry.location.lng();
+  // Removed:       localStorage.setItem('selected_address', JSON.stringify({
+  // Removed:         address: place.formatted_address,
+  // Removed:         lat: lat,
+  // Removed:         lon: lng
+  // Removed:       }));
+  // Removed:     }
+  // Removed:     setAddressResults([]);
+  // Removed:     setCityResults([]);
+  // Removed:   }
+  // Removed: };
 
   // Address autocomplete handler (debounced)
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,20 +356,27 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {isLoaded && (
-                  <Autocomplete
-                    onLoad={setAutocomplete}
-                    onPlaceChanged={onPlaceChanged}
-                  >
-                    <input
-                      type="text"
-                      placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
-                      value={address}
-                      onChange={e => setAddress(e.target.value)}
-                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                    />
-                  </Autocomplete>
-                )}
+                {/* Removed: {isLoaded && ( */}
+                {/* Removed:   <Autocomplete */}
+                {/* Removed:     onLoad={setAutocomplete} */}
+                {/* Removed:     onPlaceChanged={onPlaceChanged} */}
+                {/* Removed:   > */}
+                {/* Removed:     <input */}
+                {/* Removed:       type="text" */}
+                {/* Removed:       placeholder="e.g., 123 Main Street, Bangalore, Karnataka" */}
+                {/* Removed:       value={address} */}
+                {/* Removed:       onChange={e => setAddress(e.target.value)} */}
+                {/* Removed:       className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full" */}
+                {/* Removed:     /> */}
+                {/* Removed:   </Autocomplete> */}
+                {/* Removed: )} */}
+                <input
+                  type="text"
+                  placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                />
               </div>
             </div>
 
@@ -583,20 +589,27 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {isLoaded && (
-                  <Autocomplete
-                    onLoad={setAutocomplete}
-                    onPlaceChanged={onPlaceChanged}
-                  >
-                    <input
-                      type="text"
-                      placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
-                      value={address}
-                      onChange={e => setAddress(e.target.value)}
-                      className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                    />
-                  </Autocomplete>
-                )}
+                {/* Removed: {isLoaded && ( */}
+                {/* Removed:   <Autocomplete */}
+                {/* Removed:     onLoad={setAutocomplete} */}
+                {/* Removed:     onPlaceChanged={onPlaceChanged} */}
+                {/* Removed:   > */}
+                {/* Removed:     <input */}
+                {/* Removed:       type="text" */}
+                {/* Removed:       placeholder="e.g., 123 Main Street, Bangalore, Karnataka" */}
+                {/* Removed:       value={address} */}
+                {/* Removed:       onChange={e => setAddress(e.target.value)} */}
+                {/* Removed:       className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full" */}
+                {/* Removed:     /> */}
+                {/* Removed:   </Autocomplete> */}
+                {/* Removed: )} */}
+                <input
+                  type="text"
+                  placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                />
               </div>
             </div>
 
