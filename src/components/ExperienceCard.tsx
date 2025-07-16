@@ -348,14 +348,16 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
               <MapPin className="inline-block h-4 w-4 mr-1 text-gray-400" />
               <span className="truncate" title={experience.location}>{experience.location}</span>
             </div>
-            <button
+            <a
               className="text-primary underline text-xs ml-2"
-              type="button"
-              onClick={() => setIsMapOpen(true)}
+              href={`https://www.google.com/maps/search/?api=1&query=${experience.latitude},${experience.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
               tabIndex={0}
+              onClick={e => e.stopPropagation()}
             >
               Show Map
-            </button>
+            </a>
           </div>
           <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
             <DialogContent>

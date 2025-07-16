@@ -84,7 +84,7 @@ function App() {
                     <Route path="/contact" element={<Layout><ContactUs /></Layout>} />
                     <Route path="/faq" element={<Layout><FAQ /></Layout>} />
                     {/* Auth Callback Route */}
-                    <Route path="/auth-callback" element={<AuthCallback />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                     {/* Protected User Routes */}
                     <Route path="/wishlist" element={<Layout><Wishlist /></Layout>} />
                     <Route path="/profile" element={<Layout><Profile /></Layout>} />
