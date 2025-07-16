@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyDuFZbhqg3iFNVljlXFo3tQcHjJqWSX9Qs";
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // Add TypeScript declarations for custom elements
 // @ts-ignore
@@ -18,7 +18,13 @@ interface GMPXPlacePickerElement extends HTMLElement {
   value: any;
 }
 
-const ExperienceMap = () => {
+interface ExperienceMapProps {
+  latitude: number;
+  longitude: number;
+  locationName?: string;
+}
+
+const ExperienceMap: React.FC<ExperienceMapProps> = ({ latitude, longitude, locationName }) => {
   useEffect(() => {
     const init = async () => {
       await window.customElements.whenDefined('gmp-map');
@@ -64,14 +70,14 @@ const ExperienceMap = () => {
 
   // @ts-ignore: Suppress all JSX errors for custom elements in this block
   return (
-    // @ts-ignore
     <div style={{ width: '100%', height: '500px' }}>
       <gmpx-api-loader
         key={GOOGLE_MAPS_API_KEY}
+        api-key={GOOGLE_MAPS_API_KEY}
         solution-channel="GMP_GE_mapsandplacesautocomplete_v2"
       ></gmpx-api-loader>
       <gmp-map
-        center="40.749933,-73.98633"
+        center={`${latitude},${longitude}`}
         zoom="13"
         map-id="DEMO_MAP_ID"
         style={{ width: '100%', height: '100%' }}
@@ -79,8 +85,18 @@ const ExperienceMap = () => {
         <div slot="control-block-start-inline-start" className="place-picker-container" style={{ padding: 20 }}>
           <gmpx-place-picker placeholder="Enter an address"></gmpx-place-picker>
         </div>
-        <gmp-advanced-marker></gmp-advanced-marker>
+        <gmp-advanced-marker position={`${latitude},${longitude}`}></gmp-advanced-marker>
       </gmp-map>
+      <div style={{ marginTop: 12, textAlign: 'right' }}>
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline text-xs"
+        >
+          Open in Google Maps
+        </a>
+      </div>
     </div>
   );
 };

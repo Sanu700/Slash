@@ -362,7 +362,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
               <DialogHeader>
                 <DialogTitle>Location Map</DialogTitle>
               </DialogHeader>
-              <ExperienceMap locationName={experience.location} />
+              <ExperienceMap latitude={experience.latitude} longitude={experience.longitude} locationName={experience.location} />
             </DialogContent>
           </Dialog>
           {/* Minimal View Experience button */}

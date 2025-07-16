@@ -31,8 +31,8 @@ const AboutUs = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="rounded-xl overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&auto=format&fit=crop" 
-                alt="Team brainstorming" 
+                src="https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=800&q=80" 
+                alt="Gift box on cozy background" 
                 className="w-full h-full object-cover"
               />
             </div>
