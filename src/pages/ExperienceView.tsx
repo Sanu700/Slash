@@ -656,17 +656,14 @@ const ExperienceView: React.FC<ExperienceViewProps> = ({ friends: propsFriends, 
                 <div className="flex items-center gap-2 text-muted-foreground text-base">
                   <MapPin className="h-5 w-5" />
                   <span>{experience.location}</span>
-                  <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-                    <DialogTrigger asChild>
-                      <button className="underline text-sm ml-2" type="button">Show Map</button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[625px]">
-                      <DialogHeader>
-                        <DialogTitle>{experience.title} - Location</DialogTitle>
-                      </DialogHeader>
-                      <ExperienceMap locationName={experience.location} />
-                    </DialogContent>
-                  </Dialog>
+                  <a
+                    className="underline text-sm ml-2 text-primary"
+                    href={`https://www.google.com/maps/search/?api=1&query=${experience.latitude},${experience.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Show Map
+                  </a>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <Clock className="h-4 w-4 mr-2" />

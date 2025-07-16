@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
+import { config } from '@/config';
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const GOOGLE_MAPS_API_KEY = config.googleMaps.apiKey;
 
 // Add TypeScript declarations for custom elements
 // @ts-ignore

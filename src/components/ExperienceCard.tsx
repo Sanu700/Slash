@@ -23,6 +23,9 @@ import {
   CarouselNext,
 } from '@/components/ui/carousel';
 
+import { config } from '@/config';
+import { createPortal } from 'react-dom';
+
 // Array of fallback images for variety
 const FALLBACK_IMAGES = [
   '/placeholder.svg',
@@ -237,6 +240,8 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   });
   console.log('[DEBUG][ExperienceCard] friends:', friends, 'friendsLikedExperiences:', friendsLikedExperiences, 'experience.id:', experience.id, 'friendsWhoLiked:', friendsWhoLiked); // DEBUG LOG
 
+  const showMapRef = useRef(null);
+
   return (
     <>
       <div
@@ -344,20 +349,21 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
           </div>
           {/* Address and Show Map row */}
           <div className="flex justify-between items-center text-sm text-gray-500 mb-1 truncate">
-            <div className="flex items-center truncate">
+            <div className="flex items-center truncate" style={{ position: 'relative' }}>
               <MapPin className="inline-block h-4 w-4 mr-1 text-gray-400" />
               <span className="truncate" title={experience.location}>{experience.location}</span>
+              <a
+                className="text-primary underline text-xs ml-2"
+                href={`https://www.google.com/maps/search/?api=1&query=${experience.latitude},${experience.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                tabIndex={0}
+                onClick={e => e.stopPropagation()}
+                ref={showMapRef}
+              >
+                Show Map
+              </a>
             </div>
-            <a
-              className="text-primary underline text-xs ml-2"
-              href={`https://www.google.com/maps/search/?api=1&query=${experience.latitude},${experience.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              tabIndex={0}
-              onClick={e => e.stopPropagation()}
-            >
-              Show Map
-            </a>
           </div>
           <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
             <DialogContent>

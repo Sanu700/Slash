@@ -17,6 +17,9 @@ interface Config {
     clientId: string;
     clientSecret: string;
   };
+  googleMaps: {
+    apiKey: string;
+  };
 }
 
 // Development credentials (only used if environment variables are not set)
@@ -43,5 +46,8 @@ export const config: Config = {
   google: {
     clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
     clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || '',
+  },
+  googleMaps: {
+    apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
   }
 };
