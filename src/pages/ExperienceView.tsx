@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import ExperienceMap from '@/components/ExperienceMap';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CITY_COORDINATES } from '../components/CitySelector';
+import ImageTrail from '@/components/ImageTrail';
 
 function getValidImgSrc(src: any) {
   if (!src) return '/placeholder.svg';

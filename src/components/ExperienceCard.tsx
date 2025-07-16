@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Experience } from '@/lib/data';
 import { Heart, HeartIcon } from 'lucide-react';
@@ -245,7 +245,7 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   return (
     <>
       <div
-        className="bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer"
+        className={`bg-white rounded-2xl shadow hover:shadow-xl transition-shadow duration-200 group relative mb-10 overflow-hidden cursor-pointer`}
         onClick={e => {
           // Prevent navigation if clicking on a button or link inside the card
           const tag = (e.target as HTMLElement).tagName.toLowerCase();
@@ -261,6 +261,18 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
         role="button"
         aria-label={`View details for ${experience.title}`}
       >
+        {/* SVG filter for pixelation */}
+        <svg width="0" height="0" style={{ position: 'absolute' }}>
+          <filter id="pixelate">
+            <feFlood x="4" y="4" height="8" width="8" />
+            <feComposite in2="SourceGraphic" operator="in" />
+            <feMorphology operator="dilate" radius="2" />
+            <feGaussianBlur stdDeviation="2" />
+            <feComponentTransfer>
+              <feFuncA type="discrete" tableValues="1 1" />
+            </feComponentTransfer>
+          </filter>
+        </svg>
         {/* Image section */}
         <div className="aspect-[3/2] w-full overflow-hidden rounded-t-2xl relative">
           {Array.isArray(experience.imageUrl) && experience.imageUrl.length > 1 ? (

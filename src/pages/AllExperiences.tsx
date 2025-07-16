@@ -25,6 +25,7 @@ import {
 import { useWishlistExperiences } from '@/hooks/useDataLoaders';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
+import ImageTrail from '@/components/ImageTrail';
 
 // Add distance filter options
 const DISTANCE_FILTERS = [
@@ -572,6 +573,10 @@ const AllExperiences = () => {
             </div>
           ) : (
             <>
+              {/* Show image trail at the top of the experiences list */}
+              <div className="mb-8">
+                <ImageTrail items={experiences.map(exp => Array.isArray(exp.imageUrl) ? exp.imageUrl[0] : exp.imageUrl || '/placeholder.svg')} variant={1} />
+              </div>
               {/* Search Bar */}
               <div className={cn(
                 "mb-8 mt-8 transition-all duration-500",
