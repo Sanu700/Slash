@@ -473,6 +473,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               Gift Personalizer
             </Link>
+            <Link to="/swipe-feature" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Swipe
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -731,6 +734,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {/* Main navigation options */}
             <Link to="/experiences" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
             <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/swipe-feature" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Swipe</Link>
             {/* Company Section */}
             <div>
               <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-base font-medium text-gray-900 dark:text-gray-100">
