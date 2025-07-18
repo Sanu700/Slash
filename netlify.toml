@@ -38,4 +38,4 @@
   X-XSS-Protection = "1; mode=block"
   X-Content-Type-Options = "nosniff"
   Referrer-Policy = "strict-origin-when-cross-origin"
- Content-Security-Policy = "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://api.mapbox.com https://events.mapbox.com https://api.openai.com https://ceqpdprcqhmkqdbgmmkn.supabase.co https://slash-rag-agent.onrender.com https://api.slashexperiences.in http://localhost:8000 https://nominatim.openstreetmap.org;" 
+  Content-Security-Policy = "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://api.mapbox.com https://events.mapbox.com https://api.openai.com https://ceqpdprcqhmkqdbgmmkn.supabase.co https://slash-rag-agent.onrender.com https://api.slashexperiences.in http://localhost:8000 https://nominatim.openstreetmap.org;" 
