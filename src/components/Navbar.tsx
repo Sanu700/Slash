@@ -671,7 +671,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden overflow-x-hidden">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-[240px] h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
             <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
@@ -692,8 +692,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <MapPin className="h-5 w-5 text-blue-600" />
                     <span
                       className={cn(
-                        "max-w-[120px] truncate text-base font-medium whitespace-nowrap",
-                        isDarkPage ? "text-white" : "text-gray-900"
+
+                        "max-w-[120px] truncate text-base font-normal whitespace-nowrap text-black"
+
                       )}
                       style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
                     >
