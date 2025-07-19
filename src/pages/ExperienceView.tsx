@@ -10,7 +10,7 @@ import { Experience } from '@/lib/data';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import useTrackExperienceView from '@/hooks/useTrackExperienceView';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { LoginModal } from '@/components/LoginModal';
@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import ExperienceMap from '@/components/ExperienceMap';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CITY_COORDINATES } from '../components/CitySelector';
+import ImageTrail from '@/components/ImageTrail';
 
 function getValidImgSrc(src: any) {
   if (!src) return '/placeholder.svg';
@@ -39,7 +40,13 @@ function getValidImgSrc(src: any) {
   return src;
 }
 
-const ExperienceView = () => {
+// Accept friends and friendsLikedExperiences as optional props
+interface ExperienceViewProps {
+  friends?: any[];
+  friendsLikedExperiences?: Record<string, any>;
+}
+
+const ExperienceView: React.FC<ExperienceViewProps> = ({ friends: propsFriends, friendsLikedExperiences: propsFriendsLikedExperiences }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart, items, updateQuantity } = useCart();
@@ -63,6 +70,11 @@ const ExperienceView = () => {
   const [travelTime, setTravelTime] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('selected_city') : null));
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [isSavedForLater, setIsSavedForLater] = useState(false);
+  // --- Friends and their liked experiences logic (copied from Profile) ---
+  // Use props if provided, otherwise use local state
+  const [friends, setFriends] = useState<any[]>(propsFriends || []);
+  const [friendsLikedExperiences, setFriendsLikedExperiences] = useState<Record<string, any>>(propsFriendsLikedExperiences || {});
   
   // Track experience view in database when logged in
   useTrackExperienceView(id || '');
@@ -117,10 +129,41 @@ const ExperienceView = () => {
     fetchExperience();
   }, [id, navigate]);
   
-  // Check if the experience is in the user's wishlist
+  // Always check latest wishlist state on mount or when user/experience changes
+  useEffect(() => {
+    if (!experience) return;
+    if (!user) {
+      // Guest: check localStorage
+      const wishlist = localStorage.getItem('wishlist');
+      let wishlistArr = wishlist ? JSON.parse(wishlist) : [];
+      setIsInWishlist(wishlistArr.includes(experience.id));
+    } else {
+      // Logged in: fetch from Supabase
+      supabase
+        .from('wishlists')
+        .select('experience_id')
+        .eq('user_id', user.id)
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setIsInWishlist(data.some((item) => item.experience_id === experience.id));
+          }
+        });
+    }
+  }, [user, experience]);
+  
+  // Check if the experience is in the user's wishlist or saved for later
   useEffect(() => {
     if (!user && experience) {
       setIsInWishlist(wishlistLocal.includes(experience.id));
+      // Check saved for later
+      const saved = localStorage.getItem('savedExperiences');
+      let savedExperiences = saved ? JSON.parse(saved) : [];
+      setIsSavedForLater(!!savedExperiences.find((exp) => exp.id === experience.id));
+    } else if (user && experience) {
+      // Check saved for later for logged in user (localStorage fallback)
+      const saved = localStorage.getItem('savedExperiences');
+      let savedExperiences = saved ? JSON.parse(saved) : [];
+      setIsSavedForLater(!!savedExperiences.find((exp) => exp.id === experience.id));
     }
   }, [user, experience, wishlistLocal]);
   
@@ -248,12 +291,14 @@ const ExperienceView = () => {
         setWishlistLocal(wishlistArr);
         localStorage.setItem('wishlist', JSON.stringify(wishlistArr));
         toast.success('Removed from wishlist');
+        window.dispatchEvent(new Event('wishlistUpdated'));
       } else {
         wishlistArr.push(experience.id);
         setIsInWishlist(true);
         setWishlistLocal(wishlistArr);
         localStorage.setItem('wishlist', JSON.stringify(wishlistArr));
         toast.success('Added to wishlist');
+        window.dispatchEvent(new Event('wishlistUpdated'));
       }
       return;
     }
@@ -265,9 +310,10 @@ const ExperienceView = () => {
           .delete()
           .eq('user_id', user.id)
           .eq('experience_id', experience.id);
+        setIsInWishlist(false); // Always update state immediately
         if (error) throw error;
-        setIsInWishlist(false);
         toast.success('Removed from wishlist');
+        window.dispatchEvent(new Event('wishlistUpdated'));
       } else {
         const { error } = await supabase
           .from('wishlists')
@@ -275,9 +321,10 @@ const ExperienceView = () => {
             user_id: user.id,
             experience_id: experience.id
           });
+        setIsInWishlist(true); // Always update state immediately
         if (error) throw error;
-        setIsInWishlist(true);
         toast.success('Added to wishlist');
+        window.dispatchEvent(new Event('wishlistUpdated'));
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
@@ -293,15 +340,21 @@ const ExperienceView = () => {
       try {
         const saved = localStorage.getItem('savedExperiences');
         let savedExperiences = saved ? JSON.parse(saved) : [];
-        if (!savedExperiences.find((exp: any) => exp.id === experience.id)) {
+        const alreadySaved = savedExperiences.find((exp: any) => exp.id === experience.id);
+        if (!alreadySaved) {
           savedExperiences.push({ ...experience });
           localStorage.setItem('savedExperiences', JSON.stringify(savedExperiences));
+          setIsSavedForLater(true);
           toast.success('Saved for later!');
         } else {
-          toast.info('Already saved for later!');
+          // Remove from saved
+          savedExperiences = savedExperiences.filter((exp: any) => exp.id !== experience.id);
+          localStorage.setItem('savedExperiences', JSON.stringify(savedExperiences));
+          setIsSavedForLater(false);
+          toast.info('Removed from Saved for Later');
         }
       } catch (error) {
-        toast.error('Failed to save for later');
+        toast.error('Failed to update saved for later');
       }
       return;
     }
@@ -309,15 +362,21 @@ const ExperienceView = () => {
     try {
       const saved = localStorage.getItem('savedExperiences');
       let savedExperiences = saved ? JSON.parse(saved) : [];
-      if (!savedExperiences.find((exp: any) => exp.id === experience.id)) {
+      const alreadySaved = savedExperiences.find((exp: any) => exp.id === experience.id);
+      if (!alreadySaved) {
         savedExperiences.push({ ...experience });
         localStorage.setItem('savedExperiences', JSON.stringify(savedExperiences));
+        setIsSavedForLater(true);
         toast.success('Saved for later!');
       } else {
-        toast.info('Already saved for later!');
+        // Remove from saved
+        savedExperiences = savedExperiences.filter((exp: any) => exp.id !== experience.id);
+        localStorage.setItem('savedExperiences', JSON.stringify(savedExperiences));
+        setIsSavedForLater(false);
+        toast.info('Removed from Saved for Later');
       }
     } catch (error) {
-      toast.error('Failed to save for later');
+      toast.error('Failed to update saved for later');
     }
   };
   
@@ -381,6 +440,78 @@ const ExperienceView = () => {
     fetchWishlist();
   }, [user, wishlistLocal]);
   
+  // Listen for wishlistUpdated event to re-fetch wishlist state
+  useEffect(() => {
+    const handler = () => {
+      if (!user && experience) {
+        setIsInWishlist(wishlistLocal.includes(experience.id));
+      } else if (user && experience) {
+        // For logged-in users, fetch from Supabase
+        supabase
+          .from('wishlists')
+          .select('experience_id')
+          .eq('user_id', user.id)
+          .then(({ data, error }) => {
+            if (!error && data) {
+              setIsInWishlist(data.some((item: any) => item.experience_id === experience.id));
+            }
+          });
+      }
+    };
+    window.addEventListener('wishlistUpdated', handler);
+    return () => window.removeEventListener('wishlistUpdated', handler);
+  }, [user, experience, wishlistLocal]);
+  
+  // Smooth scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, []);
+  
+  // Revert to previous friends and friendsLikedExperiences logic (before Profile.tsx copy)
+  // Only fetch if not provided by props
+  useEffect(() => {
+    if (propsFriends) return;
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from('connections')
+        .select('from_user_id, to_user_id')
+        .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+      if (!data) return setFriends([]);
+      const friendIds = data.map(conn =>
+        conn.from_user_id === user.id ? conn.to_user_id : conn.from_user_id
+      );
+      if (friendIds.length === 0) return setFriends([]);
+      const { data: profiles } = await supabase
+        .from('profiles_with_email')
+        .select('id, full_name, avatar_url, username')
+        .in('id', friendIds);
+      setFriends(profiles || []);
+    })();
+  }, [user?.id, propsFriends]);
+
+  useEffect(() => {
+    if (propsFriendsLikedExperiences) return;
+    async function fetchFriendsLikes() {
+      if (!friends.length) {
+        setFriendsLikedExperiences({});
+        return;
+      }
+      const allLikes = {};
+      for (const friend of friends) {
+        const { data: wishlist } = await supabase
+          .from('wishlists')
+          .select('experience_id')
+          .eq('user_id', friend.id);
+        const expIds = (wishlist || []).map(w => w.experience_id).filter(Boolean);
+        allLikes[friend.id] = expIds;
+      }
+      setFriendsLikedExperiences(allLikes);
+    }
+    fetchFriendsLikes();
+  }, [friends, propsFriendsLikedExperiences]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -393,22 +524,41 @@ const ExperienceView = () => {
     return null;
   }
   
+  const friendsWhoLiked = friends.filter(friend => {
+    const liked = friendsLikedExperiences[friend.id];
+    if (Array.isArray(liked) && liked.length > 0) {
+      if (typeof liked[0] === 'string') {
+        return liked.includes(experience.id);
+      } else if (typeof liked[0] === 'object' && liked[0] !== null) {
+        return liked.some((exp) => typeof exp === 'object' && exp.id === experience.id);
+      }
+    }
+    return false;
+  });
+  console.log('[DEBUG] friendsWhoLiked:', friendsWhoLiked, 'for experience', experience?.id, experience?.title); // DEBUG LOG
+  
+  // Debug logs for troubleshooting
+  console.log('[DEBUG][ExperienceView] friends:', friends);
+  console.log('[DEBUG][ExperienceView] friendsLikedExperiences:', friendsLikedExperiences);
+  console.log('[DEBUG][ExperienceView] experience.id:', experience?.id);
+  console.log('[DEBUG][ExperienceView] friendsWhoLiked:', friendsWhoLiked);
+  
   return (
     <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
         {/* Hero Image Section */}
-        <div className="relative h-[50vh] md:h-[60vh] w-full">
+        <div className="relative w-full h-48 md:h-[50vh] lg:h-[60vh] z-0 mt-20">
           <img 
             src={getValidImgSrc(imageUrls[currentImageIdx])}
             alt={experience.title}
-            className="h-full w-full object-cover rounded-lg"
-            style={{ maxHeight: '100%', maxWidth: '100%' }}
+            className="h-full w-full object-cover rounded-b-2xl"
+            style={{ maxHeight: '100%', maxWidth: '100%', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
           />
           {/* Left Arrow */}
           {imageUrls.length > 1 && (
             <button
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white rounded-full p-2 z-10"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white rounded-full p-2 z-20"
               onClick={handlePrevImage}
               aria-label="Previous image"
             >
@@ -418,15 +568,14 @@ const ExperienceView = () => {
           {/* Right Arrow */}
           {imageUrls.length > 1 && (
             <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white rounded-full p-2 z-10"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white rounded-full p-2 z-20"
               onClick={handleNextImage}
               aria-label="Next image"
             >
               <ChevronRight className="h-6 w-6" />
             </button>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="absolute top-6 left-6">
+          <div className="absolute top-6 left-6 z-30">
             <button
               onClick={() => navigate(-1)}
               className="bg-white/10 backdrop-blur-sm p-2 rounded-full hover:bg-white/20 transition-colors"
@@ -436,13 +585,13 @@ const ExperienceView = () => {
           </div>
           {/* Thumbnails (future support for multiple images) */}
           {imageUrls.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 rounded-lg px-3 py-2">
+            <div className="absolute bottom-4 left-0 w-full flex justify-center overflow-x-auto gap-2 bg-black/30 rounded-lg px-2 py-2 z-30">
               {imageUrls.map((img, idx) => (
                 <img
                   key={img}
                   src={img}
                   alt={`Thumbnail ${idx + 1}`}
-                  className={`w-16 h-12 object-cover rounded cursor-pointer border-2 ${currentImageIdx === idx ? 'border-primary' : 'border-transparent'} hover:border-primary`}
+                  className={`w-12 h-9 md:w-16 md:h-12 object-cover rounded cursor-pointer border-2 ${currentImageIdx === idx ? 'border-primary' : 'border-transparent'} hover:border-primary flex-shrink-0`}
                   onClick={() => setCurrentImageIdx(idx)}
                 />
               ))}
@@ -452,43 +601,70 @@ const ExperienceView = () => {
         
         {/* Main Content Section */}
         <div className="container max-w-3xl mx-auto px-4 py-8 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center w-full text-center">
-            <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center break-words">{experience.title}</h1>
+            <div className="flex flex-col items-center w-full text-center">
+              <h1 className="text-3xl md:text-4xl font-medium mb-4 text-center break-words">{experience.title}</h1>
               <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
                 <Button
                   onClick={toggleWishlist}
                   className={cn(
-                    "p-2 rounded-lg flex items-center gap-2 font-medium",
-                    isInWishlist ? "text-red-500 bg-red-50" : "text-gray-700 bg-gray-100 hover:text-red-500"
+                    "p-2 rounded-lg flex items-center gap-2 font-medium border",
+                    isInWishlist
+                      ? "text-white bg-red-500 border-red-500 hover:bg-red-600 hover:border-red-600"
+                      : "text-gray-700 bg-gray-100 border-gray-300 hover:text-red-500 hover:border-red-400"
                   )}
                   disabled={isWishlistLoading}
                 >
-                  <Heart className="h-5 w-5" fill={isInWishlist ? "currentColor" : "none"} />
+                  <Heart className={cn("h-5 w-5", isInWishlist ? "fill-current" : "", isInWishlist ? "text-white" : "")}
+                    fill={isInWishlist ? "currentColor" : "none"} />
                   {isInWishlist ? 'Liked' : 'Like'}
                 </Button>
                 <Button
                   onClick={handleSaveForLater}
-                  className="p-2 rounded-lg flex items-center gap-2 font-medium text-gray-700 bg-gray-100 hover:text-primary"
+                  className={cn(
+                    "p-2 rounded-lg flex items-center gap-2 font-medium border",
+                    isSavedForLater
+                      ? "text-white bg-black border-black hover:bg-gray-900 hover:border-gray-900"
+                      : "text-gray-700 bg-gray-100 border-gray-300 hover:text-primary hover:border-primary"
+                  )}
                 >
-                  <Bookmark className="h-5 w-5" />
-                  Save for Later
+                  <Bookmark className={cn("h-5 w-5", isSavedForLater ? "fill-current" : "", isSavedForLater ? "text-white" : "")}
+                    fill={isSavedForLater ? "currentColor" : "none"} />
+                  {isSavedForLater ? 'Saved' : 'Save for Later'}
                 </Button>
               </div>
+              {friendsWhoLiked.length > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-gray-400 font-normal">Liked by</span>
+                  {friendsWhoLiked.slice(0, 5).map(friend => (
+                    <div key={friend.id} className="flex items-center gap-1">
+                      <img
+                        src={friend.avatar_url || '/placeholder.svg'}
+                        alt={friend.full_name}
+                        title={friend.full_name}
+                        className="h-5 w-5 rounded-full border border-gray-200 object-cover opacity-80"
+                      />
+                      <span className="text-xs text-gray-500 font-normal">
+                        {friend.username ? `@${friend.username}` : friend.full_name}
+                      </span>
+                    </div>
+                  ))}
+                  {friendsWhoLiked.length > 5 && (
+                    <span className="text-xs text-gray-400 ml-1">+{friendsWhoLiked.length - 5}</span>
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap gap-4 mb-6 justify-center items-center text-center">
                 <div className="flex items-center gap-2 text-muted-foreground text-base">
                   <MapPin className="h-5 w-5" />
                   <span>{experience.location}</span>
-                  <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-                    <DialogTrigger asChild>
-                      <button className="underline text-sm ml-2" type="button">Show Map</button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[625px]">
-                      <DialogHeader>
-                        <DialogTitle>{experience.title} - Location</DialogTitle>
-                      </DialogHeader>
-                      <ExperienceMap locationName={experience.location} />
-                    </DialogContent>
-                  </Dialog>
+                  <a
+                    className="underline text-sm ml-2 text-primary"
+                    href={`https://www.google.com/maps/search/?api=1&query=${experience.latitude},${experience.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Show Map
+                  </a>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <Clock className="h-4 w-4 mr-2" />
@@ -499,7 +675,7 @@ const ExperienceView = () => {
                   {experience.participants}
                 </div>
               </div>
-              <div className="prose prose-lg max-w-none mb-8 mx-auto text-center">
+              <div className="prose prose-lg max-w-full sm:max-w-none mb-8 mx-auto text-center">
                 <p>{experience.description}</p>
               </div>
               {/* Experience Details */}
@@ -508,29 +684,29 @@ const ExperienceView = () => {
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Duration</h3>
-                  <p className="text-muted-foreground text-sm">{experience.duration}</p>
+                    <h3 className="font-medium mb-1">Duration</h3>
+                    <p className="text-muted-foreground text-sm">{experience.duration}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Users className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Group Size</h3>
-                  <p className="text-muted-foreground text-sm">{experience.participants}</p>
+                    <h3 className="font-medium mb-1">Group Size</h3>
+                    <p className="text-muted-foreground text-sm">{experience.participants}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Date</h3>
-                  <p className="text-muted-foreground text-sm">{experience.date}</p>
+                    <h3 className="font-medium mb-1">Date</h3>
+                    <p className="text-muted-foreground text-sm">{experience.date}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-primary/10 p-2 rounded-lg mb-2 flex items-center justify-center">
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-medium mb-1">Location</h3>
-                  <p className="text-muted-foreground text-sm">{experience.location}</p>
+                    <h3 className="font-medium mb-1">Location</h3>
+                    <p className="text-muted-foreground text-sm">{experience.location}</p>
                 </div>
               </div>
 
@@ -538,58 +714,34 @@ const ExperienceView = () => {
               {similarExperiences.length > 0 && (
                 <div className="mt-12">
                   <h2 className="text-2xl font-medium mb-6">Similar Experiences</h2>
-                  {similarExperiences.length === 1 ? (
-                    <div className="flex justify-center">
-                      <div className="w-[346.66px] h-auto">
-                        <ExperienceCard 
-                          key={similarExperiences[0].id} 
-                          experience={similarExperiences[0]} 
-                          index={0} 
-                          isInWishlist={wishlistIds.includes(similarExperiences[0].id)}
-                          onWishlistChange={(experienceId, newIsInWishlist) => {
-                            setWishlistIds(prev => {
-                              if (newIsInWishlist) {
-                                return [...prev, experienceId];
-                              } else {
-                                return prev.filter(id => id !== experienceId);
-                              }
-                            });
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                      {similarExperiences.map((exp, idx) => (
-                        <ExperienceCard 
-                          key={exp.id} 
-                          experience={exp} 
-                          index={idx} 
-                          isInWishlist={wishlistIds.includes(exp.id)}
-                          onWishlistChange={(experienceId, newIsInWishlist) => {
-                            setWishlistIds(prev => {
-                              if (newIsInWishlist) {
-                                return [...prev, experienceId];
-                              } else {
-                                return prev.filter(id => id !== experienceId);
-                              }
-                            });
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                    {similarExperiences.map((exp, idx) => (
+                      <ExperienceCard 
+                        key={exp.id} 
+                        experience={exp} 
+                        index={idx} 
+                        isInWishlist={wishlistIds.includes(exp.id)}
+                        onWishlistChange={(experienceId, newIsInWishlist) => {
+                          setWishlistIds(prev => {
+                            if (newIsInWishlist) {
+                              return [...prev, experienceId];
+                            } else {
+                              return prev.filter(id => id !== experienceId);
+                            }
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-            {/* Right Column - Booking Card (desktop) */}
-            {/* Removed right column booking card */}
-          </div>
-          <LoginModal 
-            isOpen={showLoginModal} 
-            onClose={() => setShowLoginModal(false)} 
-          />
         </div>
+      </div>
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </>
   );
 };

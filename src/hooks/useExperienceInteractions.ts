@@ -68,12 +68,12 @@ export const useExperienceInteractions = (userId: string | undefined) => {
         // Add to wishlist
         const { error, data } = await supabase
           .from('wishlists')
-          .insert({
+          .upsert({
             user_id: userId,
             experience_id: experienceId,
             added_at: new Date().toISOString()
-          });
-        console.log('Supabase insert result:', { error, data }); // DEBUG LOG
+          }, { onConflict: 'user_id,experience_id' });
+        console.log('Supabase upsert result:', { error, data }); // DEBUG LOG
         if (error) throw error;
         
         // Get the experience details

@@ -6,6 +6,9 @@ import { FormData } from '@/types/personalizerTypes';
 import { useNavigate } from 'react-router-dom';
 import { formatRupees } from '@/lib/formatters';
 import { goBackOneStep, submitAnswer, fetchNextQuestion, fetchSuggestions, fetchInitQuestion, resetSession, submitFollowup } from '@/lib/aiPersonalizer';
+import ExperienceCard from '@/components/ExperienceCard';
+import { Experience } from '@/lib/data/types';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Suggestion {
   id: string;
@@ -31,9 +34,25 @@ interface StepResultsProps {
   aiSessionId?: string;
 }
 
+const getFirstImageUrl = (suggestion: Suggestion) => {
+  const fields = [
+    suggestion.image_url,
+    suggestion.image,
+    suggestion.imageUrl,
+    suggestion.img,
+    suggestion.photo,
+    suggestion.thumbnail
+  ];
+  for (const field of fields) {
+    if (Array.isArray(field) && field.length > 0) return field[0];
+    if (typeof field === 'string' && field) return field;
+  }
+  return '/placeholder.svg';
+};
+
 const AISuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
   const navigate = useNavigate();
-  const imageUrl = suggestion.image_url || suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg';
+  const imageUrl = getFirstImageUrl(suggestion);
   
   // Debug logging
   console.log('AISuggestionCard image data:', {
@@ -88,101 +107,93 @@ const AISuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
   );
 };
 
+const mapToExperience = (s: any): Experience => ({
+  id: s.id || Math.random().toString(36).substr(2, 9),
+  title: s.title || '',
+  description: s.description || '',
+  imageUrl: Array.isArray(s.imageUrl) ? s.imageUrl : [s.image_url || s.image || s.imageUrl || s.img || s.photo || s.thumbnail || '/placeholder.svg'],
+  price: s.price || 0,
+  location: s.location || '',
+  latitude: s.latitude,
+  longitude: s.longitude,
+  duration: s.duration || '',
+  participants: s.participants || '',
+  date: s.date || '',
+  category: s.category || '',
+  niche: s.niche,
+  nicheCategory: s.nicheCategory,
+  trending: s.trending,
+  featured: s.featured,
+  romantic: s.romantic,
+  adventurous: s.adventurous,
+  group: s.group,
+  coordinates: s.coordinates,
+  exp_type: s.exp_type,
+});
+
+function isValidExperience(obj: any): obj is Experience {
+  return obj && typeof obj.id === 'string' && typeof obj.title === 'string' && Array.isArray(obj.imageUrl) && obj.imageUrl.length > 0 && typeof obj.location === 'string' && typeof obj.duration === 'string' && typeof obj.participants === 'string' && typeof obj.date === 'string';
+}
+
 const StepResults = ({ formData, suggestions, onBack, onStartOver, basicsInput, interestsInput, aiSessionId }: StepResultsProps) => {
   const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [localSuggestions, setLocalSuggestions] = useState(suggestions);
-  const [resultsHistory, setResultsHistory] = useState<Suggestion[][]>([]);
+  // Always use aiSuggestions as the source of truth
+  const [aiSuggestions, setAiSuggestions] = useState<Suggestion[]>(suggestions);
+  // Store history of previous results
+  const [history, setHistory] = useState<Suggestion[][]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  console.log('StepResults received suggestions:', suggestions);
-  console.log('Number of suggestions:', suggestions.length);
-  
-  const mapSuggestionToExperience = (suggestion: Suggestion) => ({
-    id: suggestion.id,
-    title: suggestion.title,
-    description: suggestion.description,
-    imageUrl: suggestion.image || suggestion.imageUrl || suggestion.img || suggestion.photo || suggestion.thumbnail || '/placeholder.svg',
-    price: suggestion.price,
-    location: 'Unknown',
-    duration: 'N/A',
-    participants: 'N/A',
-    date: 'N/A',
-    category: suggestion.category || 'General',
-  });
+  // Always show the latest AI output (from /suggestion or /followup)
+  // Use aiSuggestions as the only source of truth
+  const suggestionsToShow = aiSuggestions;
 
-  const handleChatOpen = () => {
-    if (showChat) {
-      // If chat is open, close it
-      setShowChat(false);
-      setChatInput("");
-    } else {
-      // If chat is closed, open it
-      setShowChat(true);
-    }
-  };
+  // Remove all Supabase/local/fallback logic
 
-  const handleChatClose = () => {
-    setShowChat(false);
-    setChatInput("");
-  };
+  const handleChatOpen = () => setShowChat(v => !v);
+  const handleChatClose = () => { setShowChat(false); setChatInput(""); };
 
   const handleChatSubmit = async () => {
     if (!chatInput.trim()) return;
     setIsChatLoading(true);
     try {
-      // Save current results to history before updating
-      setResultsHistory(prev => [localSuggestions, ...prev]);
-      
-      // Submit the chat input using followup - response should contain new suggestions
+      // Save current suggestions to history before updating
+      if (aiSuggestions && aiSuggestions.length > 0) {
+        setHistory(prev => [aiSuggestions, ...prev]);
+      }
       const followupResult = await submitFollowup(aiSessionId, chatInput);
-      
-      // Process the followup result to extract suggestions
-      if (followupResult) {
-        let newSuggestions = [];
-        
-        if (Array.isArray(followupResult)) {
-          // If the response is directly an array of suggestions
-          newSuggestions = followupResult;
-        } else if (followupResult.suggestions && Array.isArray(followupResult.suggestions)) {
-          // If the response has a suggestions property
-          newSuggestions = followupResult.suggestions;
-        } else if (followupResult.results && Array.isArray(followupResult.results)) {
-          // If the response has a results property
-          newSuggestions = followupResult.results;
-        } else if (typeof followupResult === 'object' && followupResult !== null) {
-          // If it's an object, try to extract suggestions from it
-          const keys = Object.keys(followupResult);
-          for (const key of keys) {
-            if (Array.isArray(followupResult[key])) {
-              newSuggestions = followupResult[key];
-              break;
-            }
-          }
-          
-          // If no array found, treat the object as a single suggestion
-          if (newSuggestions.length === 0) {
-            newSuggestions = [followupResult];
-          }
-        }
-        
-        if (newSuggestions.length > 0) {
-          setLocalSuggestions(newSuggestions);
+      let newSuggestions: any[] = [];
+      if (Array.isArray(followupResult)) newSuggestions = followupResult;
+      else if (typeof followupResult === 'object' && followupResult !== null) {
+        const arrayValue = Object.values(followupResult).find(v => Array.isArray(v));
+        if (arrayValue) newSuggestions = arrayValue as any[];
+        else newSuggestions = [followupResult];
+      }
+
+      console.log('AI suggestions:', newSuggestions);
+      // Match by supabase_id only (as in StepInterests)
+      const supabaseIds = newSuggestions.map((s: any) => s.supabase_id).filter(Boolean);
+      console.log('Supabase IDs:', supabaseIds);
+      let matchedExperiences = [];
+      if (supabaseIds.length > 0) {
+        const { data, error } = await supabase
+          .from('experiences')
+          .select('*')
+          .in('id', supabaseIds);
+        if (!error) {
+          matchedExperiences = data || [];
         }
       }
-      
+      console.log('Matched experiences:', matchedExperiences);
+      setAiSuggestions(matchedExperiences.length > 0 ? matchedExperiences : newSuggestions);
       setShowChat(false);
       setChatInput("");
     } catch (err) {
-      // Optionally show error
+      // Optionally handle error
     } finally {
       setIsChatLoading(false);
     }
-  };
-
-  const handleRestoreHistory = (historyIndex: number) => {
-    setLocalSuggestions(resultsHistory[historyIndex]);
   };
 
   return (
@@ -235,11 +246,16 @@ const StepResults = ({ formData, suggestions, onBack, onStartOver, basicsInput, 
           <CardDescription>Curated just for you based on your input</CardDescription>
         </CardHeader>
         <CardContent>
-          {localSuggestions.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {localSuggestions.map((suggestion, index) => (
-                <AISuggestionCard key={suggestion.id || index} suggestion={suggestion} />
-              ))}
+          {suggestionsToShow && suggestionsToShow.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {suggestionsToShow.map((experience) => {
+                const key = isValidExperience(experience)
+                  ? String(experience.id)
+                  : ('supabase_id' in experience ? String((experience as any).supabase_id) : String(experience.id || Math.random().toString(36).substr(2, 9)));
+                return isValidExperience(experience)
+                  ? <ExperienceCard key={key} experience={experience} openInNewTab={true} />
+                  : <ExperienceCard key={key} experience={mapToExperience(experience)} openInNewTab={true} />;
+              })}
             </div>
           ) : (
             <div className="text-center py-8">
@@ -247,49 +263,46 @@ const StepResults = ({ formData, suggestions, onBack, onStartOver, basicsInput, 
             </div>
           )}
 
-          {resultsHistory.length > 0 && (
-            <div className="mt-8">
+          <div className="flex justify-center gap-4 pt-6">
+            {history.length > 0 && (
               <Button variant="outline" size="sm" onClick={() => setShowHistory(v => !v)}>
                 {showHistory ? 'Hide Previous Results' : 'Show Previous Results'}
               </Button>
-              {showHistory && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" /> Previous Results
-                  </h3>
-                  <div className="space-y-6">
-                    {resultsHistory.map((history, idx) => (
-                      <div key={idx} className="border rounded-lg p-2 bg-gray-50">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-muted-foreground">Result Set #{resultsHistory.length - idx}</span>
-                          <Button size="sm" variant="outline" onClick={() => handleRestoreHistory(idx)}>
-                            View
-                          </Button>
-                        </div>
-                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                          {history.map((suggestion, sidx) => (
-                            <AISuggestionCard key={suggestion.id || sidx} suggestion={suggestion} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex justify-center gap-4 pt-6">
-            <Button
-              onClick={onStartOver}
-              className="flex items-center gap-2"
-            >
+            )}
+            <div className="flex-1" />
+            <Button onClick={onStartOver} className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               Start Over
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Previous Results section moved below current experiences */}
+      {showHistory && history.length > 0 && (
+        <div className="mb-6 mt-6">
+          {history.map((prevResults, idx) => (
+            <Card key={idx} className="mb-4 border-dashed border-2 border-gray-300 bg-gray-50">
+              <CardHeader>
+                <CardTitle>Previous Results {history.length - idx}</CardTitle>
+                <CardDescription>These were your earlier recommendations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {prevResults.map((experience, i) => {
+                    const key = isValidExperience(experience)
+                      ? String(experience.id)
+                      : ('supabase_id' in experience ? String((experience as any).supabase_id) : String(experience.id || Math.random().toString(36).substr(2, 9)));
+                    return isValidExperience(experience)
+                      ? <ExperienceCard key={key} experience={experience} openInNewTab={true} />
+                      : <ExperienceCard key={key} experience={mapToExperience(experience)} openInNewTab={true} />;
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

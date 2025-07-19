@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { getExperienceById, Experience } from '@/lib/data';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';

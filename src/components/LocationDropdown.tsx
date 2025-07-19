@@ -91,6 +91,13 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
   // Store user's coordinates if available
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
+  // Removed: const [autocomplete, setAutocomplete] = useState<any>(null);
+
+  // Removed: const { isLoaded } = useJsApiLoader({
+  // Removed:   googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  // Removed:   libraries: ['places'],
+  // Removed: });
+
   useEffect(() => {
     // Always read the latest value from localStorage when the route changes
     const selectedAddressRaw = localStorage.getItem('selected_address');
@@ -150,11 +157,11 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           didRespond = true;
           clearTimeout(geoTimeout);
           const { latitude, longitude } = position.coords;
-          setUserCoords({ lat: latitude, lon: longitude }); // <-- update here
+          setUserCoords({ lat: latitude, lon: longitude });
           let fetchTimeout;
           let didFetch = false;
           try {
-            // Reverse geocode to get address
+            // Reverse geocode to get address using Google Maps Geocoding API
             fetchTimeout = setTimeout(() => {
               if (!didFetch) {
                 setIsGettingLocation(false);
@@ -162,20 +169,20 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               }
             }, 5000); // 5 seconds timeout
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
             );
             const data = await response.json();
             didFetch = true;
             clearTimeout(fetchTimeout);
-            const addressText = data.display_name;
-            setAddress(addressText);
-            setSelectedLocation(addressText);
+            const addressText = data.results && data.results[0] && data.results[0].formatted_address;
+            setAddress(addressText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setSelectedLocation(addressText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
             localStorage.setItem('selected_address', JSON.stringify({
-              address: addressText,
+              address: addressText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
               lat: latitude.toString(),
               lon: longitude.toString()
             }));
-          } catch (error) {
+          } catch {
             setIsGettingLocation(false);
             setError('Could not resolve your address. Please try again.');
             // Fallback to coordinates
@@ -206,6 +213,25 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
       setError('Geolocation is not supported by this browser.');
     }
   };
+
+  // Removed: const onPlaceChanged = () => {
+  // Removed:   if (autocomplete !== null) {
+  // Removed:     const place = autocomplete.getPlace();
+  // Removed:     setAddress(place.formatted_address || '');
+  // Removed:     setSelectedLocation(place.formatted_address || '');
+  // Removed:     if (place.geometry && place.geometry.location) {
+  // Removed:       const lat = place.geometry.location.lat();
+  // Removed:       const lng = place.geometry.location.lng();
+  // Removed:       localStorage.setItem('selected_address', JSON.stringify({
+  // Removed:         address: place.formatted_address,
+  // Removed:         lat: lat,
+  // Removed:         lon: lng
+  // Removed:       }));
+  // Removed:     }
+  // Removed:     setAddressResults([]);
+  // Removed:     setCityResults([]);
+  // Removed:   }
+  // Removed: };
 
   // Address autocomplete handler (debounced)
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -297,7 +323,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
 
   if (standalone) {
     return (
-      <div className="w-80 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
+      <div className="w-[28rem] p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
         {/* Header with clear messaging */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
           <div className="flex items-center gap-2 mb-2">
@@ -330,11 +356,26 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
+                {/* Removed: {isLoaded && ( */}
+                {/* Removed:   <Autocomplete */}
+                {/* Removed:     onLoad={setAutocomplete} */}
+                {/* Removed:     onPlaceChanged={onPlaceChanged} */}
+                {/* Removed:   > */}
+                {/* Removed:     <input */}
+                {/* Removed:       type="text" */}
+                {/* Removed:       placeholder="e.g., 123 Main Street, Bangalore, Karnataka" */}
+                {/* Removed:       value={address} */}
+                {/* Removed:       onChange={e => setAddress(e.target.value)} */}
+                {/* Removed:       className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full" */}
+                {/* Removed:     /> */}
+                {/* Removed:   </Autocomplete> */}
+                {/* Removed: )} */}
+                <input
+                  type="text"
                   placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
                   value={address}
                   onChange={handleAddressChange}
-                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                 />
               </div>
             </div>
@@ -515,7 +556,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
           <ChevronDown className="ml-1 h-4 w-4 text-gray-400" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
+      <DropdownMenuContent className="w-[28rem] p-0 mt-1 border border-gray-200 dark:border-gray-700 bg-white rounded-lg shadow-lg">
         {/* Header with clear messaging */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
           <div className="flex items-center gap-2 mb-2">
@@ -548,11 +589,26 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
+                {/* Removed: {isLoaded && ( */}
+                {/* Removed:   <Autocomplete */}
+                {/* Removed:     onLoad={setAutocomplete} */}
+                {/* Removed:     onPlaceChanged={onPlaceChanged} */}
+                {/* Removed:   > */}
+                {/* Removed:     <input */}
+                {/* Removed:       type="text" */}
+                {/* Removed:       placeholder="e.g., 123 Main Street, Bangalore, Karnataka" */}
+                {/* Removed:       value={address} */}
+                {/* Removed:       onChange={e => setAddress(e.target.value)} */}
+                {/* Removed:       className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full" */}
+                {/* Removed:     /> */}
+                {/* Removed:   </Autocomplete> */}
+                {/* Removed: )} */}
+                <input
+                  type="text"
                   placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
                   value={address}
                   onChange={handleAddressChange}
-                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                 />
               </div>
             </div>

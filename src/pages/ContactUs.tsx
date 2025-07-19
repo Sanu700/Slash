@@ -132,88 +132,19 @@ const ContactUs = () => {
         className="py-16 md:py-24 bg-secondary/10"
       >
         <div className="container max-w-6xl mx-auto px-6 md:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Form Side */}
-            <div className={cn(
-              "bg-white p-8 rounded-xl shadow-sm transition-all duration-700",
-              formInView ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
+          <div className="flex flex-col items-center justify-center">
+            <div className="bg-white p-8 rounded-xl shadow-sm text-center max-w-lg w-full">
               <h2 className="text-2xl font-medium mb-6">Send Us a Message</h2>
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label htmlFor="firstName" className="text-sm font-medium">
-                      First Name
-                    </label>
-                    <Input id="firstName" placeholder="Enter your first name" value={form.firstName} onChange={handleChange} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="lastName" className="text-sm font-medium">
-                      Last Name
-                    </label>
-                    <Input id="lastName" placeholder="Enter your last name" value={form.lastName} onChange={handleChange} required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email Address
-                  </label>
-                  <Input id="email" type="email" placeholder="Enter your email address" value={form.email} onChange={handleChange} required />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="subject" className="text-sm font-medium">
-                    Subject
-                  </label>
-                  <Input id="subject" placeholder="What is your message regarding?" value={form.subject} onChange={handleChange} required />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="message" className="text-sm font-medium">
-                    Message
-                  </label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="How can we help you?" 
-                    className="min-h-[120px]"
-                    value={form.message}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                {success && <div className="text-green-600 font-medium">{success}</div>}
-                {error && <div className="text-red-600 font-medium">{error}</div>}
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Sending...' : 'Send Message'}</Button>
-              </form>
-            </div>
-            
-            {/* Info Side */}
-            <div className={cn(
-              "transition-all duration-700 delay-200",
-              formInView ? "opacity-100" : "opacity-0 translate-y-8"
-            )}>
-              <h2 className="text-2xl font-medium mb-6">Contact Information</h2>
-              
-              <div className="space-y-8">
-                <div className="flex items-start">
-                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-1">Phone</h3>
-                    <div className="text-muted-foreground flex flex-row gap-8">
-                      <div className="flex flex-col">
-                        <span>Aryan Jain</span>
-                        <span>Apoorv Kakar</span>
-                        <span>Kaushal Rathi</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span>8468951580</span>
-                        <span>8076586928</span>
-                        <span>9007488827</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <p className="mb-6 text-muted-foreground">Have a question or want to reach out? Click below to email us directly.</p>
+              <a
+                href="mailto:slash.adbc@gmail.com"
+                className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-semibold text-lg shadow hover:bg-primary/90 transition-colors duration-150"
+              >
+                Send us a message
+              </a>
+              <p className="mt-2 text-sm text-muted-foreground">
+                If clicking doesn't open your email, please send your message to <b>slash.adbc@gmail.com</b>
+              </p>
             </div>
           </div>
         </div>

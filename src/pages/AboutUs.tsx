@@ -31,10 +31,10 @@ const AboutUs = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="rounded-xl overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&auto=format&fit=crop" 
-                alt="Team brainstorming" 
-                className="w-full h-full object-cover"
-              />
+                 src="/lovable-uploads/beautiful-gift-new-year-christmas_564714-11165.avif" 
+                 alt="Beautiful gift for New Year or Christmas" 
+                  className="w-full h-full object-cover"
+                />
             </div>
             
             <div>
@@ -94,16 +94,30 @@ const AboutUs = () => {
         </div>
       </section>
       
-      {/* Team Section */}
-      <section ref={teamRef} className="py-12 md:py-24">
-        <div className="container max-w-6xl mx-auto px-4 md:px-10">
-          <div className="text-center">
-            <h2 className="text-3xl font-medium mb-6">Founders</h2>
-            <div className="text-xl text-muted-foreground space-y-2">
-              <div>Aryan Jain</div>
-              <div>Apoorv Kakar</div>
-              <div>Kaushal Rathi</div>
-            </div>
+      {/* Founders Section */}
+      <section className="mt-16 mb-12">
+        <h2 className="text-2xl font-bold text-center mb-8">Meet the Co-founders</h2>
+        <div className="flex flex-col md:flex-row gap-8 justify-center items-center">
+          {/* Aryan Jain */}
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center w-full max-w-xs">
+            <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Aryan Jain" className="h-24 w-24 rounded-full object-cover mb-4 border-2 border-primary" />
+            <h3 className="text-lg font-semibold mb-0">Aryan Jain</h3>
+            <p className="text-primary text-sm font-medium mb-1">Co-founder</p>
+            <p className="text-gray-600 text-center">Product visionary and passionate about creating joyful gifting experiences.</p>
+          </div>
+          {/* Apoorv Kakar */}
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center w-full max-w-xs">
+            <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Apoorv Kakar" className="h-24 w-24 rounded-full object-cover mb-4 border-2 border-primary" />
+            <h3 className="text-lg font-semibold mb-0">Apoorv Kakar</h3>
+            <p className="text-primary text-sm font-medium mb-1">Co-founder</p>
+            <p className="text-gray-600 text-center">Tech lead, ensuring seamless and delightful user journeys.</p>
+          </div>
+          {/* Kaushal Rathi */}
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center w-full max-w-xs">
+            <img src="/lovable-uploads/5c4b2b72-9668-4671-9be9-84c7371c459a.png" alt="Kaushal Rathi" className="h-24 w-24 rounded-full object-cover mb-4 border-2 border-primary" />
+            <h3 className="text-lg font-semibold mb-0">Kaushal Rathi</h3>
+            <p className="text-primary text-sm font-medium mb-1">Co-founder</p>
+            <p className="text-gray-600 text-center">Operations and partnerships, making every experience possible.</p>
           </div>
         </div>
       </section>

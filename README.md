@@ -104,7 +104,6 @@ Slash-13/
 
 ### Test: Added Instagram scraper functionality
 
-
 ## Enhanced Search with Autocomplete
 - **Smart Search**: Search across experience titles, descriptions, locations, categories, and more
 - **Real-time Suggestions**: Get instant autocomplete suggestions as you type

@@ -171,7 +171,7 @@ const Index = () => {
         <Hero />
 
         {/* Suggested for You */}
-        <section id="suggested" className="py-20 md:py-28 mt-8 md:mt-16">
+        <section id="suggested" className="py-20 md:py-28 mt-0">
           <div className="container max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-6 md:px-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-medium mb-4 animate-fade-in">
@@ -206,12 +206,8 @@ const Index = () => {
                   )}
                 </div>
                 {/* Unified Gift Inspiration section for all devices */}
-                <div className="w-full mt-16">
+                <div className="w-full mt-24 pt-8">
                   <hr className="my-6 border-t border-gray-200" />
-                  <div className="text-center mb-6">
-                    <h2 className="text-2xl md:text-3xl font-bold text-primary">Gift Inspiration</h2>
-                    <p className="text-base md:text-lg text-muted-foreground mt-2">Why gift an experience? See the science and inspiration below!</p>
-                  </div>
                   <span id="gifting-guide" className="block" />
                   <section ref={guideInViewRef} className="container max-w-[1152px] mx-auto px-4 py-8">
                     <div className={cn(
