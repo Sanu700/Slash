@@ -1,0 +1,3 @@
+[submodule "swipe"]
+  path = swipe
+  url = https://github.com/satvik-A/swipe.git 
