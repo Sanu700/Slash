@@ -476,6 +476,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               Gift Personalizer
             </Link>
+            <Link to="/swipe-feature" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Swipe
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -671,7 +674,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex flex-col md:hidden overflow-x-hidden">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-xs h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-[240px] h-full p-6 flex flex-col space-y-4 shadow-lg overflow-y-auto">
             <button className="self-end mb-4" onClick={toggleMobileMenu} aria-label="Close menu">
               <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
             </button>
@@ -692,8 +695,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
                     <MapPin className="h-5 w-5 text-blue-600" />
                     <span
                       className={cn(
-                        "max-w-[120px] truncate text-base font-medium whitespace-nowrap",
-                        isDarkPage ? "text-white" : "text-gray-900"
+
+                        "max-w-[120px] truncate text-base font-normal whitespace-nowrap text-black"
+
                       )}
                       style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', verticalAlign: 'middle' }}
                     >
@@ -734,6 +738,7 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             {/* Main navigation options */}
             <Link to="/experiences" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">All Experiences</Link>
             <Link to="/gift-personalizer" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Gift Personalizer</Link>
+            <Link to="/swipe-feature" onClick={toggleMobileMenu} className="text-base font-medium text-gray-900 dark:text-gray-100 w-full">Swipe</Link>
             {/* Company Section */}
             <div>
               <button onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)} className="flex items-center justify-between w-full text-base font-medium text-gray-900 dark:text-gray-100">

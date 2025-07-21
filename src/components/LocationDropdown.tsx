@@ -374,7 +374,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                   type="text"
                   placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
                   value={address}
-                  onChange={e => setAddress(e.target.value)}
+                  onChange={handleAddressChange}
                   className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                 />
               </div>
@@ -607,7 +607,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ value, onChange, pl
                   type="text"
                   placeholder="e.g., 123 Main Street, Bangalore, Karnataka"
                   value={address}
-                  onChange={e => setAddress(e.target.value)}
+                  onChange={handleAddressChange}
                   className="pl-10 h-10 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                 />
               </div>

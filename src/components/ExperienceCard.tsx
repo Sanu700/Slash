@@ -171,7 +171,8 @@ const ExperienceCard = ({ experience, featured = false, onWishlistChange, isInWi
   const [imgError, setImgError] = useState(false);
 
   // Debug log for image source and type
-  console.log('ExperienceCard image:', { imgSrc, type: typeof imgSrc, experience, imageUrl: experience.imageUrl });
+  console.log('ExperienceCard imageUrl prop:', experience.imageUrl);
+  console.log('ExperienceCard resolved imgSrc:', imgSrc);
 
   const navigate = useNavigate();
 
