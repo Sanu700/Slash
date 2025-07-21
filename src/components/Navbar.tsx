@@ -476,9 +476,6 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               Gift Personalizer
             </Link>
-            <Link to="/swipe-feature" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
-              Swipe
-            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
