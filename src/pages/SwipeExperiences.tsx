@@ -195,7 +195,7 @@ const SwipeExperiences: React.FC = () => {
       <style>{globalStyles + loadingBarAnim}</style>
       {loading && <div style={loadingBarStyle}></div>}
       <div style={{ minHeight: '100vh', minWidth: '100vw', background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0 }}>
-        <div style={{ marginTop: 140, width: '100%' }}>
+        <div style={{ marginTop: 140, marginBottom: 60, width: '100%' }}>
           {showIntro ? (
             <div style={{ background: '#fff', borderRadius: 24, boxShadow: '0 8px 32px rgba(99,102,241,0.10)', padding: 48, maxWidth: 440, minWidth: 320, textAlign: 'center', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, margin: '0 auto' }}>
               <div style={{ fontSize: 56, marginBottom: 12 }}>🎁</div>
