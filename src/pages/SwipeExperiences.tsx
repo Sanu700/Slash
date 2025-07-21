@@ -147,9 +147,9 @@ const SwipeExperiences: React.FC = () => {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
-  // Scroll to top of page on card change or after swipe
+  // Scroll to just below the navbar (e.g., 100px from top) on card change or after swipe
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 100, behavior: 'smooth' });
   }, [current, showCelebration, showIntro]);
 
   const handleAction = (action: 'like' | 'dislike' | 'skip') => {
@@ -158,8 +158,8 @@ const SwipeExperiences: React.FC = () => {
     if (action === 'like') setLiked([...liked, exp]);
     if (action === 'dislike') setDisliked([...disliked, exp]);
     if (action === 'skip') setSkipped([...skipped, exp]);
-    // Always scroll to top after swipe
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Always scroll to just below the navbar after swipe
+    window.scrollTo({ top: 100, behavior: 'smooth' });
     // After swipe, get new recommendations if at end
     if (current + 1 >= experiences.length) {
       setLoading(true);
