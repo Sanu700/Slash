@@ -23,6 +23,7 @@ import Wishlist from "./pages/Wishlist";
 import TravelDemo from "./pages/TravelDemo";
 import { WishlistProvider } from './contexts/WishlistContext';
 import ExperienceType from "./pages/ExperienceType";
+import SwipeExperiences from "./pages/SwipeExperiences";
 // Company Pages
 import AboutUs from "./pages/AboutUs";
 import Testimonials from "./pages/Testimonials";
@@ -75,6 +76,7 @@ function App() {
                       <Route path="/gift-personalizer" element={<Layout><GiftPersonalizer /></Layout>} />
                       <Route path="/ai-suggestions" element={<Layout><AISuggestions /></Layout>} />
                       <Route path="/travel-demo" element={<Layout><TravelDemo /></Layout>} />
+                      <Route path="/swipe" element={<Layout><SwipeExperiences /></Layout>} />
                       {/* Company Pages */}
                       <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
                       <Route path="/testimonials" element={<Layout><Testimonials /></Layout>} />

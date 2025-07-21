@@ -470,6 +470,9 @@ const Navbar = ({ isDarkPageProp = false }: NavbarProps) => {
             <Link to="/experiences" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               All Experiences
             </Link>
+            <Link to="/swipe" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
+              Swipe
+            </Link>
             <Link to="/gift-personalizer" className={cn("text-base font-medium whitespace-nowrap", textClass)}>
               Gift Personalizer
             </Link>
