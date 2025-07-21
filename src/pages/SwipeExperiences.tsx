@@ -147,12 +147,10 @@ const SwipeExperiences: React.FC = () => {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
-  // Scroll to top of card on swipe
+  // Scroll to top of page on card change or after swipe
   useEffect(() => {
-    if (cardRef.current) {
-      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [current]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [current, showCelebration, showIntro]);
 
   const handleAction = (action: 'like' | 'dislike' | 'skip') => {
     const exp = experiences[current];
