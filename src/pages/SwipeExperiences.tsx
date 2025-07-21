@@ -149,7 +149,7 @@ const SwipeExperiences: React.FC = () => {
 
   // Scroll to just below the navbar (e.g., 100px from top) on card change or after swipe
   useEffect(() => {
-    window.scrollTo({ top: 100, behavior: 'smooth' });
+    // window.scrollTo({ top: 100, behavior: 'smooth' });
   }, [current, showCelebration, showIntro]);
 
   const handleAction = (action: 'like' | 'dislike' | 'skip') => {
@@ -159,7 +159,7 @@ const SwipeExperiences: React.FC = () => {
     if (action === 'dislike') setDisliked([...disliked, exp]);
     if (action === 'skip') setSkipped([...skipped, exp]);
     // Always scroll to just below the navbar after swipe
-    window.scrollTo({ top: 100, behavior: 'smooth' });
+    // window.scrollTo({ top: 100, behavior: 'smooth' });
     // After swipe, get new recommendations if at end
     if (current + 1 >= experiences.length) {
       setLoading(true);
@@ -194,74 +194,75 @@ const SwipeExperiences: React.FC = () => {
     <>
       <style>{globalStyles + loadingBarAnim}</style>
       {loading && <div style={loadingBarStyle}></div>}
-      <div style={{ minHeight: '100vh', minWidth: '100vw', background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-        <div style={{ height: 120 }} />
-        {showIntro ? (
-          <div style={{ background: '#fff', borderRadius: 24, boxShadow: '0 8px 32px rgba(99,102,241,0.10)', padding: 48, maxWidth: 440, minWidth: 320, textAlign: 'center', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>🎁</div>
-            <h1 style={{ fontWeight: 900, fontSize: 32, marginBottom: 10, letterSpacing: 1, background: 'linear-gradient(90deg, #6366f1, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome to Swipe</h1>
-            <div style={{ color: '#64748b', fontSize: 18, marginBottom: 32 }}>
-              Discover unique experiences for you and your friends. Ready to explore?
+      <div style={{ minHeight: '100vh', minWidth: '100vw', background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0 }}>
+        <div style={{ marginTop: 140, width: '100%' }}>
+          {showIntro ? (
+            <div style={{ background: '#fff', borderRadius: 24, boxShadow: '0 8px 32px rgba(99,102,241,0.10)', padding: 48, maxWidth: 440, minWidth: 320, textAlign: 'center', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, margin: '0 auto' }}>
+              <div style={{ fontSize: 56, marginBottom: 12 }}>🎁</div>
+              <h1 style={{ fontWeight: 900, fontSize: 32, marginBottom: 10, letterSpacing: 1, background: 'linear-gradient(90deg, #6366f1, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome to Swipe</h1>
+              <div style={{ color: '#64748b', fontSize: 18, marginBottom: 32 }}>
+                Discover unique experiences for you and your friends. Ready to explore?
+              </div>
+              <Button style={{ fontSize: 20, padding: '14px 40px', fontWeight: 700, background: 'linear-gradient(90deg, #6366f1, #22d3ee)', color: '#fff', border: 'none', borderRadius: 8, boxShadow: '0 2px 8px rgba(99,102,241,0.10)' }} onClick={handleStartSwiping}>
+                Start Swiping
+              </Button>
             </div>
-            <Button style={{ fontSize: 20, padding: '14px 40px', fontWeight: 700, background: 'linear-gradient(90deg, #6366f1, #22d3ee)', color: '#fff', border: 'none', borderRadius: 8, boxShadow: '0 2px 8px rgba(99,102,241,0.10)' }} onClick={handleStartSwiping}>
-              Start Swiping
-            </Button>
-          </div>
-        ) : showCelebration ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-            <div style={{ fontSize: 80, animation: 'pop 0.7s cubic-bezier(.68,-0.55,.27,1.55) infinite alternate' }}>🎉</div>
-            <style>{`@keyframes pop { 0% { transform: scale(1); } 100% { transform: scale(1.25) rotate(-8deg); } }`}</style>
-          </div>
-        ) : (
-          <div style={{ ...cardStyle, ...fadeInStyle, margin: '0 auto' }} ref={cardRef}>
-            <div style={{ fontWeight: 800, fontSize: 18, textAlign: 'center', marginBottom: 10, color: '#6366f1', textTransform: 'uppercase', letterSpacing: 2 }}>Swipe</div>
-            {loading ? (
-              <div style={{ textAlign: 'center', margin: 32, fontSize: 18 }}>Loading...</div>
-            ) : currentExp ? (
-              <>
-                <img src={currentExp.imageUrl?.[0] || '/placeholder.svg'} alt={currentExp.title} style={imgStyle} />
-                <div style={titleStyle} title={currentExp.title}>{currentExp.title.length > 40 ? currentExp.title.slice(0, 40) + '…' : currentExp.title}</div>
-                <div style={descStyle}>{currentExp.description}</div>
-                <div style={locationStyle}>{currentExp.location}</div>
-                <div style={priceStyle}>₹{currentExp.price}</div>
-                <div style={{ ...buttonRow, marginTop: 32 }}>
-                  <Button style={{ background: '#22c55e', color: '#fff', minWidth: 90, fontWeight: 600 }} onClick={() => handleAction('like')}>Like</Button>
-                  <Button style={{ background: '#6b7280', color: '#fff', minWidth: 90, fontWeight: 600 }} onClick={() => handleAction('skip')}>Skip</Button>
-                  <Button style={{ background: '#ef4444', color: '#fff', minWidth: 90, fontWeight: 600 }} onClick={() => handleAction('dislike')}>Dislike</Button>
+          ) : showCelebration ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+              <div style={{ fontSize: 80, animation: 'pop 0.7s cubic-bezier(.68,-0.55,.27,1.55) infinite alternate' }}>🎉</div>
+              <style>{`@keyframes pop { 0% { transform: scale(1); } 100% { transform: scale(1.25) rotate(-8deg); } }`}</style>
+            </div>
+          ) : (
+            <div style={{ ...cardStyle, ...fadeInStyle, margin: '0 auto' }} ref={cardRef}>
+              <div style={{ fontWeight: 800, fontSize: 18, textAlign: 'center', marginBottom: 10, color: '#6366f1', textTransform: 'uppercase', letterSpacing: 2 }}>Swipe</div>
+              {loading ? (
+                <div style={{ textAlign: 'center', margin: 32, fontSize: 18 }}>Loading...</div>
+              ) : currentExp ? (
+                <>
+                  <img src={currentExp.imageUrl?.[0] || '/placeholder.svg'} alt={currentExp.title} style={imgStyle} />
+                  <div style={titleStyle} title={currentExp.title}>{currentExp.title.length > 40 ? currentExp.title.slice(0, 40) + '…' : currentExp.title}</div>
+                  <div style={descStyle}>{currentExp.description}</div>
+                  <div style={locationStyle}>{currentExp.location}</div>
+                  <div style={priceStyle}>₹{currentExp.price}</div>
+                  <div style={{ ...buttonRow, marginTop: 32 }}>
+                    <Button style={{ background: '#22c55e', color: '#fff', minWidth: 90, fontWeight: 600 }} onClick={() => handleAction('like')}>Like</Button>
+                    <Button style={{ background: '#6b7280', color: '#fff', minWidth: 90, fontWeight: 600 }} onClick={() => handleAction('skip')}>Skip</Button>
+                    <Button style={{ background: '#ef4444', color: '#fff', minWidth: 90, fontWeight: 600 }} onClick={() => handleAction('dislike')}>Dislike</Button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', margin: 32, fontSize: 20 }}>No more experiences to show!</div>
+              )}
+              <div style={{ ...summaryStyle, width: '100%', background: 'rgba(255,255,255,0.95)', padding: 16, borderRadius: 12, marginTop: 24 }}>
+                <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Your Swipes</h3>
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontWeight: 600 }}>Liked:</span>
+                  {liked.length === 0 ? (
+                    <span style={{ marginLeft: 8, color: '#6b7280' }}>None</span>
+                  ) : (
+                    <ul style={{ margin: '4px 0 0 20px' }}>{liked.map(exp => <li key={exp.id}>{exp.title}</li>)}</ul>
+                  )}
                 </div>
-              </>
-            ) : (
-              <div style={{ textAlign: 'center', margin: 32, fontSize: 20 }}>No more experiences to show!</div>
-            )}
-            <div style={{ ...summaryStyle, width: '100%', background: 'rgba(255,255,255,0.95)', padding: 16, borderRadius: 12, marginTop: 24 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Your Swipes</h3>
-              <div style={{ marginBottom: 8 }}>
-                <span style={{ fontWeight: 600 }}>Liked:</span>
-                {liked.length === 0 ? (
-                  <span style={{ marginLeft: 8, color: '#6b7280' }}>None</span>
-                ) : (
-                  <ul style={{ margin: '4px 0 0 20px' }}>{liked.map(exp => <li key={exp.id}>{exp.title}</li>)}</ul>
-                )}
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <span style={{ fontWeight: 600 }}>Disliked:</span>
-                {disliked.length === 0 ? (
-                  <span style={{ marginLeft: 8, color: '#6b7280' }}>None</span>
-                ) : (
-                  <ul style={{ margin: '4px 0 0 20px' }}>{disliked.map(exp => <li key={exp.id}>{exp.title}</li>)}</ul>
-                )}
-              </div>
-              <div>
-                <span style={{ fontWeight: 600 }}>Skipped:</span>
-                {skipped.length === 0 ? (
-                  <span style={{ marginLeft: 8, color: '#6b7280' }}>None</span>
-                ) : (
-                  <ul style={{ margin: '4px 0 0 20px' }}>{skipped.map(exp => <li key={exp.id}>{exp.title}</li>)}</ul>
-                )}
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontWeight: 600 }}>Disliked:</span>
+                  {disliked.length === 0 ? (
+                    <span style={{ marginLeft: 8, color: '#6b7280' }}>None</span>
+                  ) : (
+                    <ul style={{ margin: '4px 0 0 20px' }}>{disliked.map(exp => <li key={exp.id}>{exp.title}</li>)}</ul>
+                  )}
+                </div>
+                <div>
+                  <span style={{ fontWeight: 600 }}>Skipped:</span>
+                  {skipped.length === 0 ? (
+                    <span style={{ marginLeft: 8, color: '#6b7280' }}>None</span>
+                  ) : (
+                    <ul style={{ margin: '4px 0 0 20px' }}>{skipped.map(exp => <li key={exp.id}>{exp.title}</li>)}</ul>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );
