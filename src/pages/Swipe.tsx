@@ -277,10 +277,23 @@ const Swipe: React.FC = () => {
             <pre className="bg-gray-100 rounded p-2 text-xs overflow-x-auto max-h-64">{typeof apiOutput === 'string' ? apiOutput : JSON.stringify(apiOutput, null, 2)}</pre>
           </div>
         )}
-        {/* Show grid of experience cards or a placeholder if none */}
+        {/* Show current experience card and swipe buttons */}
+        {!loading && !error && rawApiExperiences.length > 0 && currentIndex < rawApiExperiences.length && (
+          <>
+            <RawExperienceCard exp={rawApiExperiences[currentIndex]} />
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => handleAction('disliked')} variant="outline" className="text-red-600 border-red-300">Dislike</Button>
+              <Button onClick={() => handleAction('skipped')} variant="outline">Skip</Button>
+              <Button onClick={() => handleAction('liked')} variant="default" className="bg-green-500 hover:bg-green-600">Like</Button>
+            </div>
+          </>
+        )}
+        {/* Show grid of experience cards or a placeholder if none (for debug, can be removed if not needed) */}
+        {/*
         {!loading && !error && rawApiExperiences.length > 0 && (
           <ExperienceGrid experiences={rawApiExperiences} />
         )}
+        */}
         {!loading && !error && rawApiExperiences.length === 0 && (
           <div className="w-full flex flex-col items-center mt-8">
             <div className="bg-white rounded-2xl shadow p-8 w-full max-w-md flex flex-col items-center border">
