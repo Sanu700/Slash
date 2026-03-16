@@ -11,9 +11,17 @@
 
 ---
 
-## 🌐 Live Demo
+## 🌐 Live Site
 
 🚀 **[slashexperiences.in](https://slashexperiences.in)**
+
+---
+
+## 📌 About
+
+Slash is a curated experience gifting platform serving 1,000+ users across India. The platform allows users to browse, book, and gift experiences — from adventure activities to wellness retreats — across 200+ cities.
+
+Built during a 3-month internship as the lead developer on a 6-member team.
 
 ---
 
@@ -26,62 +34,6 @@
 - 🛠️ **Admin Dashboard** — Manage experiences, suppliers, and bookings
 - ⚡ **Optimized Performance** — 25% faster page load, 20% higher user engagement
 - 📱 **Mobile-first** — Fully responsive across all screen sizes
-- 🔐 **Secure Auth** — Supabase authentication with session management
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Supabase account
-- Razorpay account (for payments)
-
-### Installation
-
-```bash
-git clone https://github.com/Sanu700/Slash.git
-cd Slash
-npm install
-```
-
-### Environment Variables
-
-Create a `.env` file in the root:
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_RAZORPAY_KEY_ID=your_razorpay_key
-```
-
-### Run Locally
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173)
-
----
-
-## 🏗️ Project Structure
-
-```
-Slash/
-├── src/
-│   ├── components/         # Reusable UI components
-│   ├── pages/              # Page-level components
-│   ├── contexts/           # React context (auth, cart, user)
-│   ├── hooks/              # Custom React hooks
-│   └── lib/                # Supabase client, utilities
-├── netlify/
-│   └── functions/          # Serverless payment functions
-├── supabase/
-│   └── migrations/         # Database schema and migrations
-├── public/                 # Static assets
-└── package.json
-```
 
 ---
 
@@ -109,14 +61,4 @@ Slash/
 
 ---
 
-## 🚀 Deployment
-
-- Frontend → [Netlify](https://netlify.com) (auto-deploys on push to main)
-- Backend → Supabase (managed PostgreSQL)
-- Configure environment variables in Netlify dashboard
-
----
-
-## 📄 License
-
-GPL-3.0 — see [LICENSE](LICENSE) for details.
+> This is a proprietary project built for Slash Experiences. Code is shared for portfolio purposes only.
